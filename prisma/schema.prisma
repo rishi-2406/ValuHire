@@ -206,6 +206,8 @@ model McqAnswer {
   selectedKey        String
   isCorrect          Boolean
   pointsAwarded      Int
+
+  @@unique([assessmentSessionId, questionId])
 }
 
 model Submission {
