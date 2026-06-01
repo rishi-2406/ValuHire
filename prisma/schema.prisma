@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  RECRUITER
+  CANDIDATE
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+enum CompanyStatus {
+  PENDING
+  APPROVED
+  BANNED
+}
+
+enum CampaignStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  ASSESSMENT_INVITED
+  ASSESSMENT_COMPLETED
+  INTERVIEW_SCHEDULED
+  REJECTED
+  HIRED
+}
+
+enum AssessmentSessionStatus {
+  STARTED
+  SUBMITTED
+  SCORED
+  EXPIRED
+}
+
+enum SubmissionStatus {
+  QUEUED
+  RUNNING
+  PASSED
+  FAILED
+  COMPILE_ERROR
+  RUNTIME_ERROR
+  TIMEOUT
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id                String              @id @default(cuid())
+  role              UserRole
+  status            UserStatus          @default(ACTIVE)
+  name              String
+  email             String              @unique
+  passwordHash      String
+  resumeUrl         String?
+  skills            String[]            @default([])
+  profilePicUrl     String?
+  companyId         String?
+  company           Company?            @relation(fields: [companyId], references: [id])
+  applications      Application[]
+  sessions          AssessmentSession[]
+  submissions       Submission[]
+  interviewSlots    InterviewSlot[]     @relation("CandidateInterviews")
+  recruiterSlots    InterviewSlot[]     @relation("RecruiterInterviews")
+  feedbackGiven     InterviewFeedback[]
+  refreshTokens     RefreshToken[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Company {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      CompanyStatus @default(PENDING)
+  recruiters  User[]
+  campaigns   Campaign[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  companyId      String
+  company        Company        @relation(fields: [companyId], references: [id])
+  title          String
+  description    String?
+  status         CampaignStatus @default(DRAFT)
+  assessment     Assessment?
+  applications   Application[]
+  inviteLinks    InviteLink[]
+  interviewSlots InterviewSlot[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  candidateId String
+  candidate   User              @relation(fields: [candidateId], references: [id])
+  campaignId  String
+  campaign    Campaign          @relation(fields: [campaignId], references: [id])
+  status      ApplicationStatus @default(APPLIED)
+  appliedAt   DateTime          @default(now())
+
+  @@unique([candidateId, campaignId])
+}
+
+model Assessment {
+  id              String              @id @default(cuid())
+  campaignId      String              @unique
+  campaign        Campaign            @relation(fields: [campaignId], references: [id])
+  title           String
+  instructions    String?
+  durationMinutes Int
+  mcqQuestions    McqQuestion[]
+  codingQuestions CodingQuestion[]
+  sessions        AssessmentSession[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model McqQuestion {
+  id           String      @id @default(cuid())
+  assessmentId String
+  assessment   Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  prompt       String
+  options      Json
+  correctKey   String
+  points       Int         @default(1)
+  answers      McqAnswer[]
+}
+
+model CodingQuestion {
+  id           String       @id @default(cuid())
+  assessmentId String
+  assessment   Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  title        String
+  statement    String
+  difficulty   String
+  constraints  String?
+  points       Int          @default(10)
+  testCases    TestCase[]
+  submissions  Submission[]
+}
+
+model TestCase {
+  id               String         @id @default(cuid())
+  codingQuestionId String
+  codingQuestion   CodingQuestion @relation(fields: [codingQuestionId], references: [id], onDelete: Cascade)
+  input            String
+  expectedOutput   String
+  isHidden         Boolean        @default(false)
+}
+
+model AssessmentSession {
+  id           String                  @id @default(cuid())
+  assessmentId String
+  assessment   Assessment              @relation(fields: [assessmentId], references: [id])
+  candidateId  String
+  candidate    User                    @relation(fields: [candidateId], references: [id])
+  status       AssessmentSessionStatus @default(STARTED)
+  startedAt    DateTime                @default(now())
+  submittedAt  DateTime?
+  expiresAt    DateTime
+  mcqAnswers   McqAnswer[]
+  submissions  Submission[]
+  result       AssessmentResult?
+  proctorEvents ProctorEvent[]
+}
+
+model McqAnswer {
+  id                 String            @id @default(cuid())
+  assessmentSessionId String
+  session            AssessmentSession @relation(fields: [assessmentSessionId], references: [id], onDelete: Cascade)
+  questionId         String
+  question           McqQuestion       @relation(fields: [questionId], references: [id])
+  selectedKey        String
+  isCorrect          Boolean
+  pointsAwarded      Int
+}
+
+model Submission {
+  id                  String            @id @default(cuid())
+  assessmentSessionId String?
+  session             AssessmentSession? @relation(fields: [assessmentSessionId], references: [id])
+  candidateId         String
+  candidate           User              @relation(fields: [candidateId], references: [id])
+  codingQuestionId    String
+  codingQuestion      CodingQuestion    @relation(fields: [codingQuestionId], references: [id])
+  code                String
+  language            String
+  status              SubmissionStatus  @default(QUEUED)
+  score               Int               @default(0)
+  executionTimeMs     Int?
+  testResults         Json?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model AssessmentResult {
+  id                  String            @id @default(cuid())
+  assessmentSessionId String            @unique
+  session             AssessmentSession @relation(fields: [assessmentSessionId], references: [id], onDelete: Cascade)
+  candidateId         String
+  assessmentId        String
+  mcqScore            Int               @default(0)
+  codingScore         Int               @default(0)
+  totalScore          Int               @default(0)
+  rank                Int?
+  durationSeconds     Int?
+  createdAt           DateTime          @default(now())
+}
+
+model ProctorEvent {
+  id                  String            @id @default(cuid())
+  assessmentSessionId String
+  session             AssessmentSession @relation(fields: [assessmentSessionId], references: [id], onDelete: Cascade)
+  type                String
+  metadata            Json?
+  occurredAt          DateTime          @default(now())
+}
+
+model InviteLink {
+  id         String    @id @default(cuid())
+  campaignId String
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime?
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model InterviewSlot {
+  id          String              @id @default(cuid())
+  campaignId  String
+  campaign    Campaign            @relation(fields: [campaignId], references: [id])
+  recruiterId String
+  recruiter   User                @relation("RecruiterInterviews", fields: [recruiterId], references: [id])
+  candidateId String
+  candidate   User                @relation("CandidateInterviews", fields: [candidateId], references: [id])
+  status      InterviewStatus     @default(SCHEDULED)
+  startsAt    DateTime
+  endsAt      DateTime
+  roomCode    String              @unique
+  feedback    InterviewFeedback?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model InterviewFeedback {
+  id              String        @id @default(cuid())
+  interviewSlotId String        @unique
+  interviewSlot   InterviewSlot @relation(fields: [interviewSlotId], references: [id], onDelete: Cascade)
+  interviewerId   String
+  interviewer     User          @relation(fields: [interviewerId], references: [id])
+  notes           String?
+  rating          Int?
+  recommendation  String?
+  createdAt       DateTime      @default(now())
+}
