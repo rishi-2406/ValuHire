@@ -6,18 +6,18 @@ import {
   CalendarDays,
   Video,
   Plus,
-  Play,
-  Edit,
   CheckCircle2,
   Clock,
-  XCircle,
-  X,
   Mic,
   MicOff,
   VideoOff,
   ScreenShare,
   PhoneOff,
-  ChevronRight
+  ChevronRight,
+  Filter,
+  FileText,
+  Save,
+  Code
 } from "lucide-react";
 import { interviewService, resultsService } from "../services/api";
 import { joinRoom, leaveRoom, onRoomEvent } from "../services/socket";
@@ -26,7 +26,7 @@ import TopBar from "../components/TopBar";
 import EmptyState from "../components/EmptyState";
 import ScheduleInterviewModal from "../components/ScheduleInterviewModal";
 
-const FEEDBACK_OPTIONS = ["Strong Hire", "Hire", "No Hire", "Strong No Hire"];
+const FEEDBACK_OPTIONS = ["Strong Hire", "Hire", "No Hire", "Strong No"];
 
 function getWeekDays(reference = new Date()) {
   const start = new Date(reference);
@@ -54,6 +54,7 @@ export default function InterviewsPage() {
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [micOn, setMicOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
+  const [notes, setNotes] = useState("");
 
   const role = (user?.role || "recruiter").toLowerCase();
   const days = getWeekDays(selectedDay);
@@ -127,8 +128,9 @@ export default function InterviewsPage() {
       return;
     }
     try {
-      await interviewService.submitFeedback(activeRoom, { recommendation: feedback });
+      await interviewService.submitFeedback(activeRoom, { recommendation: feedback, notes });
       toast.success("Feedback submitted", { title: "Recorded" });
+      handleLeaveRoom();
     } catch (err) {
       toast.error(`Failed to submit: ${err.message}`);
     }
@@ -152,278 +154,272 @@ export default function InterviewsPage() {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell bg-background text-on-background">
       <Sidebar role={role === "candidate" ? "candidate" : "recruiter"} />
       <main className="workspace">
         <TopBar
           eyebrow="Recruiter Portal"
-          title="Interviews & Live Room"
+          title="Live Session Manager"
           actions={
             <button type="button" className="primary-button" onClick={() => setShowScheduleModal(true)}>
               <Plus size={18} />
-              <span>Schedule Interview</span>
+              <span>Schedule</span>
             </button>
           }
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <section className="panel lg:col-span-2">
-            <div className="panel-header">
-              <div>
-                <CalendarDays size={20} className="text-primary" />
-                <h2>Schedule</h2>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => {
-                    const d = new Date(selectedDay);
-                    d.setDate(d.getDate() - 7);
-                    setSelectedDay(d);
-                  }}
-                  aria-label="Previous week"
-                >
-                  <ChevronRight size={18} className="rotate-180" />
-                </button>
-                <span className="text-sm font-semibold text-on-surface">
-                  {days[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} – {days[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                </span>
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => {
-                    const d = new Date(selectedDay);
-                    d.setDate(d.getDate() + 7);
-                    setSelectedDay(d);
-                  }}
-                  aria-label="Next week"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-              <button
-                type="button"
-                className="tertiary-button text-sm"
-                onClick={() => setSelectedDay(new Date())}
-              >
-                Today
+        <div className="flex gap-6 h-[calc(100vh-6rem)] mt-6 px-6 pb-6 overflow-hidden max-w-[1600px] mx-auto">
+          {/* Left Column: Schedule & List */}
+          <aside className="w-1/3 min-w-[320px] bg-surface-container-lowest rounded-xl border border-outline-variant flex flex-col shadow-sm overflow-hidden flex-shrink-0 flex-1">
+            <div className="p-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-lowest">
+              <h2 className="text-title-lg font-semibold text-on-surface">Interview Management</h2>
+              <button className="text-primary hover:bg-surface-container-high p-2 rounded-lg transition-colors flex items-center gap-2">
+                <Filter size={20} />
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 mb-4">
-              {days.map((day) => {
-                const isToday = day.toDateString() === new Date().toDateString();
-                const isSelected = day.toDateString() === selectedDay.toDateString();
-                return (
-                  <button
-                    key={day.toISOString()}
-                    type="button"
-                    onClick={() => setSelectedDay(day)}
-                    className={
-                      "flex flex-col items-center py-2 rounded-lg text-xs font-semibold transition-colors " +
-                      (isSelected
-                        ? "bg-primary text-white"
-                        : isToday
-                        ? "bg-primary/10 text-primary"
-                        : "bg-surface-light text-on-surface-variant hover:bg-surface")
-                    }
-                  >
-                    <span className="text-[10px] uppercase">{day.toLocaleDateString(undefined, { weekday: "short" })}</span>
-                    <span className="text-base font-bold mt-0.5">{day.getDate()}</span>
+            <div className="p-4 border-b border-outline-variant bg-surface">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1">
+                  <button type="button" className="icon-button" onClick={() => { const d = new Date(selectedDay); d.setDate(d.getDate() - 7); setSelectedDay(d); }}>
+                    <ChevronRight size={18} className="rotate-180" />
                   </button>
-                );
-              })}
-            </div>
+                  <span className="text-sm font-semibold text-on-surface">
+                    {days[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} – {days[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
+                  <button type="button" className="icon-button" onClick={() => { const d = new Date(selectedDay); d.setDate(d.getDate() + 7); setSelectedDay(d); }}>
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+                <button type="button" className="text-xs font-semibold text-primary hover:bg-primary/10 px-2 py-1 rounded transition-colors" onClick={() => setSelectedDay(new Date())}>
+                  Today
+                </button>
+              </div>
 
-            {loading ? (
-              <p className="text-sm text-on-surface-variant">Loading interviews…</p>
-            ) : error ? (
-              <p className="text-sm text-error">Failed to load: {error}</p>
-            ) : interviews.length === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                title="No interviews scheduled"
-                description="Schedule your first interview to start collaborating with candidates."
-                primaryAction={{ label: "Schedule interview", icon: <Plus size={18} />, onClick: () => setShowScheduleModal(true) }}
-              />
-            ) : (
-              <div className="stack">
-                {interviews.map((interview) => {
-                  const id = interview.id || interview.interviewId;
-                  const isActive = activeRoom === id;
+              <div className="grid grid-cols-7 gap-1">
+                {days.map((day) => {
+                  const isToday = day.toDateString() === new Date().toDateString();
+                  const isSelected = day.toDateString() === selectedDay.toDateString();
                   return (
-                    <div
-                      key={id}
-                      className={"moderation-row " + (isActive ? "border-2 border-primary" : "")}
+                    <button
+                      key={day.toISOString()}
+                      type="button"
+                      onClick={() => setSelectedDay(day)}
+                      className={
+                        "flex flex-col items-center py-2 rounded-lg text-xs font-semibold transition-colors " +
+                        (isSelected
+                          ? "bg-primary text-white"
+                          : isToday
+                          ? "bg-primary-container/20 text-primary"
+                          : "bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container")
+                      }
                     >
-                      <div className="moderation-info">
-                        <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
-                          {(interview.candidateName || interview.name || "C").charAt(0)}
-                        </div>
-                        <div>
-                          <strong>{interview.candidateName || interview.name || "Candidate"}</strong>
-                          <span>
-                            {interview.role || interview.position} • {interview.scheduledAt
-                              ? new Date(interview.scheduledAt).toLocaleString()
-                              : interview.time || "TBD"}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className={isActive ? "secondary-button" : "primary-button"}
-                        onClick={() => (isActive ? handleLeaveRoom() : handleJoinRoom(id))}
-                      >
-                        {isActive ? (
-                          <>
-                            <PhoneOff size={16} />
-                            <span>Leave</span>
-                          </>
-                        ) : (
-                          <>
-                            <Video size={16} />
-                            <span>{interview.action || "Join Call"}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                      <span className="text-[10px] uppercase">{day.toLocaleDateString(undefined, { weekday: "short" })}</span>
+                      <span className="text-sm mt-0.5">{day.getDate()}</span>
+                    </button>
                   );
                 })}
               </div>
-            )}
-          </section>
-
-          <section className="panel">
-            <div className="panel-header">
-              <div>
-                <Video size={20} className="text-primary" />
-                <h2>Live Room</h2>
-              </div>
-              {activeRoom ? (
-                <span
-                  className={
-                    "status-chip " +
-                    (connectionStatus === "connected" ? "success" : connectionStatus === "connecting" ? "warning" : "error")
-                  }
-                >
-                  {connectionStatus} • {participants} {participants === 1 ? "person" : "people"}
-                </span>
-              ) : null}
             </div>
 
-            {activeRoom ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="aspect-video bg-inverse rounded-xl flex items-center justify-center text-inverse-on relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary-container/20" />
-                    <div className="relative text-center">
-                      <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold mx-auto">
-                        {user?.name?.charAt(0) || "Y"}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 bg-surface">
+              {loading ? (
+                <p className="text-sm text-on-surface-variant">Loading interviews…</p>
+              ) : error ? (
+                <p className="text-sm text-error">Failed to load: {error}</p>
+              ) : interviews.length === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No interviews scheduled"
+                  description="Schedule your first interview to start collaborating with candidates."
+                  primaryAction={{ label: "Schedule interview", icon: <Plus size={18} />, onClick: () => setShowScheduleModal(true) }}
+                />
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider pl-1">Scheduled</h3>
+                  {interviews.map((interview) => {
+                    const id = interview.id || interview.interviewId;
+                    const isActive = activeRoom === id;
+                    const isPast = new Date(interview.scheduledAt) < new Date();
+                    
+                    return (
+                      <div
+                        key={id}
+                        className={"bg-surface-container-lowest rounded-lg p-4 border shadow-sm transition-shadow " + (isActive ? "border-primary ring-1 ring-primary" : "border-outline-variant hover:shadow-md")}
+                      >
+                        {isActive && (
+                          <div className="absolute -top-2.5 right-4 bg-error text-white px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> LIVE
+                          </div>
+                        )}
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                              {(interview.candidateName || interview.name || "C").charAt(0)}
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-on-surface">{interview.candidateName || interview.name || "Candidate"}</h4>
+                              <p className="text-xs text-on-surface-variant">{interview.role || interview.position}</p>
+                            </div>
+                          </div>
+                          {!isActive && (
+                            <span className="bg-surface-container-low text-primary px-2 py-1 rounded text-[10px] font-semibold uppercase">
+                              {isPast ? "Completed" : "Scheduled"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-on-surface-variant mb-4 mt-3 bg-surface p-2 rounded">
+                          <Clock size={16} />
+                          {interview.scheduledAt
+                            ? new Date(interview.scheduledAt).toLocaleString()
+                            : interview.time || "TBD"}
+                        </div>
+                        
+                        <button
+                          type="button"
+                          className={"w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors " + (isActive ? "bg-surface-container-highest text-primary hover:bg-surface-container-high border border-outline-variant" : "bg-primary text-white hover:bg-primary/90")}
+                          onClick={() => (isActive ? handleLeaveRoom() : handleJoinRoom(id))}
+                        >
+                          {isActive ? (
+                            <>
+                              <PhoneOff size={18} />
+                              Leave Call
+                            </>
+                          ) : (
+                            <>
+                              <Video size={18} />
+                              {interview.action || "Join Call"}
+                            </>
+                          )}
+                        </button>
                       </div>
-                      <span className="text-xs text-white mt-1 block">You</span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </aside>
+
+          {/* Right Column: Active Live Room / Assessment Panel */}
+          {activeRoom ? (
+            <div className="flex-1 flex flex-col gap-6 overflow-hidden min-w-0">
+              {/* Top: Video Call Area */}
+              <div className="bg-inverse-surface rounded-xl relative overflow-hidden h-[45%] shadow-md border border-outline-variant flex flex-col">
+                <div className="flex-1 bg-gray-900 relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {participants > 1 ? (
+                      <div className="w-24 h-24 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold">
+                        C
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+                          <Clock size={24} className="text-white" />
+                        </div>
+                        <span className="text-sm text-white/80">Waiting for candidate...</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white font-semibold text-xs px-2 py-1 rounded backdrop-blur-sm">
+                    Candidate
+                  </div>
+                </div>
+                
+                {/* PIP (Self) */}
+                <div className="absolute top-4 right-4 w-48 aspect-video bg-gray-800 rounded-lg border-2 border-surface-variant overflow-hidden shadow-lg">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center font-bold">
+                      {user?.name?.charAt(0) || "Y"}
                     </div>
-                    {!videoOn ? (
-                      <VideoOff size={20} className="absolute top-2 right-2 text-white opacity-80" />
-                    ) : null}
                   </div>
-                  <div className="aspect-video bg-inverse rounded-xl flex items-center justify-center text-inverse-on relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-secondary-container/20" />
-                    <div className="relative text-center">
-                      {participants > 1 ? (
-                        <>
-                          <div className="w-12 h-12 rounded-full bg-secondary text-white flex items-center justify-center text-lg font-bold mx-auto">
-                            C
-                          </div>
-                          <span className="text-xs text-white mt-1 block">Candidate</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto">
-                            <Clock size={20} className="text-white" />
-                          </div>
-                          <span className="text-xs text-white mt-1 block opacity-80">Waiting…</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  {!videoOn && <div className="absolute inset-0 bg-black/80 flex items-center justify-center"><VideoOff size={24} className="text-white/50" /></div>}
+                  <div className="absolute bottom-1 left-1 bg-black/50 text-white font-semibold text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">You</div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setMicOn(!micOn)}
-                    className={"icon-button w-11 h-11 " + (micOn ? "" : "bg-error-coral text-white hover:bg-error-coral hover:text-white")}
-                    aria-label={micOn ? "Mute mic" : "Unmute mic"}
-                  >
-                    {micOn ? <Mic size={18} /> : <MicOff size={18} />}
+                {/* Video Controls */}
+                <div className="bg-surface/90 backdrop-blur border-t border-outline-variant p-3 flex justify-center space-x-4">
+                  <button className={"p-3 rounded-full transition-colors " + (micOn ? "bg-surface-container hover:bg-surface-container-high text-on-surface" : "bg-error text-white")} onClick={() => setMicOn(!micOn)}>
+                    {micOn ? <Mic size={20} /> : <MicOff size={20} />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setVideoOn(!videoOn)}
-                    className={"icon-button w-11 h-11 " + (videoOn ? "" : "bg-error-coral text-white hover:bg-error-coral hover:text-white")}
-                    aria-label={videoOn ? "Stop video" : "Start video"}
-                  >
-                    {videoOn ? <Video size={18} /> : <VideoOff size={18} />}
+                  <button className={"p-3 rounded-full transition-colors " + (videoOn ? "bg-surface-container hover:bg-surface-container-high text-on-surface" : "bg-error text-white")} onClick={() => setVideoOn(!videoOn)}>
+                    {videoOn ? <Video size={20} /> : <VideoOff size={20} />}
                   </button>
-                  <button type="button" className="icon-button w-11 h-11" aria-label="Share screen">
-                    <ScreenShare size={18} />
+                  <button className="p-3 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors">
+                    <ScreenShare size={20} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleLeaveRoom}
-                    className="bg-error-coral text-white w-11 h-11 rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity"
-                    aria-label="End call"
-                  >
-                    <PhoneOff size={18} />
-                  </button>
-                </div>
-
-                <div className="bg-code-bg-dark rounded-lg p-3">
-                  <pre className="text-slate-200 text-xs font-mono overflow-x-auto">
-{`socket.on("codeChange", syncEditor)
-socket.on("cursorMove", updateCursor)
-socket.on("webrtcOffer", connectVideo)
-socket.on("languageChange", updateLanguage)`}
-                  </pre>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-semibold text-on-surface">Recommendation</span>
-                    <select
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      className="px-3 h-10 border border-outline rounded-lg text-sm bg-white"
-                    >
-                      {FEEDBACK_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    className="w-full primary-button"
-                    onClick={handleSubmitFeedback}
-                  >
-                    <CheckCircle2 size={16} />
-                    <span>Submit Feedback</span>
+                  <button className="p-3 rounded-full bg-error text-white hover:bg-error/90 transition-opacity shadow-sm" onClick={handleLeaveRoom}>
+                    <PhoneOff size={20} />
                   </button>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-                  <Video size={28} />
+
+              {/* Bottom: Assessment Panel (Recommendation & Editor Sync) */}
+              <div className="flex-1 flex gap-6 min-h-0">
+                {/* Candidate Code View */}
+                <div className="flex-[2] bg-code-bg-dark rounded-xl border border-outline-variant flex flex-col overflow-hidden shadow-sm">
+                  <div className="bg-[#1E293B] border-b border-[#334155] p-2 flex items-center px-4">
+                    <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+                      <Code size={16} className="text-primary" />
+                      Live Editor View
+                    </div>
+                  </div>
+                  <div className="flex-1 p-4 overflow-y-auto font-mono text-sm text-slate-300">
+                    <pre className="whitespace-pre-wrap">{`// Listening for candidate code updates...
+socket.on("codeChange", syncEditor)
+`}</pre>
+                  </div>
                 </div>
-                <p className="text-sm text-on-surface-variant mb-2">No active session</p>
-                <p className="text-xs text-on-surface-variant">Join an interview to start the live room</p>
+
+                {/* Scoring & Notes */}
+                <div className="flex-1 flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-outline-variant bg-surface-container-lowest">
+                    <h2 className="text-sm font-semibold text-on-surface uppercase tracking-wider">Evaluation</h2>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+                    <div className="flex flex-col gap-3">
+                      <h3 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Internal Recommendation</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {FEEDBACK_OPTIONS.map((opt) => (
+                          <button
+                            key={opt}
+                            onClick={() => setFeedback(opt)}
+                            className={"py-2 border rounded-md text-sm font-semibold transition-all " + (feedback === opt ? (opt.includes("No") ? "bg-error-container text-on-error-container border-error" : "bg-primary-container text-on-primary-container border-primary") : "border-outline-variant text-on-surface hover:bg-surface-container")}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 flex-1">
+                      <h3 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Private Notes</h3>
+                      <textarea
+                        className="flex-1 w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-3 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none shadow-inner"
+                        placeholder="Jot down notes here. Candidate cannot see this."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-4 border-t border-outline-variant bg-surface-container-lowest">
+                    <button className="w-full bg-primary text-white font-semibold py-2.5 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2" onClick={handleSubmitFeedback}>
+                      <Save size={18} />
+                      Submit Evaluation
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
-          </section>
+            </div>
+          ) : (
+            <div className="flex-1 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col items-center justify-center text-center p-8">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6">
+                <Video size={36} />
+              </div>
+              <h2 className="text-xl font-bold text-on-surface mb-2">No active session</h2>
+              <p className="text-sm text-on-surface-variant max-w-md">
+                Select an upcoming interview from the schedule to join the live room, review notes, and evaluate candidates.
+              </p>
+            </div>
+          )}
         </div>
       </main>
 

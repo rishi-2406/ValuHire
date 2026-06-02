@@ -1,6 +1,13 @@
 import { ArrowRight, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const ILLUSTRATIONS = {
+  "no-applications": "/illustrations/no-applications.png",
+  "no-campaigns": "/illustrations/no-campaigns.png",
+  "no-interviews": "/illustrations/no-interviews.png",
+  "no-results": "/illustrations/no-results.png",
+};
+
 export default function EmptyState({
   icon: Icon,
   title,
@@ -11,11 +18,20 @@ export default function EmptyState({
   variant = "default"
 }) {
   const Wrapper = primaryAction?.to ? Link : "button";
+  const illustrationSrc = typeof illustration === "string" ? ILLUSTRATIONS[illustration] : null;
 
   return (
-    <div className="flex flex-col items-center justify-center text-center py-12 px-6 bg-white border border-outline rounded-2xl animate-fade-in">
-      {illustration ? (
-        <div className="mb-6 max-w-xs">{illustration}</div>
+    <div className="flex flex-col items-center justify-center text-center py-16 px-8 bg-white border border-outline rounded-3xl animate-fade-in shadow-sm w-full max-w-2xl mx-auto">
+      {illustrationSrc ? (
+        <div className="mb-8 flex justify-center">
+          <img 
+            src={illustrationSrc} 
+            alt={title} 
+            className="w-48 h-48 object-contain rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)]" 
+          />
+        </div>
+      ) : illustration ? (
+        <div className="mb-8">{illustration}</div>
       ) : Icon ? (
         <div
           className={
@@ -31,20 +47,19 @@ export default function EmptyState({
         </div>
       ) : null}
 
-      <h3 className="text-headline-md text-on-surface mb-2">{title}</h3>
+      <h3 className="text-2xl font-bold text-on-surface mb-3">{title}</h3>
       {description ? (
-        <p className="text-body-md text-on-surface-variant max-w-sm mb-6">{description}</p>
+        <p className="text-on-surface-variant max-w-sm mb-8 leading-relaxed font-medium">{description}</p>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-4">
         {primaryAction ? (
           <Wrapper
             {...(primaryAction.to ? { to: primaryAction.to } : { type: "button", onClick: primaryAction.onClick })}
-            className="primary-button"
+            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-sm inline-flex items-center gap-2"
           >
-            {primaryAction.icon || <Plus size={18} />}
+            {primaryAction.icon || null}
             <span>{primaryAction.label}</span>
-            {primaryAction.arrow !== false ? <ArrowRight size={16} /> : null}
           </Wrapper>
         ) : null}
 
@@ -52,7 +67,7 @@ export default function EmptyState({
           <button
             type="button"
             onClick={secondaryAction.onClick}
-            className="tertiary-button"
+            className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-sm inline-flex items-center gap-2"
           >
             <span>{secondaryAction.label}</span>
           </button>

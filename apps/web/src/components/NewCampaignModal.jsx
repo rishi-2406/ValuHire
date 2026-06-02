@@ -1,21 +1,14 @@
 import { useState } from "react";
-import { X, Plus, Trash2, Sparkles } from "lucide-react";
-
-const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Hard", "Expert"];
-const DURATION_OPTIONS = ["30", "60", "90", "120"];
-const LANGUAGE_OPTIONS = ["JavaScript", "Python", "Java", "C++", "Go", "TypeScript", "Ruby"];
+import { X, Megaphone, Briefcase, Calendar, Code, Brain, ArrowRight } from "lucide-react";
 
 export default function NewCampaignModal({ open, onClose, onCreate }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [difficulty, setDifficulty] = useState("Medium");
-  const [duration, setDuration] = useState("60");
-  const [language, setLanguage] = useState("JavaScript");
-  const [tags, setTags] = useState([]);
+  const [targetRole, setTargetRole] = useState("");
+  const [duration, setDuration] = useState("");
+  const [tags, setTags] = useState(["React", "TypeScript"]);
   const [tagInput, setTagInput] = useState("");
-  const [questions, setQuestions] = useState([
-    { title: "", description: "", sampleInput: "", sampleOutput: "" }
-  ]);
+  const [template, setTemplate] = useState("technical");
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
@@ -31,35 +24,18 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
 
   const removeTag = (tag) => setTags(tags.filter((t) => t !== tag));
 
-  const addQuestion = () => {
-    setQuestions([
-      ...questions,
-      { title: "", description: "", sampleInput: "", sampleOutput: "" }
-    ]);
-  };
-
-  const removeQuestion = (i) => {
-    if (questions.length === 1) return;
-    setQuestions(questions.filter((_, idx) => idx !== i));
-  };
-
-  const updateQuestion = (i, field, value) => {
-    setQuestions(questions.map((q, idx) => (idx === i ? { ...q, [field]: value } : q)));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
+    if (!title.trim() || !targetRole.trim()) return;
     setSubmitting(true);
     try {
       await onCreate?.({
         title: title.trim(),
         description: description.trim(),
-        difficulty,
-        duration: Number(duration),
-        language,
+        targetRole: targetRole.trim(),
+        duration,
         tags,
-        questions
+        template
       });
       onClose?.();
     } finally {
@@ -68,86 +44,107 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="new-campaign-title">
-      <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit} style={{ maxWidth: 640 }}>
-        <div className="modal-header">
-          <div>
-            <h2 id="new-campaign-title">New Campaign</h2>
-            <p>Create a new assessment campaign for candidates.</p>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose} role="dialog" aria-modal="true">
+      <form className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
+        
+        {/* Header */}
+        <div className="p-6 border-b border-outline-variant/50 flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <Megaphone size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-on-surface">Create New Campaign</h2>
+              <p className="text-sm text-on-surface-variant mt-0.5">Setup the details for your next hiring sprint.</p>
+            </div>
           </div>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close">
+          <button type="button" className="text-on-surface-variant hover:text-on-surface transition-colors p-1" onClick={onClose} aria-label="Close">
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-body">
-          <div className="stack">
-            <div className="form-row">
-              <label htmlFor="campaign-title">Campaign Title</label>
+        {/* Body */}
+        <div className="p-6 overflow-y-auto max-h-[70vh]">
+          <div className="flex flex-col gap-6">
+            
+            <div>
+              <label htmlFor="campaign-title" className="block text-sm font-semibold text-on-surface mb-2">
+                Campaign Title <span className="text-[#DC2626]">*</span>
+              </label>
               <input
                 id="campaign-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Senior Frontend Engineer"
+                placeholder="e.g., Q3 Senior Engineers"
                 required
                 autoFocus
+                className="w-full border border-outline-variant/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface"
               />
             </div>
 
-            <div className="form-row">
-              <label htmlFor="campaign-desc">Description</label>
+            <div>
+              <label htmlFor="campaign-desc" className="block text-sm font-semibold text-on-surface mb-2">Description</label>
               <textarea
                 id="campaign-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the role, expectations, and assessment focus."
-                rows={3}
-                required
+                placeholder="Brief overview of the campaign goals..."
+                rows={4}
+                className="w-full border border-outline-variant/80 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface resize-none"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="form-row">
-                <label htmlFor="campaign-difficulty">Difficulty</label>
-                <select id="campaign-difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                  {DIFFICULTY_OPTIONS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="campaign-role" className="block text-sm font-semibold text-on-surface mb-2">
+                  Target Role / Position <span className="text-[#DC2626]">*</span>
+                </label>
+                <div className="relative">
+                  <Briefcase size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none" />
+                  <input
+                    id="campaign-role"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                    placeholder="e.g., Full Stack Developer"
+                    required
+                    className="w-full border border-outline-variant/80 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface"
+                  />
+                </div>
               </div>
 
-              <div className="form-row">
-                <label htmlFor="campaign-duration">Duration (min)</label>
-                <select id="campaign-duration" value={duration} onChange={(e) => setDuration(e.target.value)}>
-                  {DURATION_OPTIONS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-row">
-                <label htmlFor="campaign-language">Language</label>
-                <select id="campaign-language" value={language} onChange={(e) => setLanguage(e.target.value)}>
-                  {LANGUAGE_OPTIONS.map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
+              <div>
+                <label htmlFor="campaign-duration" className="block text-sm font-semibold text-on-surface mb-2">Campaign Duration</label>
+                <div className="relative">
+                  <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none" />
+                  <select
+                    id="campaign-duration"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    className="w-full border border-outline-variant/80 rounded-lg pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface appearance-none bg-white"
+                  >
+                    <option value="" disabled>Select duration...</option>
+                    <option value="30">30 Days</option>
+                    <option value="60">60 Days</option>
+                    <option value="90">90 Days</option>
+                  </select>
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
               </div>
             </div>
 
-            <div className="form-row">
-              <label htmlFor="campaign-tags">Skills & Tags</label>
-              <div className="flex flex-wrap items-center gap-2 p-2 border border-outline rounded-lg min-h-[44px] bg-white">
+            <div>
+              <label htmlFor="campaign-skills" className="block text-sm font-semibold text-on-surface mb-2">Required Skills</label>
+              <div className="flex flex-wrap items-center gap-2 px-3 py-2 border border-outline-variant/80 rounded-lg min-h-[46px] bg-white focus-within:border-[#2563EB] focus-within:ring-1 focus-within:ring-[#2563EB]">
                 {tags.map((tag) => (
-                  <span key={tag} className="status-chip info">
+                  <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] rounded-full text-sm font-medium">
                     {tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="ml-1" aria-label={`Remove ${tag}`}>
-                      <X size={12} />
+                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-black transition-colors" aria-label={`Remove ${tag}`}>
+                      <X size={14} />
                     </button>
                   </span>
                 ))}
                 <input
-                  id="campaign-tags"
+                  id="campaign-skills"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -156,75 +153,56 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
                       addTag(e);
                     }
                   }}
-                  placeholder={tags.length ? "Add more…" : "React, TypeScript, Algorithms…"}
-                  className="flex-1 min-w-[120px] outline-none text-sm bg-transparent border-none h-8 px-1"
+                  placeholder="Type a skill and press enter..."
+                  className="flex-1 min-w-[200px] outline-none text-sm bg-transparent border-none py-1"
                 />
               </div>
-              <span className="helper">Press Enter to add a tag</span>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-on-surface">Questions</label>
-                <button type="button" onClick={addQuestion} className="tertiary-button text-sm">
-                  <Plus size={16} />
-                  <span>Add question</span>
-                </button>
-              </div>
-              <div className="stack">
-                {questions.map((q, i) => (
-                  <div key={i} className="border border-outline rounded-lg p-3 bg-surface-light">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-on-surface">Question {i + 1}</span>
-                      {questions.length > 1 ? (
-                        <button type="button" onClick={() => removeQuestion(i)} className="icon-button" aria-label="Remove question">
-                          <Trash2 size={16} />
-                        </button>
-                      ) : null}
+              <label className="block text-sm font-semibold text-on-surface mb-3">Assessment Template</label>
+              <div className="grid grid-cols-2 gap-4">
+                
+                {/* Template 1 */}
+                <label className={`relative border rounded-xl p-4 cursor-pointer transition-all ${template === 'technical' ? 'border-[#2563EB] bg-[#F8FAFC]' : 'border-outline-variant/80 hover:border-outline-variant bg-white'}`}>
+                  <input type="radio" name="template" value="technical" checked={template === 'technical'} onChange={() => setTemplate('technical')} className="sr-only" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div className={`w-8 h-8 rounded bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center`}>
+                      <Code size={18} />
                     </div>
-                    <div className="stack">
-                      <input
-                        value={q.title}
-                        onChange={(e) => updateQuestion(i, "title", e.target.value)}
-                        placeholder="Question title"
-                        className="h-10 px-3 border border-outline rounded-lg text-sm bg-white"
-                      />
-                      <textarea
-                        value={q.description}
-                        onChange={(e) => updateQuestion(i, "description", e.target.value)}
-                        placeholder="Problem statement"
-                        rows={2}
-                        className="px-3 py-2 border border-outline rounded-lg text-sm bg-white"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          value={q.sampleInput}
-                          onChange={(e) => updateQuestion(i, "sampleInput", e.target.value)}
-                          placeholder="Sample input"
-                          className="h-10 px-3 border border-outline rounded-lg text-sm font-mono bg-white"
-                        />
-                        <input
-                          value={q.sampleOutput}
-                          onChange={(e) => updateQuestion(i, "sampleOutput", e.target.value)}
-                          placeholder="Sample output"
-                          className="h-10 px-3 border border-outline rounded-lg text-sm font-mono bg-white"
-                        />
-                      </div>
-                    </div>
+                    <div className={`w-5 h-5 rounded-full border-[5px] ${template === 'technical' ? 'border-[#2563EB] bg-white ring-1 ring-[#2563EB]' : 'border-white ring-1 ring-outline-variant'}`} />
                   </div>
-                ))}
+                  <h4 className="font-semibold text-sm text-on-surface mb-1">Technical Deep Dive</h4>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">Includes coding exercises, system design, and technical MCQ.</p>
+                </label>
+
+                {/* Template 2 */}
+                <label className={`relative border rounded-xl p-4 cursor-pointer transition-all ${template === 'behavioral' ? 'border-[#2563EB] bg-[#F8FAFC]' : 'border-outline-variant/80 hover:border-outline-variant bg-white'}`}>
+                  <input type="radio" name="template" value="behavioral" checked={template === 'behavioral'} onChange={() => setTemplate('behavioral')} className="sr-only" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div className={`w-8 h-8 rounded bg-[#F1F5F9] text-[#64748B] flex items-center justify-center`}>
+                      <Brain size={18} />
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-[5px] ${template === 'behavioral' ? 'border-[#2563EB] bg-white ring-1 ring-[#2563EB]' : 'border-white ring-1 ring-outline-variant'}`} />
+                  </div>
+                  <h4 className="font-semibold text-sm text-on-surface mb-1">Behavioral Core</h4>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">Focuses on soft skills, past experiences, and cultural fit.</p>
+                </label>
+
               </div>
             </div>
+
           </div>
         </div>
 
-        <div className="modal-footer">
-          <button type="button" onClick={onClose} className="secondary-button" disabled={submitting}>
+        {/* Footer */}
+        <div className="p-6 border-t border-outline-variant/50 flex justify-end gap-3 bg-[#F8FAFC]">
+          <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-semibold text-on-surface hover:bg-black/5 rounded-lg transition-colors" disabled={submitting}>
             Cancel
           </button>
-          <button type="submit" className="primary-button" disabled={submitting || !title.trim() || !description.trim()}>
-            <Sparkles size={16} />
+          <button type="submit" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm inline-flex items-center gap-2" disabled={submitting || !title.trim() || !targetRole.trim()}>
             <span>{submitting ? "Creating…" : "Create Campaign"}</span>
+            {!submitting && <ArrowRight size={16} />}
           </button>
         </div>
       </form>

@@ -93,6 +93,7 @@ export default {
         "code-md": ["JetBrains Mono", "monospace"]
       },
       fontSize: {
+        "display-lg": ["48px", { lineHeight: "56px", fontWeight: "700", letterSpacing: "-0.02em" }],
         "display-sm": ["30px", { lineHeight: "38px", fontWeight: "700", letterSpacing: "-0.02em" }],
         "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "700", letterSpacing: "-0.02em" }],
         "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600", letterSpacing: "-0.01em" }],
