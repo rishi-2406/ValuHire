@@ -63,7 +63,8 @@ export default function InterviewsPage() {
     setLoading(true);
     interviewService.getMyInterviews()
       .then((data) => {
-        const list = data.interviews || data || [];
+        // Backend returns { slots: [...] }
+        const list = data.slots || data.interviews || data || [];
         setInterviews(list);
       })
       .catch((err) => {
@@ -137,15 +138,25 @@ export default function InterviewsPage() {
   };
 
   const handleSchedule = async (payload) => {
+    // Backend POST /interviews needs: { campaignId, candidateId, startsAt, endsAt }
+    // The modal returns: { date, time, duration, type, attendees, notes }
+    // We derive startsAt/endsAt from date+time+duration
     try {
-      const data = await interviewService.scheduleInterview({
-        candidateId: payload.candidateId,
-        scheduledAt: new Date(`${payload.date}T${payload.time}`).toISOString(),
-        duration: payload.duration,
-        role: payload.agenda || "Technical Interview"
-      });
-      const newInterview = data.interview || data;
-      setInterviews((prev) => [newInterview, ...prev]);
+      const startsAt = new Date(`${payload.date}T${payload.time}`).toISOString();
+      const durationMin = parseInt(payload.duration) || 60;
+      const endsAt = new Date(new Date(startsAt).getTime() + durationMin * 60000).toISOString();
+      // candidateId comes from the first attendee that isn't the current user, or falls back to payload.candidateId
+      const candidateId = payload.candidateId || (payload.attendees?.[0]?.id);
+      const campaignId = payload.campaignId;
+
+      if (!campaignId || !candidateId) {
+        toast.warning("Please select a candidate and campaign to schedule.");
+        return;
+      }
+
+      const data = await interviewService.scheduleInterview({ campaignId, candidateId, startsAt, endsAt });
+      const newSlot = data.slot || data.interview || data;
+      setInterviews((prev) => [newSlot, ...prev]);
       toast.success("Interview scheduled", { title: payload.date });
     } catch (err) {
       toast.error(err.message || "Failed to schedule interview");
@@ -155,16 +166,19 @@ export default function InterviewsPage() {
 
   return (
     <div className="app-shell bg-background text-on-background">
-      <Sidebar role={role === "candidate" ? "candidate" : "recruiter"} />
+      <Sidebar role={role} />
       <main className="workspace">
         <TopBar
-          eyebrow="Recruiter Portal"
+          eyebrow={role === "candidate" ? "Candidate Portal" : "Recruiter Portal"}
           title="Live Session Manager"
           actions={
-            <button type="button" className="primary-button" onClick={() => setShowScheduleModal(true)}>
-              <Plus size={18} />
-              <span>Schedule</span>
-            </button>
+            // Only recruiters can schedule new interviews
+            role !== "candidate" ? (
+              <button type="button" className="primary-button" onClick={() => setShowScheduleModal(true)}>
+                <Plus size={18} />
+                <span>Schedule</span>
+              </button>
+            ) : null
           }
         />
 

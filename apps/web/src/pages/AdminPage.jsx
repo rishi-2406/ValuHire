@@ -108,9 +108,9 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background font-sans antialiased text-on-background overflow-hidden">
+    <div className="app-shell bg-[#F8FAFC]">
       <Sidebar role="admin" />
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="workspace">
         <TopBar
           eyebrow="Admin Console"
           title="Dashboard"
@@ -127,8 +127,7 @@ export default function AdminPage() {
           }
         />
 
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-          <div className="max-w-[1600px] mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8 w-full overflow-y-auto">
             {/* Page Header */}
             <div>
               <h1 className="text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold">Dashboard Overview</h1>
@@ -212,7 +211,7 @@ export default function AdminPage() {
                             <tr key={company.id} className="hover:bg-surface-bright transition-colors group">
                               <td className="p-3 text-label-md font-medium">{company.name}</td>
                               <td className="p-3 text-on-surface-variant">
-                                {company.recruiters || 0} recruiters, {company.campaigns || 0} campaigns
+                                {company.recruiters?.length || 0} recruiters, {company.campaigns?.length || 0} campaigns
                               </td>
                               <td className="p-3">
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-label-sm text-[10px] uppercase font-bold tracking-wider ${
@@ -328,8 +327,7 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+      </main>
     </div>
   );
 }

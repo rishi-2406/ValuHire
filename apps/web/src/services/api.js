@@ -121,6 +121,10 @@ export const authService = {
   }
 };
 
+export const userService = {
+  updateProfile: (data) => request("/auth/me", { method: "PATCH", body: JSON.stringify(data) })
+};
+
 export const campaignService = {
   getPublicCampaigns: () => request("/campaigns/public"),
   getMyCampaigns: () => request("/campaigns"),
@@ -149,19 +153,33 @@ export const submissionService = {
 };
 
 export const interviewService = {
-  getMyInterviews: () => request("/interviews/me"),
+  // GET /interviews returns slots for the current user (recruiter or candidate)
+  getMyInterviews: () => request("/interviews"),
+  // POST /interviews requires { campaignId, candidateId, startsAt, endsAt }
   scheduleInterview: (data) => request("/interviews", { method: "POST", body: JSON.stringify(data) }),
-  submitFeedback: (interviewId, data) => request(`/interviews/${interviewId}/feedback`, { method: "POST", body: JSON.stringify(data) })
+  submitFeedback: (interviewId, data) => request(`/interviews/${interviewId}/feedback`, { method: "POST", body: JSON.stringify(data) }),
+  getRoomByCode: (roomCode) => request(`/interviews/rooms/${roomCode}`)
 };
 
 export const resultsService = {
-  getCampaignResults: (campaignId) => request(`/results/campaign/${campaignId}`),
-  getMyResults: () => request("/results/me")
+  // Recruiter: get all results for a specific campaign
+  getCampaignResults: (campaignId) => request(`/results/campaigns/${campaignId}`),
+  // Candidate: get their own result history
+  getMyResults: () => request("/results/me/history"),
+  // Get a specific result by ID
+  getResult: (id) => request(`/results/${id}`)
 };
 
 export const adminService = {
   getCompanies: () => request("/admin/companies"),
-  updateCompanyStatus: (companyId, status) => request(`/admin/companies/${companyId}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  // PATCH /admin/companies/:id/status with { status: "APPROVED"|"PENDING"|"BANNED" }
+  updateCompanyStatus: (companyId, status) =>
+    request(`/admin/companies/${companyId}/status`, { method: "PATCH", body: JSON.stringify({ status: status.toUpperCase() }) }),
   getUsers: () => request("/admin/users"),
-  banUser: (userId) => request(`/admin/users/${userId}/ban`, { method: "POST" })
+  // PATCH /admin/users/:id/status with { status: "BANNED"|"ACTIVE" }
+  banUser: (userId) =>
+    request(`/admin/users/${userId}/status`, { method: "PATCH", body: JSON.stringify({ status: "BANNED" }) }),
+  unbanUser: (userId) =>
+    request(`/admin/users/${userId}/status`, { method: "PATCH", body: JSON.stringify({ status: "ACTIVE" }) })
 };
+

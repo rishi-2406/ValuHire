@@ -14,7 +14,7 @@ import {
   Play,
   BarChart3
 } from "lucide-react";
-import { applicationService, campaignService, resultsService } from "../services/api";
+import { applicationService, campaignService, resultsService, interviewService } from "../services/api";
 import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
 import { SkeletonCard } from "../components/Skeleton";
@@ -26,6 +26,7 @@ export default function CandidateDashboard() {
   const [campaigns, setCampaigns] = useState([]);
   const [applications, setApplications] = useState([]);
   const [pastResults, setPastResults] = useState([]);
+  const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [startingSession, setStartingSession] = useState(null);
@@ -34,12 +35,14 @@ export default function CandidateDashboard() {
     Promise.all([
       campaignService.getPublicCampaigns().catch(() => ({ campaigns: [] })),
       applicationService.getMyApplications().catch(() => ({ applications: [] })),
-      resultsService.getMyResults().catch(() => ({ results: [] }))
+      resultsService.getMyResults().catch(() => ({ results: [] })),
+      interviewService.getMyInterviews().catch(() => ({ slots: [] }))
     ])
-      .then(([campaignData, appData, resultsData]) => {
+      .then(([campaignData, appData, resultsData, interviewData]) => {
         setCampaigns(campaignData.campaigns || campaignData || []);
         setApplications(appData.applications || appData || []);
         setPastResults(resultsData.results || resultsData || []);
+        setInterviews(interviewData.slots || interviewData.interviews || interviewData || []);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -71,7 +74,7 @@ export default function CandidateDashboard() {
     setStartingSession(null);
   };
 
-  const name = user?.name?.split(" ")[0] || "Alex";
+  const name = user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
 
   const renderProgressSteps = (currentStatus) => {
     const steps = [
@@ -232,24 +235,6 @@ export default function CandidateDashboard() {
                       description="Apply to a campaign to see your progress here."
                     />
                   )}
-                  {/* Mock static application if less than 2 for visual fidelity to design */}
-                  {applications.length < 2 && (
-                    <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="text-xl font-bold text-on-surface">Product Designer</h4>
-                          <div className="flex items-center gap-2 text-on-surface-variant text-sm mt-1">
-                            <Briefcase size={16} />
-                            <span>Initech</span>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 bg-surface-container-low text-on-surface-variant rounded-full text-xs font-bold border border-outline">
-                          Under Review
-                        </span>
-                      </div>
-                      {renderProgressSteps("SCREENING")}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -259,20 +244,31 @@ export default function CandidateDashboard() {
               {/* Profile Completion */}
               <div className="bg-[#F0F4FF] border border-[#DCE4FF] rounded-2xl p-8 text-center flex flex-col items-center shadow-sm">
                 <div className="relative w-32 h-32 mb-6">
-                  {/* Mock circular progress SVG */}
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="#E2E8F0" strokeWidth="8" />
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="#2B7B59" strokeWidth="8" strokeDasharray="282.7" strokeDashoffset="70.67" strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[1.75rem] font-bold text-[#1E293B]">75%</span>
-                  </div>
+                  {(() => {
+                    let score = 20; // base score for signed up
+                    if (user?.name) score += 20;
+                    if (user?.bio) score += 20;
+                    if (user?.avatar) score += 20;
+                    if (user?.specialties?.length) score += 20;
+                    const strokeOffset = 282.7 - (282.7 * (score / 100));
+                    return (
+                      <>
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="45" fill="none" stroke="#E2E8F0" strokeWidth="8" />
+                          <circle cx="50" cy="50" r="45" fill="none" stroke="#2B7B59" strokeWidth="8" strokeDasharray="282.7" strokeDashoffset={strokeOffset} strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-[1.75rem] font-bold text-[#1E293B]">{score}%</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <h3 className="text-xl font-bold text-on-surface mb-3">Profile Completion</h3>
                 <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
                   Complete your profile to unlock <strong className="text-[#2B7B59]">5x more opportunities</strong> and stand out to recruiters.
                 </p>
-                <button className="w-full bg-white border border-[#2B7B59] text-[#2B7B59] font-bold py-2.5 rounded-lg hover:bg-[#2B7B59]/5 transition-colors">
+                <button onClick={() => navigate('/settings')} className="w-full bg-white border border-[#2B7B59] text-[#2B7B59] font-bold py-2.5 rounded-lg hover:bg-[#2B7B59]/5 transition-colors">
                   Complete Profile
                 </button>
               </div>
@@ -283,19 +279,33 @@ export default function CandidateDashboard() {
                   <Clock size={20} />
                   Schedule
                 </div>
-                <div className="flex gap-4">
-                  <div className="bg-[#EFF6FF] rounded-xl p-3 flex flex-col items-center justify-center min-w-[72px]">
-                    <span className="text-[10px] font-bold text-[#3B82F6] tracking-widest uppercase">Oct</span>
-                    <span className="text-2xl font-bold text-[#1E293B] leading-none mt-1">24</span>
+                {interviews.length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">No upcoming interviews scheduled.</p>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {interviews.slice(0, 3).map((interview) => {
+                      const dt = new Date(interview.scheduledAt || interview.startsAt);
+                      const month = dt.toLocaleString('default', { month: 'short' });
+                      const day = dt.getDate();
+                      const time = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      return (
+                        <div key={interview.id} className="flex gap-4">
+                          <div className="bg-[#EFF6FF] rounded-xl p-3 flex flex-col items-center justify-center min-w-[72px]">
+                            <span className="text-[10px] font-bold text-[#3B82F6] tracking-widest uppercase">{month}</span>
+                            <span className="text-2xl font-bold text-[#1E293B] leading-none mt-1">{day}</span>
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <h4 className="font-bold text-sm text-on-surface mb-1">{interview.campaign?.title || interview.role || "Technical Interview"}</h4>
+                            <p className="text-xs text-on-surface-variant mb-2">{time}</p>
+                            <button className="flex items-center gap-1.5 text-xs font-bold text-[#3B82F6] hover:underline">
+                              <Video size={14} /> Join Link
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                  <div className="flex flex-col justify-center">
-                    <h4 className="font-bold text-sm text-on-surface mb-1">Technical Interview</h4>
-                    <p className="text-xs text-on-surface-variant mb-2">10:00 AM - 11:30 AM</p>
-                    <button className="flex items-center gap-1.5 text-xs font-bold text-[#3B82F6] hover:underline">
-                      <Video size={14} /> Join Link
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Recent Results */}
@@ -304,19 +314,31 @@ export default function CandidateDashboard() {
                   <BarChart3 size={20} />
                   Recent Results
                 </div>
-                <div className="bg-[#F8FAFC] border border-outline-variant/50 rounded-xl p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-[#ECFDF5] flex items-center justify-center text-[#10B981]">
-                    <Code size={20} />
+                {pastResults.length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">No completed assessments.</p>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {pastResults.slice(0, 3).map((result) => {
+                       const dt = new Date(result.createdAt || result.completedAt || Date.now());
+                       const month = dt.toLocaleString('default', { month: 'short' });
+                       const day = dt.getDate();
+                       return (
+                         <div key={result.id} className="bg-[#F8FAFC] border border-outline-variant/50 rounded-xl p-4 flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-lg bg-[#ECFDF5] flex items-center justify-center text-[#10B981]">
+                             <Code size={20} />
+                           </div>
+                           <div className="flex-1">
+                             <h4 className="font-bold text-sm text-on-surface">{result.campaign?.title || "Assessment"}</h4>
+                             <p className="text-[11px] text-on-surface-variant mt-0.5">Completed {month} {day}</p>
+                           </div>
+                           <div className="text-right">
+                             <div className="text-xl font-bold text-[#10B981]">{result.score || 0}%</div>
+                           </div>
+                         </div>
+                       )
+                    })}
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-sm text-on-surface">React Basics Test</h4>
-                    <p className="text-[11px] text-on-surface-variant mt-0.5">Completed Oct 15</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-[#10B981]">92%</div>
-                    <div className="text-[10px] text-on-surface-variant font-semibold">Top 10%</div>
-                  </div>
-                </div>
+                )}
               </div>
 
             </div>

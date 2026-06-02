@@ -26,8 +26,6 @@ const NAV_ITEMS = {
   ],
   admin: [
     { to: "/admin", label: "Console", icon: Shield, end: true },
-    { to: "/admin#companies", label: "Companies", icon: Briefcase },
-    { to: "/admin#users", label: "Users", icon: Users },
     { to: "/settings", label: "Settings", icon: Settings }
   ]
 };
@@ -36,7 +34,9 @@ export default function Sidebar({ role = "recruiter" }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const items = NAV_ITEMS[role] || NAV_ITEMS.recruiter;
+  // API returns roles in uppercase ("CANDIDATE", "RECRUITER", "ADMIN") — normalize for nav lookup
+  const roleKey = (role || "recruiter").toLowerCase();
+  const items = NAV_ITEMS[roleKey] || NAV_ITEMS.recruiter;
 
   const handleLogout = async () => {
     await logout();
@@ -92,7 +92,7 @@ export default function Sidebar({ role = "recruiter" }) {
       <div className="sidebar-user">
         <div className="user-info">
           <span className="user-name">{user?.name || user?.email || "Guest"}</span>
-          <span className="user-role">{role}</span>
+          <span className="user-role">{roleKey}</span>
         </div>
         <button
           type="button"

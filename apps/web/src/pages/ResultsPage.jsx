@@ -45,6 +45,8 @@ export default function ResultsPage() {
   const location = useLocation();
   const toast = useToast();
   const [candidates, setCandidates] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -55,26 +57,34 @@ export default function ResultsPage() {
   const role = (user?.role || "recruiter").toLowerCase();
   const isCandidate = role === "candidate";
 
+  // Load campaigns list for recruiters (for dropdown)
+  useEffect(() => {
+    if (!isCandidate) {
+      campaignService.getMyCampaigns()
+        .then((data) => {
+          const list = data.campaigns || data || [];
+          setCampaigns(list);
+          if (list.length > 0) setSelectedCampaignId(list[0].id);
+        })
+        .catch(() => setCampaigns([]));
+    }
+  }, [isCandidate]);
+
+  // Load results — for recruiters, load by selected campaign; for candidates, load own history
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const fetcher = isCandidate
-      ? resultsService.getMyResults()
-      : Promise.all([
-          campaignService.getMyCampaigns().catch(() => ({ campaigns: [] })),
-          Promise.all([])
-        ]).then(async ([c]) => {
-          const list = c.campaigns || c || [];
-          const allResults = await Promise.all(
-            list.map((camp) =>
-              resultsService
-                .getCampaignResults(camp.id)
-                .then((r) => r.results || r || [])
-                .catch(() => [])
-            )
-          );
-          return { results: allResults.flat() };
-        });
+
+    let fetcher;
+    if (isCandidate) {
+      fetcher = resultsService.getMyResults();
+    } else if (selectedCampaignId) {
+      fetcher = resultsService.getCampaignResults(selectedCampaignId)
+        .then((r) => ({ results: r.results || r || [] }));
+    } else {
+      setLoading(false);
+      return;
+    }
 
     fetcher
       .then((data) => {
@@ -86,7 +96,7 @@ export default function ResultsPage() {
         setCandidates([]);
       })
       .finally(() => setLoading(false));
-  }, [isCandidate, location.pathname]);
+  }, [isCandidate, selectedCampaignId, location.pathname]);
 
   const filtered = candidates.filter((c) => {
     if (search && !c.name?.toLowerCase().includes(search.toLowerCase())) return false;
@@ -96,17 +106,18 @@ export default function ResultsPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  // Mock data for UI if real data is empty
-  const displayCandidates = paged.length > 0 ? paged : [
-    { id: 1, rank: 1, name: "Anika Rao", role: "Sr. Backend Engineer", score: 98, integrityFlags: 0, status: 'Top match', accent: true },
-    { id: 2, rank: 2, name: "Marcus Lin", role: "Full Stack Developer", score: 92, integrityFlags: 0, status: 'Top match' },
-    { id: 3, rank: 3, name: "Sarah Jenkins", role: "Backend Engineer", score: 89, integrityFlags: 2, status: 'Review' },
-    { id: 4, rank: 4, name: "David Park", role: "Cloud Architect", score: 85, integrityFlags: 0, status: 'Top match' },
-  ];
+  const displayCandidates = paged;
 
-  const totalCandidates = 128;
-  const avgScore = 76;
-  const topCandidate = displayCandidates[0];
+  // Derive stats from real data
+  const totalCandidates = candidates.length;
+  const avgScore = candidates.length > 0
+    ? Math.round(candidates.reduce((sum, c) => sum + c.score, 0) / candidates.length)
+    : 0;
+  const topCandidate = candidates.length > 0 ? candidates[0] : null;
+  const qualifiedMatches = candidates.filter(c => c.score >= 80).length;
+  const conversionRate = totalCandidates ? Math.round((qualifiedMatches / totalCandidates) * 100) : 0;
+  const passedIntegrity = candidates.filter(c => c.integrityFlags === 0).length;
+  const integrityPassRate = totalCandidates ? ((passedIntegrity / totalCandidates) * 100).toFixed(1) : 0;
 
   const handleExport = () => {
     toast.success("Results exported", { title: "CSV downloaded" });
@@ -114,40 +125,48 @@ export default function ResultsPage() {
 
   return (
     <div className="app-shell bg-[#F8FAFC]">
-      <Sidebar role={role === "candidate" ? "candidate" : "recruiter"} />
+      <Sidebar role={role} />
       <main className="workspace">
-        
+
         {/* Custom Header for Results */}
         <header className="h-20 bg-white border-b border-outline-variant/50 px-8 flex items-center justify-between sticky top-0 z-40">
           <div>
-            <h1 className="text-2xl font-bold text-on-surface">Results and Rankings</h1>
+            <h1 className="text-2xl font-bold text-on-surface">
+              {isCandidate ? "My Assessment Results" : "Results and Rankings"}
+            </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <select className="appearance-none bg-surface-container-low border border-outline-variant/60 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
-                <option>Senior Software Engineer Q3</option>
-                <option>Frontend Developer</option>
-                <option>Product Manager</option>
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
-            </div>
-            
+            {/* Campaign selector — recruiters only */}
+            {!isCandidate && (
+              <div className="relative">
+                <select
+                  value={selectedCampaignId}
+                  onChange={(e) => { setSelectedCampaignId(e.target.value); setPage(1); }}
+                  className="appearance-none bg-surface-container-low border border-outline-variant/60 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  {campaigns.length === 0 && <option value="">No campaigns yet</option>}
+                  {campaigns.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
+              </div>
+            )}
+
             <div className="h-8 w-px bg-outline-variant/50 mx-2" />
-            
-            <button className="text-on-surface-variant hover:text-on-surface p-1">
-              <Bell size={20} />
-            </button>
-            <button className="text-on-surface-variant hover:text-on-surface p-1">
-              <Settings size={20} />
-            </button>
-            
-            <button onClick={handleExport} className="ml-2 flex items-center gap-2 bg-white border border-outline-variant/80 hover:bg-surface-light text-on-surface px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
-              <Download size={16} /> Export
-            </button>
-            <button className="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
-              <Plus size={16} /> New Campaign
-            </button>
+
+            {/* Export + New Campaign — recruiters only */}
+            {!isCandidate && (
+              <>
+                <button onClick={handleExport} className="flex items-center gap-2 bg-white border border-outline-variant/80 hover:bg-surface-light text-on-surface px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
+                  <Download size={16} /> Export
+                </button>
+                <button onClick={() => navigate("/recruiter")} className="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
+                  <Plus size={16} /> New Campaign
+                </button>
+              </>
+            )}
           </div>
         </header>
 
@@ -163,9 +182,6 @@ export default function ResultsPage() {
                 </div>
               </div>
               <div className="text-4xl font-bold text-on-surface mb-2">{totalCandidates}</div>
-              <div className="text-xs font-bold text-[#059669] flex items-center gap-1">
-                <span className="text-[10px]">↗</span> +12% vs last week
-              </div>
             </div>
 
             <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
@@ -175,12 +191,12 @@ export default function ResultsPage() {
                   <Target size={16} />
                 </div>
               </div>
-              <div className="text-4xl font-bold text-[#2563EB] mb-2">42</div>
+              <div className="text-4xl font-bold text-[#2563EB] mb-2">{qualifiedMatches}</div>
               <div className="flex items-center gap-2 text-xs font-bold text-on-surface-variant">
                 <div className="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                  <div className="h-full bg-[#2563EB] w-[32%]" />
+                  <div className="h-full bg-[#2563EB]" style={{ width: `${conversionRate}%` }} />
                 </div>
-                32% Conversion Rate
+                {conversionRate}% Conversion Rate
               </div>
             </div>
 
@@ -191,7 +207,7 @@ export default function ResultsPage() {
                   <ShieldCheck size={16} />
                 </div>
               </div>
-              <div className="text-4xl font-bold text-on-surface mb-2">94.2 <span className="text-xl">%</span></div>
+              <div className="text-4xl font-bold text-on-surface mb-2">{integrityPassRate} <span className="text-xl">%</span></div>
               <div className="text-xs font-bold text-on-surface-variant">
                  <svg className="w-full h-4" viewBox="0 0 100 20" preserveAspectRatio="none">
                     <path d="M0 20 L 10 15 L 20 18 L 30 10 L 40 12 L 50 8 L 60 14 L 70 5 L 80 8 L 90 2 L 100 4" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -292,7 +308,17 @@ export default function ResultsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {displayCandidates.map((c) => {
+                    {displayCandidates.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="px-6 py-12 text-center text-on-surface-variant">
+                          <div className="flex flex-col items-center justify-center">
+                            <h3 className="text-lg font-bold text-on-surface mb-2">No results found</h3>
+                            <p className="text-sm">We couldn't find any candidate results matching your criteria.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      displayCandidates.map((c, index) => {
                         const hasFlags = c.integrityFlags > 0;
                         return (
                           <tr key={c.id} className="border-b border-outline-variant/30 hover:bg-surface-light transition-colors cursor-pointer last:border-0" onClick={() => setSelectedCandidate(c)}>
@@ -333,8 +359,9 @@ export default function ResultsPage() {
                             </td>
                           </tr>
                         );
-                      })}
-                    </tbody>
+                      })
+                    )}
+                  </tbody>
                   </table>
                 </div>
                 
@@ -389,63 +416,52 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* Integrity Watchlist */}
-              <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="text-[#DC2626] relative">
-                      <ShieldCheck size={20} />
-                      <div className="absolute top-1 left-2.5 w-1 h-1 rounded-full bg-white"></div>
-                    </div>
-                    <h3 className="text-lg font-bold text-on-surface leading-tight">Integrity<br/>Watchlist</h3>
-                  </div>
-                  <span className="px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-bold text-center leading-tight">
-                    3<br/>Alerts
-                  </span>
-                </div>
-                
-                <p className="text-sm text-on-surface-variant font-medium mb-6">
-                  Candidates requiring manual review for assessment flags.
-                </p>
-                
-                <div className="space-y-4 mb-6">
-                  {/* Alert 1 */}
-                  <div className="border border-[#FCA5A5] bg-[#FEF2F2] rounded-xl p-4 flex gap-4 cursor-pointer hover:bg-[#FEE2E2] transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-[#FCA5A5]/30 text-[#DC2626] flex items-center justify-center shrink-0">
-                      <AlertTriangle size={14} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div className="font-bold text-sm text-on-surface">Sarah Jenkins</div>
-                        <div className="text-xs font-bold text-[#DC2626]">89% Score</div>
+                <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="text-[#DC2626] relative">
+                        <ShieldCheck size={20} />
+                        <div className="absolute top-1 left-2.5 w-1 h-1 rounded-full bg-white"></div>
                       </div>
-                      <div className="text-xs font-semibold text-[#DC2626] mt-1 pr-4">Tab switching detected (x4)</div>
+                      <h3 className="text-lg font-bold text-on-surface leading-tight">Integrity<br/>Watchlist</h3>
                     </div>
-                    <ChevronRight size={16} className="text-[#DC2626] self-center" />
+                    <span className="px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-bold text-center leading-tight">
+                      {candidates.filter(c => c.integrityFlags > 0).length}<br/>Alerts
+                    </span>
                   </div>
                   
-                  {/* Alert 2 */}
-                  <div className="border border-outline-variant/50 bg-[#F8FAFC] rounded-xl p-4 flex gap-4 cursor-pointer hover:bg-surface-light transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#475569] flex items-center justify-center shrink-0">
-                      <Clock size={14} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div className="font-bold text-sm text-on-surface">Thomas Wright</div>
-                        <div className="text-xs font-bold text-on-surface-variant">72% Score</div>
-                      </div>
-                      <div className="text-xs font-medium text-on-surface-variant mt-1 pr-4 leading-relaxed">Anomalous completion time (too fast)</div>
-                    </div>
-                    <ChevronRight size={16} className="text-on-surface-variant self-center" />
+                  <p className="text-sm text-on-surface-variant font-medium mb-6">
+                    Candidates requiring manual review for assessment flags.
+                  </p>
+                  
+                  <div className="space-y-4 mb-6">
+                    {candidates.filter(c => c.integrityFlags > 0).length === 0 ? (
+                      <p className="text-sm text-on-surface-variant italic">No pending alerts.</p>
+                    ) : (
+                      candidates.filter(c => c.integrityFlags > 0).slice(0, 3).map((candidate) => (
+                        <div key={candidate.id} className="border border-[#FCA5A5] bg-[#FEF2F2] rounded-xl p-4 flex gap-4 cursor-pointer hover:bg-[#FEE2E2] transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-[#FCA5A5]/30 text-[#DC2626] flex items-center justify-center shrink-0">
+                            <AlertTriangle size={14} />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div className="font-bold text-sm text-on-surface">{candidate.name || candidate.candidate?.name || "Candidate"}</div>
+                              <div className="text-xs font-bold text-[#DC2626]">{candidate.score || 0}% Score</div>
+                            </div>
+                            <div className="text-xs font-semibold text-[#DC2626] mt-1 pr-4">{candidate.integrityFlags} Flags Detected</div>
+                          </div>
+                          <ChevronRight size={16} className="text-[#DC2626] self-center" />
+                        </div>
+                      ))
+                    )}
                   </div>
+                  
+                  <button className="w-full text-[#2563EB] font-bold text-sm hover:underline">
+                    View All Flags
+                  </button>
                 </div>
-                
-                <button className="w-full text-[#2563EB] font-bold text-sm hover:underline">
-                  View All Flags
-                </button>
-              </div>
 
-            </div>
+              </div>
           </div>
         </div>
       </main>

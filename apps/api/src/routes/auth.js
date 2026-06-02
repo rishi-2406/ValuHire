@@ -131,6 +131,20 @@ function createAuthRoutes({ router, prisma, middleware }) {
   router.get("/auth/me", middleware.requireAuth, asyncHandler(async (req, res) => {
     sendOk(res, { user: toPublicUser(req.user) });
   }));
+
+  router.patch("/auth/me", middleware.requireAuth, asyncHandler(async (req, res) => {
+    const { name, bio } = req.body;
+    const updateData = {};
+    if (name && typeof name === "string") updateData.name = name.trim();
+    if (bio !== undefined) updateData.bio = bio;
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+      include: { company: true }
+    });
+    sendOk(res, { user: toPublicUser(updated) });
+  }));
 }
 
 module.exports = createAuthRoutes;

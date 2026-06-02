@@ -11,7 +11,8 @@ import {
   Shield,
   Video,
   FileText,
-  MoreHorizontal
+  MoreHorizontal,
+  CalendarDays
 } from "lucide-react";
 import { campaignService, interviewService } from "../services/api";
 import Sidebar from "../components/Sidebar";
@@ -38,7 +39,7 @@ export default function RecruiterDashboard() {
     ])
       .then(([c, i]) => {
         setCampaigns(c.campaigns || c || []);
-        setInterviews((i.interviews || i || []).slice(0, 4));
+        setInterviews((i.slots || i.interviews || i || []).slice(0, 4));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -107,42 +108,30 @@ export default function RecruiterDashboard() {
                 <MetricCard 
                   icon={Users} 
                   label="Active Candidates" 
-                  value={totalCandidates || 422} 
-                  trend="+12%" 
+                  value={totalCandidates} 
                   iconColor="text-[#2563EB]" 
                   iconBg="bg-[#EFF6FF]" 
-                  trendColor="text-[#059669]"
-                  trendBg="bg-[#D1FAE5]"
                 />
                 <MetricCard 
                   icon={CheckCircle} 
                   label="Assessments Completed" 
-                  value={completedAssessments || 138} 
-                  trend="+5%" 
+                  value={completedAssessments} 
                   iconColor="text-[#4F46E5]" 
                   iconBg="bg-[#EEF2FF]"
-                  trendColor="text-[#059669]"
-                  trendBg="bg-[#D1FAE5]"
                 />
                 <MetricCard 
                   icon={MessageSquare} 
                   label="Interviews This Week" 
-                  value={interviews.length || 18} 
-                  trend="− 0%" 
+                  value={interviews.length} 
                   iconColor="text-[#059669]" 
                   iconBg="bg-[#ECFDF5]"
-                  trendColor="text-[#4B5563]"
-                  trendBg="bg-[#F3F4F6]"
                 />
                 <MetricCard 
                   icon={AlertTriangle} 
                   label="Integrity Flags" 
-                  value={12} 
-                  trend="+2" 
+                  value={0} 
                   iconColor="text-[#DC2626]" 
                   iconBg="bg-[#FEE2E2]"
-                  trendColor="text-[#DC2626]"
-                  trendBg="bg-[#FEE2E2]"
                   isWarning={true}
                 />
               </div>
@@ -185,51 +174,59 @@ export default function RecruiterDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Using mock data when real data is empty to match design fidelity */}
-                      {(filteredCampaigns.length ? filteredCampaigns : [
-                        { id: 1, title: 'React Platform Engineer', location: 'San Francisco, CA', applicants: 145, status: 'OPEN' },
-                        { id: 2, title: 'Backend Node.js Engineer', location: 'Remote - US', applicants: 82, status: 'OPEN' },
-                        { id: 3, title: 'Data Scientist (Machine Learning)', location: 'New York, NY', applicants: 210, status: 'CLOSED' }
-                      ]).map((campaign) => {
-                        const applicants = campaign.applicants ?? (campaign._count?.applications || campaign.applicantCount || 0);
-                        const isOpen = (campaign.status || "").toUpperCase() === "OPEN";
-                        const location = campaign.location || "Remote";
-                        
-                        return (
-                          <tr
-                            key={campaign.id}
-                            onClick={() => navigate("/results")}
-                            className="border-b border-outline-variant/30 hover:bg-surface-light transition-colors cursor-pointer last:border-0"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex flex-col">
-                                <span className="font-bold text-on-surface">{campaign.title}</span>
-                                <span className="text-xs text-on-surface-variant mt-0.5">
-                                  {location}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <span className="font-bold text-on-surface min-w-[28px]">{applicants}</span>
-                                <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
-                                  <div className={`h-full rounded-full ${isOpen ? 'bg-[#004ac6]' : 'bg-[#6B7280]'}`} style={{ width: `${Math.min(100, (applicants / 250) * 100)}%` }} />
+                      {filteredCampaigns.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" className="px-6 py-8">
+                            <EmptyState
+                              icon={FileText}
+                              title="No campaigns found"
+                              description="Create a new campaign to start recruiting."
+                              primaryAction={{ label: "New Campaign", onClick: () => setShowCreateModal(true) }}
+                            />
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredCampaigns.map((campaign) => {
+                          const applicants = campaign.applicants ?? (campaign._count?.applications || campaign.applicantCount || 0);
+                          const isOpen = (campaign.status || "").toUpperCase() === "OPEN";
+                          const location = campaign.location || "Remote";
+                          
+                          return (
+                            <tr
+                              key={campaign.id}
+                              onClick={() => navigate("/results")}
+                              className="border-b border-outline-variant/30 hover:bg-surface-light transition-colors cursor-pointer last:border-0"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-on-surface">{campaign.title}</span>
+                                  <span className="text-xs text-on-surface-variant mt-0.5">
+                                    {location}
+                                  </span>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${isOpen ? 'bg-[#D1FAE5] text-[#059669] border border-[#059669]/20' : 'bg-[#F3F4F6] text-[#4B5563] border border-outline'}`}>
-                                {isOpen ? 'Open' : 'Closed'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <button type="button" className="text-on-surface-variant hover:text-on-surface p-1">
-                                <MoreHorizontal size={20} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-bold text-on-surface min-w-[28px]">{applicants}</span>
+                                  <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${isOpen ? 'bg-[#004ac6]' : 'bg-[#6B7280]'}`} style={{ width: `${Math.min(100, (applicants / 250) * 100)}%` }} />
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${isOpen ? 'bg-[#D1FAE5] text-[#059669] border border-[#059669]/20' : 'bg-[#F3F4F6] text-[#4B5563] border border-outline'}`}>
+                                  {isOpen ? 'Open' : 'Closed'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <button type="button" className="text-on-surface-variant hover:text-on-surface p-1">
+                                  <MoreHorizontal size={20} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -246,12 +243,12 @@ export default function RecruiterDashboard() {
                   </div>
                   
                   <div className="mb-6">
-                    <div className="text-[3.5rem] font-bold leading-none mb-1">98.2%</div>
-                    <div className="text-xs text-white/70 uppercase tracking-widest font-semibold max-w-[120px] leading-tight">Global Trust Score</div>
+                    <div className="text-[3.5rem] font-bold leading-none mb-1">0</div>
+                    <div className="text-xs text-white/70 uppercase tracking-widest font-semibold max-w-[120px] leading-tight">Active Flags</div>
                   </div>
                   
                   <p className="text-sm text-white/80 mb-8 leading-relaxed">
-                    12 active flags require review across {activeCampaigns.length || 3} active campaigns. Resolve them to maintain pipeline health.
+                    0 active flags require review across {activeCampaigns.length} active campaigns. Resolve them to maintain pipeline health.
                   </p>
                   
                   <button
@@ -275,53 +272,44 @@ export default function RecruiterDashboard() {
                 </div>
                 
                 <div className="p-6 flex flex-col gap-4">
-                  {/* Mock Data for Interviews matching the design */}
-                  <div className="border border-outline-variant/50 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <div className="flex gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold">AR</div>
-                        <div>
-                          <div className="font-bold text-on-surface text-sm">Alex Rivera</div>
-                          <div className="text-xs text-on-surface-variant mt-0.5">React Platform Engineer</div>
+                  {interviews.length === 0 ? (
+                    <EmptyState
+                      icon={Video}
+                      title="No upcoming interviews"
+                      description="You don't have any interviews scheduled for today."
+                    />
+                  ) : (
+                    interviews.map(interview => {
+                      const time = new Date(interview.scheduledAt || interview.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      const candidateName = interview.candidate?.name || "Candidate";
+                      const initials = candidateName.split(" ").map(n => n[0]).join("").substring(0,2).toUpperCase();
+                      const campaignTitle = interview.campaign?.title || interview.role || "Interview";
+                      return (
+                        <div key={interview.id} className="border border-outline-variant/50 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+                          <div className="flex justify-between items-start">
+                            <div className="flex gap-3">
+                              <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold">{initials}</div>
+                              <div>
+                                <div className="font-bold text-on-surface text-sm">{candidateName}</div>
+                                <div className="text-xs text-on-surface-variant mt-0.5">{campaignTitle}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[#2563EB] font-bold text-sm">{time}</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button className="bg-[#10B981] hover:bg-[#059669] text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
+                              <Video size={14} /> Join Call
+                            </button>
+                            <button className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface py-2 rounded-lg text-xs font-bold transition-colors">
+                              Notes
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[#2563EB] font-bold text-sm">2:00 PM</div>
-                        <div className="text-[10px] text-on-surface-variant font-medium mt-0.5">in 45 mins</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button className="bg-[#10B981] hover:bg-[#059669] text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-                        <Video size={14} /> Join Call
-                      </button>
-                      <button className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface py-2 rounded-lg text-xs font-bold transition-colors">
-                        Notes
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="border border-outline-variant/50 rounded-xl p-4 flex flex-col gap-4 shadow-sm opacity-70">
-                    <div className="flex justify-between items-start">
-                      <div className="flex gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#E2E8F0] text-[#475569] flex items-center justify-center font-bold">JS</div>
-                        <div>
-                          <div className="font-bold text-on-surface text-sm">Jordan Smith</div>
-                          <div className="text-xs text-on-surface-variant mt-0.5">Backend Node.js Engineer</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-on-surface font-bold text-sm">4:30 PM</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button className="bg-white border border-outline-variant text-on-surface-variant py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-not-allowed">
-                        <Video size={14} /> Join Call
-                      </button>
-                      <button className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface py-2 rounded-lg text-xs font-bold transition-colors">
-                        Notes
-                      </button>
-                    </div>
-                  </div>
+                      );
+                    })
+                  )}
                 </div>
                 
                 <div className="p-4 border-t border-outline-variant/50 bg-surface-light/50">

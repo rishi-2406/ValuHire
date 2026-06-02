@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { authService } from "../services/api";
+import { authService, userService, setTokens, getRefreshToken, clearTokens } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -10,8 +10,33 @@ export function AuthProvider({ children }) {
 
   const checkAuth = useCallback(async () => {
     try {
+      // If we have a refresh token in storage, exchange it for a fresh access token first.
+      // This makes auth survive page refreshes since access tokens are in-memory only.
+      const rt = getRefreshToken();
+      if (rt) {
+        try {
+          const res = await fetch("/api/v1/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken: rt })
+          });
+          const json = await res.json().catch(() => ({}));
+          const data = json.data !== undefined ? json.data : json;
+          if (res.ok && data.accessToken) {
+            setTokens({ accessToken: data.accessToken, refreshToken: rt });
+          } else {
+            clearTokens();
+            setUser(null);
+            return;
+          }
+        } catch {
+          clearTokens();
+          setUser(null);
+          return;
+        }
+      }
       const data = await authService.me();
-      setUser(data.user);
+      setUser(data.user || data);
     } catch {
       setUser(null);
     } finally {
@@ -49,14 +74,15 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (refreshToken) await authService.logout(refreshToken);
+      await authService.logout();
     } catch {}
-    localStorage.removeItem("refreshToken");
+    clearTokens();
     setUser(null);
   };
 
-  const value = { user, loading, error, login, register, logout, checkAuth };
+  const updateUser = (patch) => setUser((prev) => ({ ...prev, ...patch }));
+
+  const value = { user, loading, error, login, register, logout, checkAuth, updateUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
