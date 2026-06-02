@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { ToastProvider } from "./hooks/useToast";
 import LoginPage from "./pages/LoginPage";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import CandidateDashboard from "./pages/CandidateDashboard";
@@ -9,6 +10,8 @@ import AssessmentRoom from "./pages/AssessmentRoom";
 import ResultsPage from "./pages/ResultsPage";
 import InterviewsPage from "./pages/InterviewsPage";
 import AdminPage from "./pages/AdminPage";
+import SettingsPage from "./pages/SettingsPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import "./styles.css";
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -17,7 +20,10 @@ function ProtectedRoute({ children, allowedRoles }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="text-primary text-body-md">Loading...</div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <span className="text-sm font-semibold text-on-surface-variant">Loading…</span>
+        </div>
       </div>
     );
   }
@@ -36,7 +42,13 @@ function ProtectedRoute({ children, allowedRoles }) {
 function RoleBasedRedirect() {
   const { user, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -84,7 +96,7 @@ function AppRoutes() {
       <Route
         path="/results"
         element={
-          <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN"]}>
+          <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN", "CANDIDATE"]}>
             <ResultsPage />
           </ProtectedRoute>
         }
@@ -105,7 +117,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN", "CANDIDATE"]}>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/404" element={<NotFoundPage />} />
+      <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
 }
@@ -113,9 +134,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

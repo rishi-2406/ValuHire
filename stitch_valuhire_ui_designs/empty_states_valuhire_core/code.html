@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuHire - Empty States Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#f9f9ff",
+                      "on-tertiary-fixed": "#360f00",
+                      "on-primary-container": "#eeefff",
+                      "on-secondary-fixed-variant": "#2f2ebe",
+                      "surface-container-low": "#f0f3ff",
+                      "inverse-surface": "#263143",
+                      "on-primary": "#ffffff",
+                      "tertiary-container": "#bc4800",
+                      "secondary-fixed": "#e1e0ff",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "outline": "#737686",
+                      "on-secondary": "#ffffff",
+                      "on-surface": "#111c2d",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "surface-container-lowest": "#ffffff",
+                      "primary": "#004ac6",
+                      "on-background": "#111c2d",
+                      "on-primary-fixed": "#00174b",
+                      "on-secondary-container": "#fffbff",
+                      "inverse-on-surface": "#ecf1ff",
+                      "inverse-primary": "#b4c5ff",
+                      "tertiary": "#943700",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#d8e3fb",
+                      "on-secondary-fixed": "#07006c",
+                      "error-container": "#ffdad6",
+                      "background": "#f9f9ff",
+                      "tertiary-fixed": "#ffdbcd",
+                      "surface-dim": "#cfdaf2",
+                      "primary-container": "#2563eb",
+                      "on-error": "#ffffff",
+                      "surface-container-high": "#dee8ff",
+                      "surface-container": "#e7eeff",
+                      "surface-container-highest": "#d8e3fb",
+                      "secondary-fixed-dim": "#c0c1ff",
+                      "surface-tint": "#0053db",
+                      "on-surface-variant": "#434655",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-tertiary-fixed-variant": "#7d2d00",
+                      "on-tertiary-container": "#ffede6",
+                      "on-tertiary": "#ffffff",
+                      "secondary-container": "#6063ee",
+                      "primary-fixed": "#dbe1ff",
+                      "outline-variant": "#c3c6d7",
+                      "surface": "#ffffff",
+                      "secondary": "#4648d4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "container-max": "1280px",
+                      "space-2": "0.5rem",
+                      "gutter": "24px",
+                      "space-1": "0.25rem",
+                      "space-3": "0.75rem",
+                      "space-6": "1.5rem",
+                      "space-4": "1rem",
+                      "space-8": "2rem",
+                      "space-12": "3rem",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "body-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "title-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"]
+              },
+              "fontSize": {
+                      "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                      "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                      "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                      "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                      "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                      "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                      "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                      "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                      "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<!-- TopNavBar -->
+<nav class="sticky top-0 z-40 flex justify-between items-center px-gutter w-full bg-surface h-16 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-space-4">
+<span class="font-title-lg text-title-lg font-bold text-primary">ValuHire</span>
+</div>
+<div class="flex items-center gap-space-4">
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors p-space-2 rounded-full flex items-center justify-center cursor-pointer active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors px-space-4 py-space-2 rounded-lg font-label-md text-label-md cursor-pointer active:scale-95 duration-150">
+                Support
+            </button>
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors p-space-2 rounded-full flex items-center justify-center cursor-pointer active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container transition-colors p-space-2 rounded-full flex items-center justify-center cursor-pointer active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-sm" data-icon="person">person</span>
+</div>
+</div>
+</nav>
+<div class="flex h-[calc(100vh-64px)]">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full py-space-6 bg-surface w-64 border-r border-outline-variant shrink-0">
+<nav class="flex-1 px-space-4 flex flex-col gap-space-2">
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+                    Candidates
+                </a>
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                    Assessments
+                </a>
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="video_call">video_call</span>
+                    Interviews
+                </a>
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg bg-primary-fixed-dim/10 text-primary border-l-4 border-primary transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+                    Analytics
+                </a>
+</nav>
+<div class="px-space-4 mt-auto flex flex-col gap-space-2">
+<button class="w-full bg-primary text-on-primary py-space-3 rounded-lg font-label-md text-label-md hover:bg-primary-container hover:shadow-md transition-all active:scale-95">
+                    Post New Job
+                </button>
+<div class="border-t border-outline-variant my-space-2 pt-space-2"></div>
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                    Help Center
+                </a>
+<a class="flex items-center gap-space-3 px-space-4 py-space-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Log Out
+                </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto p-gutter max-w-container-max mx-auto w-full">
+<header class="mb-space-8">
+<h1 class="font-headline-lg text-headline-lg text-on-surface md:hidden">Empty States</h1>
+<h1 class="font-headline-lg text-headline-lg text-on-surface hidden md:block">Empty States Gallery</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-2 max-w-2xl">A collection of designed empty states ensuring a professional, high-trust aesthetic when data is unavailable.</p>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-6">
+<!-- 1. No Campaigns -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow h-full min-h-[360px]">
+<div class="w-40 h-40 mb-space-6 bg-surface-container-low rounded-full flex items-center justify-center overflow-hidden">
+<img alt="" class="w-full h-full object-cover mix-blend-multiply opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDabm3L0UEjDXGOpMdwqaDtmKH0qqnItwFfyoMBpCBtZsqaEIk1NNg2l9sh1ijK7Rprpx99Ug5WDGNLvemi7DLVCvRjArHbYbIfq4FTxHz9nuHUpRNFCFseTfCvyvmMZIsJEanpibyuv0mRdQjPwanHxpmrisyalZmyWSZmJ_etFJ2hYBJQzw3Hm5a9Z8hqXHiX0I8YhLbScmSQMZLVtVV7jlfxBO9OeaxbATorS54hKONGDwKISGWUt5JQPaKatkUS95rfzEJUWEA"/>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-space-2">No Campaigns Yet</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-6 max-w-[250px]">Start by creating a new campaign to begin sourcing top talent.</p>
+<button class="bg-primary text-on-primary px-space-6 py-space-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+                        Create Campaign
+                    </button>
+</div>
+<!-- 2. No Applications -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow h-full min-h-[360px]">
+<div class="w-40 h-40 mb-space-6 bg-surface-container-low rounded-full flex items-center justify-center overflow-hidden">
+<img alt="" class="w-full h-full object-cover mix-blend-multiply opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRmoYoRnxq0SDkIZj0ZxOanYhWO2gHp8emLBHVyO3D2pPzxJS1lb0IVg6W3pF49_vpvyshfd0pZcdI69VpUyx4R9SB-pyXLyO_geqaWW1Zuqdxwmr5TUXO-tuMLRGTZEV8Elu5hWmlK5bjPMeVD_1kpTSFTAsGXf0Er6-Zv8DWXpmtPz8IieziWLXbNVtlg0-LXZLAaiKgFiDLIeYZ8AjMqSUDeby5H53yDv-DK6Ormo4pFPezEjqR7At9UW_NVbSU5Mmdjx0wpMc"/>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-space-2">No Applications Found</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-[250px]">Check back later for new candidates or adjust your job posting visibility.</p>
+</div>
+<!-- 3. No Results -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow h-full min-h-[360px]">
+<div class="w-40 h-40 mb-space-6 bg-surface-container-low rounded-full flex items-center justify-center overflow-hidden">
+<img alt="" class="w-full h-full object-cover mix-blend-multiply opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2U7rvMno4FIe8NDyr02XwAytOMjTiPiuVFp9uY-dScmY-BImYiU9xTB-Cx3eTIwND9H-RlOY1GljFD1AKbGENNL5RzahQnE9DlE8lQnuNo7VWYhzc0GUqZ6RNOwQW0Cqbg1uyZS8euDlXurQI7LNvJyfz3RuDizd9sqnXLxmvpHzk9YBAvH6PZYTW06m9kwYNU2lNjNbNElGYsGXhKxKKhqVwR53DiEe-0pOhavHWEJhux-Y5bDW_ht7CxBlaNKjquQaRH4oytE0"/>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-space-2">No Results Found</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-6 max-w-[250px]">Try adjusting your filters or clearing search criteria to find what you're looking for.</p>
+<button class="bg-surface text-primary border border-primary px-space-6 py-space-2 rounded-lg font-label-md text-label-md hover:bg-primary/5 transition-colors active:scale-95">
+                        Clear Filters
+                    </button>
+</div>
+<!-- 4. No Interviews -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow h-full min-h-[360px]">
+<div class="w-40 h-40 mb-space-6 bg-surface-container-low rounded-full flex items-center justify-center overflow-hidden">
+<img alt="" class="w-full h-full object-cover mix-blend-multiply opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD60W_6Xr7QGUsoakXcYqOX08fAPWH9FddLF5XfqI3cG_sTYIv9Cyjare3WUNIo7UB3tqTxFDZZ-vkoQ_tCdVSHqBoHlIA6PqsA3iUtAY5o3OW36Kq2bznVYe5O0T79dHYbP4E09CRIHyCHsZqI1ofaiBE8sYWgpPXXzuvrU19jVuPxvRGXuOf5qUm2LNAyS57VwRBvpPiJPXzFHcX_bof5kybvSXVcFe89TQ0MlB5QElnxkhNh091p6s6c-r6m08sbYyYHaOQ22KI"/>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-space-2">No Upcoming Interviews</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-6 max-w-[250px]">Your schedule is clear. Review applications to move candidates forward.</p>
+<button class="bg-primary text-on-primary px-space-6 py-space-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+                        Schedule Interview
+                    </button>
+</div>
+<!-- 5. Empty Inbox -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow h-full min-h-[360px]">
+<div class="w-24 h-24 mb-space-6 rounded-full bg-surface-container flex items-center justify-center text-[#10b981]">
+<span class="material-symbols-outlined text-5xl" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-space-2">You're all caught up!</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-[250px]">No new messages requiring your attention. Enjoy your clean inbox.</p>
+</div>
+<!-- 6. No Search Matches -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow h-full min-h-[360px]">
+<div class="w-24 h-24 mb-space-6 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-5xl" data-icon="search_off">search_off</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-space-2">No matches found</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-[250px]">We couldn't find anything matching your search query. Try different keywords.</p>
+</div>
+</div>
+</main>
+</div>
+</body></html>

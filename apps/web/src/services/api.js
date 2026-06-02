@@ -1,10 +1,89 @@
-const API_BASE = "http://localhost:4000/api/v1";
+const API_BASE = "/api/v1";
 
-async function handleResponse(res) {
-  const data = await res.json();
+let accessToken = null;
+let refreshToken = null;
+let refreshPromise = null;
+const listeners = new Set();
+
+function notifyChange() {
+  listeners.forEach(l => l({ accessToken, refreshToken }));
+}
+
+export function setTokens({ accessToken: at, refreshToken: rt }) {
+  accessToken = at || null;
+  refreshToken = rt || null;
+  if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+  if (!refreshToken) localStorage.removeItem("refreshToken");
+  notifyChange();
+}
+
+export function getAccessToken() {
+  return accessToken;
+}
+
+export function getRefreshToken() {
+  return refreshToken || localStorage.getItem("refreshToken");
+}
+
+export function clearTokens() {
+  accessToken = null;
+  refreshToken = null;
+  localStorage.removeItem("refreshToken");
+  notifyChange();
+}
+
+export function onTokenChange(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+async function refreshAccessToken() {
+  if (refreshPromise) return refreshPromise;
+  const rt = getRefreshToken();
+  if (!rt) throw new Error("No refresh token");
+
+  refreshPromise = (async () => {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: rt })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Refresh failed");
+    setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken || rt });
+    return data.accessToken;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+async function request(path, options = {}, _retried = false) {
+  const headers = { ...(options.headers || {}) };
+  if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const json = await res.json().catch(() => ({}));
+  const data = json.data !== undefined ? json.data : json;
+
+  if (res.status === 401 && !_retried && getRefreshToken()) {
+    try {
+      await refreshAccessToken();
+      return request(path, options, true);
+    } catch (e) {
+      clearTokens();
+      throw new Error("Session expired. Please log in again.");
+    }
+  }
+
   if (!res.ok) {
-    const error = new Error(data.message || "API Error");
+    const error = new Error(data.message || data.error || json.error?.message || "API Error");
     error.statusCode = res.status;
+    error.payload = json;
     throw error;
   }
   return data;
@@ -12,240 +91,77 @@ async function handleResponse(res) {
 
 export const authService = {
   async login(email, password) {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const data = await request("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ email, password })
     });
-    return handleResponse(res);
+    setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+    return data;
   },
 
   async register({ name, email, password, role, companyName }) {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    const data = await request("/auth/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ name, email, password, role, companyName })
     });
-    return handleResponse(res);
+    setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+    return data;
   },
 
-  async logout(refreshToken) {
-    const res = await fetch(`${API_BASE}/auth/logout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ refreshToken })
-    });
-    return handleResponse(res);
-  },
-
-  async refresh(refreshToken) {
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ refreshToken })
-    });
-    return handleResponse(res);
+  async logout() {
+    const rt = getRefreshToken();
+    try {
+      if (rt) await request("/auth/logout", { method: "POST", body: JSON.stringify({ refreshToken: rt }) });
+    } catch {}
+    clearTokens();
   },
 
   async me() {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      credentials: "include"
-    });
-    return handleResponse(res);
+    return request("/auth/me");
   }
 };
 
 export const campaignService = {
-  async getPublicCampaigns() {
-    const res = await fetch(`${API_BASE}/campaigns/public`);
-    return handleResponse(res);
-  },
-
-  async getMyCampaigns() {
-    const res = await fetch(`${API_BASE}/campaigns`, { credentials: "include" });
-    return handleResponse(res);
-  },
-
-  async createCampaign(data) {
-    const res = await fetch(`${API_BASE}/campaigns`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-  },
-
-  async updateCampaign(id, data) {
-    const res = await fetch(`${API_BASE}/campaigns/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-  },
-
-  async createInviteLink(campaignId, expiresAt) {
-    const res = await fetch(`${API_BASE}/campaigns/${campaignId}/invite-links`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ expiresAt })
-    });
-    return handleResponse(res);
-  },
-
-  async upsertAssessment(campaignId, data) {
-    const res = await fetch(`${API_BASE}/campaigns/${campaignId}/assessment`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-  }
+  getPublicCampaigns: () => request("/campaigns/public"),
+  getMyCampaigns: () => request("/campaigns"),
+  createCampaign: (data) => request("/campaigns", { method: "POST", body: JSON.stringify(data) }),
+  updateCampaign: (id, data) => request(`/campaigns/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  createInviteLink: (campaignId, expiresAt) => request(`/campaigns/${campaignId}/invite-links`, { method: "POST", body: JSON.stringify({ expiresAt }) }),
+  upsertAssessment: (campaignId, data) => request(`/campaigns/${campaignId}/assessment`, { method: "PUT", body: JSON.stringify(data) })
 };
 
 export const applicationService = {
-  async getMyApplications() {
-    const res = await fetch(`${API_BASE}/applications/me`, { credentials: "include" });
-    return handleResponse(res);
-  },
-
-  async apply(campaignId) {
-    const res = await fetch(`${API_BASE}/applications`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ campaignId })
-    });
-    return handleResponse(res);
-  },
-
-  async applyWithInvite(token) {
-    const res = await fetch(`${API_BASE}/applications/invite`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ token })
-    });
-    return handleResponse(res);
-  },
-
-  async startSession(assessmentId) {
-    const res = await fetch(`${API_BASE}/assessments/${assessmentId}/sessions`, {
-      method: "POST",
-      credentials: "include"
-    });
-    return handleResponse(res);
-  },
-
-  async submitMcqAnswer(sessionId, questionId, selectedKey) {
-    const res = await fetch(`${API_BASE}/assessment-sessions/${sessionId}/mcq-answers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ questionId, selectedKey })
-    });
-    return handleResponse(res);
-  },
-
-  async submitProctorEvent(sessionId, type, metadata) {
-    const res = await fetch(`${API_BASE}/assessment-sessions/${sessionId}/proctor-events`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ type, metadata })
-    });
-    return handleResponse(res);
-  },
-
-  async finalSubmit(sessionId) {
-    const res = await fetch(`${API_BASE}/assessment-sessions/${sessionId}/final-submit`, {
-      method: "POST",
-      credentials: "include"
-    });
-    return handleResponse(res);
-  }
+  getMyApplications: () => request("/applications/me"),
+  apply: (campaignId) => request("/applications", { method: "POST", body: JSON.stringify({ campaignId }) }),
+  applyWithInvite: (token) => request("/applications/invite", { method: "POST", body: JSON.stringify({ token }) }),
+  startSession: (assessmentId) => request(`/assessments/${assessmentId}/sessions`, { method: "POST" }),
+  submitMcqAnswer: (sessionId, questionId, selectedKey) =>
+    request(`/assessment-sessions/${sessionId}/mcq-answers`, { method: "POST", body: JSON.stringify({ questionId, selectedKey }) }),
+  submitProctorEvent: (sessionId, type, metadata) =>
+    request(`/assessment-sessions/${sessionId}/proctor-events`, { method: "POST", body: JSON.stringify({ type, metadata }) }),
+  finalSubmit: (sessionId) => request(`/assessment-sessions/${sessionId}/final-submit`, { method: "POST" })
 };
 
 export const submissionService = {
-  async submitCode(sessionId, codingQuestionId, code, language) {
-    const res = await fetch(`${API_BASE}/submissions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ sessionId, codingQuestionId, code, language })
-    });
-    return handleResponse(res);
-  },
-
-  async getSubmissionStatus(submissionId) {
-    const res = await fetch(`${API_BASE}/submissions/${submissionId}`, { credentials: "include" });
-    return handleResponse(res);
-  }
+  submitCode: (sessionId, codingQuestionId, code, language) =>
+    request("/submissions", { method: "POST", body: JSON.stringify({ sessionId, codingQuestionId, code, language }) }),
+  getSubmissionStatus: (submissionId) => request(`/submissions/${submissionId}`)
 };
 
 export const interviewService = {
-  async getMyInterviews() {
-    const res = await fetch(`${API_BASE}/interviews/me`, { credentials: "include" });
-    return handleResponse(res);
-  },
-
-  async scheduleInterview(data) {
-    const res = await fetch(`${API_BASE}/interviews`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(data)
-    });
-    return handleResponse(res);
-  }
+  getMyInterviews: () => request("/interviews/me"),
+  scheduleInterview: (data) => request("/interviews", { method: "POST", body: JSON.stringify(data) }),
+  submitFeedback: (interviewId, data) => request(`/interviews/${interviewId}/feedback`, { method: "POST", body: JSON.stringify(data) })
 };
 
 export const resultsService = {
-  async getCampaignResults(campaignId) {
-    const res = await fetch(`${API_BASE}/results/campaign/${campaignId}`, { credentials: "include" });
-    return handleResponse(res);
-  },
-
-  async getMyResults() {
-    const res = await fetch(`${API_BASE}/results/me`, { credentials: "include" });
-    return handleResponse(res);
-  }
+  getCampaignResults: (campaignId) => request(`/results/campaign/${campaignId}`),
+  getMyResults: () => request("/results/me")
 };
 
 export const adminService = {
-  async getCompanies() {
-    const res = await fetch(`${API_BASE}/admin/companies`, { credentials: "include" });
-    return handleResponse(res);
-  },
-
-  async updateCompanyStatus(companyId, status) {
-    const res = await fetch(`${API_BASE}/admin/companies/${companyId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ status })
-    });
-    return handleResponse(res);
-  },
-
-  async getUsers() {
-    const res = await fetch(`${API_BASE}/admin/users`, { credentials: "include" });
-    return handleResponse(res);
-  },
-
-  async banUser(userId) {
-    const res = await fetch(`${API_BASE}/admin/users/${userId}/ban`, {
-      method: "POST",
-      credentials: "include"
-    });
-    return handleResponse(res);
-  }
+  getCompanies: () => request("/admin/companies"),
+  updateCompanyStatus: (companyId, status) => request(`/admin/companies/${companyId}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  getUsers: () => request("/admin/users"),
+  banUser: (userId) => request(`/admin/users/${userId}/ban`, { method: "POST" })
 };

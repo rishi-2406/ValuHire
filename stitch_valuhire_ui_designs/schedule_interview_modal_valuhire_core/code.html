@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Schedule Interview - ValuHire</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#2f2ebe",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-primary": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#263143",
+                    "surface-container-high": "#dee8ff",
+                    "secondary-container": "#6063ee",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#c0c1ff",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary-fixed": "#dbe1ff",
+                    "on-tertiary-fixed": "#360f00",
+                    "inverse-on-surface": "#ecf1ff",
+                    "on-background": "#111c2d",
+                    "primary": "#004ac6",
+                    "on-surface": "#111c2d",
+                    "surface-dim": "#cfdaf2",
+                    "on-secondary-container": "#fffbff",
+                    "error": "#ba1a1a",
+                    "surface-container": "#e7eeff",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f9f9ff",
+                    "surface": "#f9f9ff",
+                    "surface-tint": "#0053db",
+                    "secondary-fixed": "#e1e0ff",
+                    "secondary": "#4648d4",
+                    "on-tertiary-container": "#ffede6",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary": "#943700",
+                    "surface-container-highest": "#d8e3fb",
+                    "outline": "#737686",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "on-secondary-fixed": "#07006c",
+                    "on-primary": "#ffffff",
+                    "surface-container-low": "#f0f3ff",
+                    "outline-variant": "#c3c6d7",
+                    "background": "#f9f9ff",
+                    "on-primary-container": "#eeefff",
+                    "surface-variant": "#d8e3fb",
+                    "on-surface-variant": "#434655",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "space-6": "1.5rem",
+                    "space-4": "1rem",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "space-3": "0.75rem",
+                    "space-8": "2rem",
+                    "space-2": "0.5rem",
+                    "space-12": "3rem",
+                    "space-1": "0.25rem",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-4">
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-on-background/40 backdrop-blur-sm z-40 flex items-center justify-center overflow-y-auto py-8">
+<!-- Modal Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-full max-w-4xl relative z-50 overflow-hidden flex flex-col md:flex-row border border-outline-variant/30">
+<!-- Header (Mobile Only, usually hidden on md) -->
+<div class="md:hidden flex items-center justify-between p-space-4 border-b border-outline-variant/30">
+<h2 class="font-title-lg text-title-lg text-on-surface">Schedule Interview</h2>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-space-1 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Left Column: Calendar -->
+<div class="w-full md:w-[40%] bg-surface-container-low border-r border-outline-variant/30 p-space-6 flex flex-col">
+<div class="mb-space-6 flex items-center justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface hidden md:block">Schedule Interview</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Select a date and time for Sarah Jenkins</p>
+</div>
+</div>
+<!-- Calendar Widget -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant/50 p-space-4 flex-grow">
+<!-- Month Navigation -->
+<div class="flex items-center justify-between mb-space-4">
+<h3 class="font-label-md text-label-md text-on-surface">October 2023</h3>
+<div class="flex gap-space-1">
+<button class="p-space-1 rounded-md hover:bg-surface-container-high text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-space-1 rounded-md hover:bg-surface-container-high text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Days Header -->
+<div class="grid grid-cols-7 gap-1 text-center mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">S</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">M</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">T</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">W</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">T</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">F</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">S</span>
+</div>
+<!-- Calendar Grid (Static representation) -->
+<div class="grid grid-cols-7 gap-1 text-center">
+<!-- Empty slots -->
+<div class="p-2"></div>
+<!-- Days -->
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">1</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">2</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">3</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">4</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">5</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">6</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">7</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">8</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">9</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">10</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">11</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">12</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">13</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">14</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-primary bg-primary-container/10 font-medium hover:bg-primary-container/20 transition-colors border border-primary/20">15</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-primary bg-primary font-medium shadow-md transition-transform scale-105">16</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-primary bg-primary-container/10 font-medium hover:bg-primary-container/20 transition-colors border border-primary/20">17</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">18</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">19</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">20</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">21</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">22</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">23</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">24</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">25</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">26</button>
+<button class="font-body-sm text-body-sm p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">27</button>
+</div>
+</div>
+<div class="mt-space-4 flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary inline-block"></span> Selected</span>
+<span class="font-label-sm text-label-sm flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container/30 border border-primary/30 inline-block"></span> Available</span>
+</div>
+</div>
+<!-- Right Column: Details -->
+<div class="w-full md:w-[60%] p-space-6 flex flex-col h-full bg-surface-container-lowest">
+<div class="flex justify-end mb-space-4 hidden md:block">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-space-1 rounded-full hover:bg-surface-container-low float-right">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-grow space-y-space-6">
+<!-- Time & Duration -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-space-2">Time Slot (PST)</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-bright border border-outline-variant rounded-lg px-space-4 py-space-3 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+<option>10:00 AM</option>
+<option>11:30 AM</option>
+<option selected="">2:00 PM</option>
+<option>3:45 PM</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-space-2">Duration</label>
+<div class="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/50">
+<button class="flex-1 font-label-sm text-label-sm py-2 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">30m</button>
+<button class="flex-1 font-label-sm text-label-sm py-2 rounded-md bg-surface-container-lowest text-primary shadow-sm border border-outline-variant/30 transition-all">45m</button>
+<button class="flex-1 font-label-sm text-label-sm py-2 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">60m</button>
+</div>
+</div>
+</div>
+<!-- Interview Type -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-space-2">Interview Type</label>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-space-3">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="int_type" type="radio"/>
+<div class="px-space-3 py-space-2 rounded-lg border border-outline-variant bg-surface-bright peer-checked:border-primary peer-checked:bg-primary-container/5 peer-checked:ring-1 peer-checked:ring-primary transition-all flex items-center gap-space-2">
+<span class="material-symbols-outlined text-[18px] peer-checked:text-primary text-on-surface-variant">videocam</span>
+<span class="font-label-md text-label-md text-on-surface">Video Call</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="int_type" type="radio"/>
+<div class="px-space-3 py-space-2 rounded-lg border border-outline-variant bg-surface-bright peer-checked:border-primary peer-checked:bg-primary-container/5 peer-checked:ring-1 peer-checked:ring-primary transition-all flex items-center gap-space-2">
+<span class="material-symbols-outlined text-[18px] peer-checked:text-primary text-on-surface-variant">call</span>
+<span class="font-label-md text-label-md text-on-surface">Phone</span>
+</div>
+</label>
+<label class="cursor-pointer col-span-2 md:col-span-1">
+<input class="peer sr-only" name="int_type" type="radio"/>
+<div class="px-space-3 py-space-2 rounded-lg border border-outline-variant bg-surface-bright peer-checked:border-primary peer-checked:bg-primary-container/5 peer-checked:ring-1 peer-checked:ring-primary transition-all flex items-center gap-space-2">
+<span class="material-symbols-outlined text-[18px] peer-checked:text-primary text-on-surface-variant">apartment</span>
+<span class="font-label-md text-label-md text-on-surface">On-site</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Attendees -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-space-2">Attendees</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-space-3 top-1/2 -translate-y-1/2 text-on-surface-variant">person_add</span>
+<input class="w-full pl-space-12 pr-space-4 py-space-3 rounded-lg border border-outline-variant bg-surface-bright font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Add team members..." type="text"/>
+</div>
+<div class="flex flex-wrap gap-space-2 mt-space-3">
+<div class="flex items-center gap-space-1 bg-surface-container rounded-full pl-space-1 pr-space-3 py-1 border border-outline-variant/30">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-[10px]">JD</div>
+<span class="font-label-sm text-label-sm text-on-surface">John Doe</span>
+<button class="text-on-surface-variant hover:text-error ml-1"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="flex items-center gap-space-1 bg-surface-container rounded-full pl-space-1 pr-space-3 py-1 border border-outline-variant/30">
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-[10px]">AS</div>
+<span class="font-label-sm text-label-sm text-on-surface">Alice Smith</span>
+<button class="text-on-surface-variant hover:text-error ml-1"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+</div>
+</div>
+<!-- Agenda Notes -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-space-2">Agenda / Notes</label>
+<textarea class="w-full p-space-3 rounded-lg border border-outline-variant bg-surface-bright font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none" placeholder="Add notes or an agenda for the candidate and interviewers..." rows="3"></textarea>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-space-8 pt-space-4 border-t border-outline-variant/30 flex justify-end gap-space-3">
+<button class="px-space-6 py-space-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-bright border border-outline-variant hover:bg-surface-container-low transition-colors">
+                        Cancel
+                    </button>
+<button class="px-space-6 py-space-2 rounded-lg font-label-md text-label-md text-on-primary bg-primary hover:bg-primary/90 shadow-sm transition-all flex items-center gap-space-2">
+<span>Schedule</span>
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

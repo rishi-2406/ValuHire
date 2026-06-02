@@ -45,7 +45,20 @@ function createAuthRoutes({ router, prisma, middleware }) {
       include: { company: true }
     });
 
-    sendCreated(res, { user: toPublicUser(user) });
+    const opaque = makeOpaqueToken();
+    const refreshRecord = await prisma.refreshToken.create({
+      data: {
+        tokenHash: hashToken(opaque),
+        userId: user.id,
+        expiresAt: refreshExpiryDate()
+      }
+    });
+
+    sendCreated(res, {
+      user: toPublicUser(user),
+      accessToken: signAccessToken(user),
+      refreshToken: `${signRefreshToken(user, refreshRecord.id)}.${opaque}`
+    });
   }));
 
   router.post("/auth/login", asyncHandler(async (req, res) => {

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuHire Toast Notification Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "inverse-primary": "#b4c5ff",
+                        "primary-container": "#2563eb",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#263143",
+                        "surface-container-high": "#dee8ff",
+                        "secondary-container": "#6063ee",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "inverse-on-surface": "#ecf1ff",
+                        "on-background": "#111c2d",
+                        "primary": "#004ac6",
+                        "on-surface": "#111c2d",
+                        "surface-dim": "#cfdaf2",
+                        "on-secondary-container": "#fffbff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#e7eeff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9ff",
+                        "surface": "#f9f9ff",
+                        "surface-tint": "#0053db",
+                        "secondary-fixed": "#e1e0ff",
+                        "secondary": "#4648d4",
+                        "on-tertiary-container": "#ffede6",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary": "#943700",
+                        "surface-container-highest": "#d8e3fb",
+                        "outline": "#737686",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-container": "#bc4800",
+                        "on-secondary-fixed": "#07006c",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f0f3ff",
+                        "outline-variant": "#c3c6d7",
+                        "background": "#f9f9ff",
+                        "on-primary-container": "#eeefff",
+                        "surface-variant": "#d8e3fb",
+                        "on-surface-variant": "#434655",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "space-6": "1.5rem",
+                        "space-4": "1rem",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "space-3": "0.75rem",
+                        "space-8": "2rem",
+                        "space-2": "0.5rem",
+                        "space-12": "3rem",
+                        "space-1": "0.25rem",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-item {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        .spin-slow {
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md antialiased overflow-x-hidden flex flex-col md:flex-row">
+<!-- TopNavBar for Mobile -->
+<nav class="md:hidden fixed top-0 w-full z-50 flex justify-between items-center px-space-6 h-16 bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">ValuHire</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-container-low transition-colors rounded-full p-2" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-container-low transition-colors rounded-full p-2" data-icon="settings">settings</span>
+<img alt="Recruiter profile avatar" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A professional headshot of a female recruiter in a corporate setting, with soft, bright light mode aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlYN0x1n6xBPV54Yi0AqBHh3reuKV2qB6kI0vWkTqFUUQpBvdF0s3pTwNEy8URbel6mLVOsoMUrbC9tVV-CJO5W2s-PFNQxxyS0hibyWPOge_JMpax9xunOm3INelRxVsw-hxnsb96eGHBnwndT6m_eQAHceEKSNJKVszVN32fhS6FvVm6EOtKFoeSUBhatuGFjGATcaO7mp4gxNjr_Z0wFnomuZpmADElgd3GrJ6Tkzv0Us38IGCByXeTZY0M689y5KSzZpKbV3Q"/>
+</div>
+</nav>
+<!-- SideNavBar for Web -->
+<aside class="hidden md:flex fixed left-0 top-0 h-full w-64 flex-col border-r border-outline-variant dark:border-outline bg-surface-container-low dark:bg-inverse-surface z-40">
+<div class="p-space-6 pb-space-4 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-headline-sm font-black text-primary">ValuHire</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Enterprise Portal</div>
+</div>
+<div class="px-space-4 pb-space-6">
+<button class="w-full bg-primary-container text-on-primary-container font-label-md text-label-md py-space-3 rounded-lg hover:bg-primary transition-colors flex justify-center items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-sm">add</span>
+                Post New Job
+            </button>
+</div>
+<nav class="flex-1 overflow-y-auto py-space-2 font-label-md text-label-md">
+<a class="flex items-center gap-space-3 bg-primary-container/10 text-primary dark:text-inverse-primary font-bold border-l-4 border-primary px-space-4 py-space-3 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-space-3 text-on-surface-variant dark:text-surface-variant px-space-4 py-space-3 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                Candidates
+            </a>
+<a class="flex items-center gap-space-3 text-on-surface-variant dark:text-surface-variant px-space-4 py-space-3 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                Assessments
+            </a>
+<a class="flex items-center gap-space-3 text-on-surface-variant dark:text-surface-variant px-space-4 py-space-3 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+                Interviews
+            </a>
+<a class="flex items-center gap-space-3 text-on-surface-variant dark:text-surface-variant px-space-4 py-space-3 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                Analytics
+            </a>
+</nav>
+<div class="p-space-4 border-t border-outline-variant font-label-md text-label-md">
+<a class="flex items-center gap-space-3 text-on-surface-variant dark:text-surface-variant px-space-4 py-space-3 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                Help Center
+            </a>
+<a class="flex items-center gap-space-3 text-on-surface-variant dark:text-surface-variant px-space-4 py-space-3 hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Log Out
+            </a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 md:ml-64 pt-16 md:pt-0 p-space-6 md:p-12 min-h-screen relative">
+<header class="mb-space-12 max-w-3xl">
+<h1 class="font-display-lg text-display-lg text-on-background mb-space-4">Notification System</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">A comprehensive showcase of ValuHire's enterprise toast notifications, designed for clarity, actionability, and subtle feedback loops.</p>
+</header>
+<!-- Gallery Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-space-8 max-w-6xl">
+<!-- Description Panel -->
+<div class="bg-surface rounded-xl border border-outline-variant p-space-8 shadow-sm h-fit">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-space-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">design_services</span>
+                    System Guidelines
+                </h2>
+<ul class="space-y-space-4 font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-green-600 mt-1" style="font-size: 20px;">check_circle</span>
+<span><strong>Success:</strong> Transient confirmation for completed tasks (e.g., candidate moved, assessment sent). Auto-dismisses.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-error mt-1" style="font-size: 20px;">error</span>
+<span><strong>Error:</strong> Persistent until dismissed. Always provides a clear path forward or a retry action.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-yellow-600 mt-1" style="font-size: 20px;">warning</span>
+<span><strong>Warning:</strong> Cautions the user about potential consequences without blocking their immediate workflow.</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" style="font-size: 20px;">info</span>
+<span><strong>Info:</strong> Neutral updates (e.g., system maintenance notices, background tasks completing).</span>
+</li>
+</ul>
+</div>
+<!-- Simulated Stack Container (Visual Only for Gallery) -->
+<div class="bg-surface-container-low rounded-xl border border-outline-variant p-space-8 min-h-[600px] relative overflow-hidden shadow-inner flex flex-col items-end gap-space-3" id="toast-container">
+<div class="absolute top-4 left-4 font-label-md text-label-md text-outline-variant uppercase tracking-widest">Simulated Viewport Right-Bottom</div>
+<!-- Spacer to push items down initially -->
+<div class="flex-1"></div>
+<!-- Toast: Detailed Multi-line -->
+<div class="toast-item w-full max-w-sm bg-surface rounded-lg shadow-lg border border-outline-variant p-space-4 flex items-start gap-space-3 relative z-10" style="animation-delay: 0.1s;">
+<span class="material-symbols-outlined text-primary-container shrink-0 mt-0.5" data-weight="fill">notifications_active</span>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface font-semibold mb-1">Assessment Completed</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Sarah Jenkins has just completed the Senior Engineer technical assessment with a score of 94%.</p>
+<div class="mt-space-3 flex gap-space-3">
+<button class="font-label-sm text-label-sm text-primary hover:text-primary-container transition-colors">View Results</button>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Toast: Action / Undo -->
+<div class="toast-item w-full max-w-sm bg-surface rounded-lg shadow-lg border border-outline-variant p-space-4 flex items-center justify-between gap-space-3 relative z-20" style="animation-delay: 0.2s;">
+<div class="flex items-center gap-space-3">
+<span class="material-symbols-outlined text-on-surface-variant shrink-0">delete</span>
+<span class="font-body-sm text-body-sm text-on-surface">Candidate profile archived.</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="font-label-md text-label-md text-primary font-semibold hover:underline">Undo</button>
+<button class="text-outline hover:text-on-surface transition-colors ml-2">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+<!-- Toast: Error with Retry -->
+<div class="toast-item w-full max-w-sm bg-error-container rounded-lg shadow-lg border border-error/20 p-space-4 flex items-start gap-space-3 relative z-30" style="animation-delay: 0.3s;">
+<span class="material-symbols-outlined text-error shrink-0 mt-0.5" data-weight="fill">error</span>
+<div class="flex-1">
+<span class="font-body-sm text-body-sm text-on-error-container block mb-2">Failed to sync interview schedule with Google Calendar.</span>
+<button class="font-label-sm text-label-sm text-error bg-error/10 hover:bg-error/20 px-3 py-1 rounded transition-colors inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">refresh</span> Retry Sync
+                        </button>
+</div>
+<button class="text-error/70 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Toast: Warning -->
+<div class="toast-item w-full max-w-sm bg-yellow-50 rounded-lg shadow-lg border border-yellow-200 p-space-4 flex items-center gap-space-3 relative z-40" style="animation-delay: 0.4s;">
+<span class="material-symbols-outlined text-yellow-600 shrink-0" data-weight="fill">warning</span>
+<span class="font-body-sm text-body-sm text-yellow-900 flex-1">Subscription limit approaching (45/50 jobs).</span>
+<button class="text-yellow-600 hover:text-yellow-800 transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Toast: Info -->
+<div class="toast-item w-full max-w-sm bg-surface rounded-lg shadow-lg border border-primary/20 p-space-4 flex items-center gap-space-3 relative z-50" style="animation-delay: 0.5s;">
+<span class="material-symbols-outlined text-primary shrink-0" data-weight="fill">info</span>
+<span class="font-body-sm text-body-sm text-on-surface flex-1">System maintenance scheduled for 2:00 AM UTC.</span>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Toast: Success -->
+<div class="toast-item w-full max-w-sm bg-green-50 rounded-lg shadow-lg border border-green-200 p-space-4 flex items-center gap-space-3 relative z-50" style="animation-delay: 0.6s;">
+<span class="material-symbols-outlined text-green-600 shrink-0" data-weight="fill">check_circle</span>
+<span class="font-body-sm text-body-sm text-green-900 flex-1">Offer letter sent successfully to Michael Chen.</span>
+<button class="text-green-600 hover:text-green-800 transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Toast: Loading -->
+<div class="toast-item w-full max-w-sm bg-surface rounded-lg shadow-lg border border-outline-variant p-space-4 flex items-center gap-space-3 relative z-50" style="animation-delay: 0.7s;">
+<span class="material-symbols-outlined text-primary shrink-0 spin-slow">progress_activity</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex-1">Parsing resume data for 12 candidates...</span>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple script to re-trigger animations for gallery effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('toast-container');
+            setInterval(() => {
+                const toasts = container.querySelectorAll('.toast-item');
+                toasts.forEach(t => {
+                    t.style.animation = 'none';
+                    t.offsetHeight; // trigger reflow
+                    t.style.animation = null; 
+                });
+            }, 8000); // Re-animate every 8 seconds for demonstration purposes
+        });
+    </script>
+</body></html>

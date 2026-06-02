@@ -1,145 +1,333 @@
-import { useAuth } from "../hooks/useAuth";
-import { FileCheck2, BarChart3, LogOut, Users, Play } from "lucide-react";
-import { useState, useEffect } from "react";
-import { applicationService, campaignService } from "../services/api";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { useToast } from "../hooks/useToast";
+import {
+  Play,
+  Clock,
+  BarChart3,
+  FileCheck2,
+  ArrowRight,
+  Sparkles,
+  Award,
+  Briefcase,
+  Timer,
+  Languages
+} from "lucide-react";
+import { applicationService, campaignService, resultsService } from "../services/api";
+import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
+import EmptyState from "../components/EmptyState";
+import { SkeletonCard, SkeletonRow } from "../components/Skeleton";
 
 export default function CandidateDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [campaigns, setCampaigns] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [pastResults, setPastResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [startingSession, setStartingSession] = useState(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     Promise.all([
-      campaignService.getPublicCampaigns(),
-      applicationService.getMyApplications()
+      campaignService.getPublicCampaigns().catch(() => ({ campaigns: [] })),
+      applicationService.getMyApplications().catch(() => ({ applications: [] })),
+      resultsService.getMyResults().catch(() => ({ results: [] }))
     ])
-      .then(([campaignData, appData]) => {
+      .then(([campaignData, appData, resultsData]) => {
         setCampaigns(campaignData.campaigns || campaignData || []);
         setApplications(appData.applications || appData || []);
+        setPastResults(resultsData.results || resultsData || []);
       })
-      .catch(err => setError(err.message))
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const appliedCampaignIds = new Set(applications.map(a => a.campaignId));
+  const appliedMap = new Map(applications.map((a) => [a.campaignId, a]));
+  const availableCampaigns = campaigns.filter(
+    (c) => !appliedMap.has(c.id) && (!search || c.title?.toLowerCase().includes(search.toLowerCase()))
+  );
+  const inProgressCampaigns = applications.filter(
+    (a) => a.status !== "SUBMITTED" && a.status !== "REJECTED"
+  );
 
-  const handleApply = async (campaignId) => {
+  const startAssessmentSession = async (assessmentId) => {
     try {
-      await applicationService.apply(campaignId);
-      setApplications(prev => [...prev, { campaignId }]);
+      const data = await applicationService.startSession(assessmentId);
+      const session = data.session || data;
+      if (session?.id) {
+        navigate(`/assessment/${session.id}`);
+      } else {
+        toast.error("Could not start session");
+      }
     } catch (err) {
-      console.error(err);
+      toast.error(err.message || "Failed to start session");
     }
   };
 
-  return (
-    <main className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">VH</div>
-          <div>
-            <strong>ValuHire</strong>
-            <span>Technical hiring</span>
-          </div>
-        </div>
-        <nav className="nav-list">
-          <button className="nav-item active">
-            <FileCheck2 size={17} />
-            <span>Campaigns</span>
-          </button>
-          <button className="nav-item">
-            <Play size={17} />
-            <span>My Assessments</span>
-          </button>
-          <button className="nav-item">
-            <BarChart3 size={17} />
-            <span>Results</span>
-          </button>
-          <button className="nav-item">
-            <Users size={17} />
-            <span>Interviews</span>
-          </button>
-        </nav>
-        <div className="sidebar-user">
-          <div className="user-info">
-            <span className="user-name">{user?.name}</span>
-            <span className="user-role">{user?.role}</span>
-          </div>
-          <button onClick={logout} className="icon-button" title="Sign out">
-            <LogOut size={18} />
-          </button>
-        </div>
-      </aside>
+  const handleApply = async (campaignId) => {
+    if (startingSession) return;
+    setStartingSession(campaignId);
+    try {
+      const data = await applicationService.apply(campaignId);
+      const newApp = data.application || data;
+      setApplications((prev) => [...prev, newApp]);
+      toast.success("Application submitted", { title: "Good luck!" });
+      const assessmentId = newApp.assessmentId || newApp.id;
+      if (assessmentId) {
+        await startAssessmentSession(assessmentId);
+      } else {
+        toast.info("Awaiting recruiter approval before starting");
+      }
+    } catch (err) {
+      toast.error(err.message || "Application failed");
+    } finally {
+      setStartingSession(null);
+    }
+  };
 
-      <section className="workspace">
-        <header className="topbar">
-          <div>
-            <span className="eyebrow">V1 MVP</span>
-            <h1>Candidate Workspace</h1>
-          </div>
-        </header>
+  const handleStart = async (application) => {
+    if (startingSession) return;
+    setStartingSession(application.id);
+    await startAssessmentSession(application.assessmentId || application.id);
+    setStartingSession(null);
+  };
+
+  const totalScore = pastResults.length
+    ? Math.round(pastResults.reduce((s, r) => s + (r.score ?? 0), 0) / pastResults.length)
+    : 0;
+  const bestScore = pastResults.length
+    ? Math.max(...pastResults.map((r) => r.score ?? 0))
+    : 0;
+  const completedCount = pastResults.length;
+
+  return (
+    <div className="app-shell">
+      <Sidebar role="candidate" />
+      <main className="workspace">
+        <TopBar
+          eyebrow="Candidate Portal"
+          title={`Welcome back, ${user?.name?.split(" ")[0] || "Candidate"}`}
+          onSearch={setSearch}
+        />
 
         <div className="stack">
-          <section className="panel">
-            <PanelHeader title="Available campaigns" action="Apply" icon={FileCheck2} />
-            {loading && <div className="p-md text-body-sm text-[#6b7280]">Loading campaigns...</div>}
-            {error && <div className="p-md text-body-sm text-red-500">{error}</div>}
-            <div className="card-grid">
-              {campaigns.map(campaign => {
-                const hasApplied = appliedCampaignIds.has(campaign.id);
-                return (
-                  <article key={campaign.id} className="mini-card">
-                    <strong>{campaign.title}</strong>
-                    <p>{campaign.description || "Technical Assessment"}</p>
+          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <MetricCard
+              icon={FileCheck2}
+              label="In Progress"
+              value={inProgressCampaigns.length}
+              accent="primary"
+            />
+            <MetricCard
+              icon={BarChart3}
+              label="Average Score"
+              value={totalScore || "—"}
+              accent="primary"
+            />
+            <MetricCard
+              icon={Award}
+              label="Best Score"
+              value={bestScore || "—"}
+              accent="success"
+            />
+          </section>
+
+          {inProgressCampaigns.length > 0 ? (
+            <section className="panel">
+              <div className="panel-header">
+                <div>
+                  <Play size={20} className="text-primary" />
+                  <h2>Continue Assessment</h2>
+                </div>
+              </div>
+              <div className="card-grid">
+                {inProgressCampaigns.map((app) => (
+                  <article
+                    key={app.id}
+                    className="bg-gradient-to-br from-primary to-primary-container text-white p-5 rounded-2xl flex flex-col gap-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={18} />
+                      <span className="text-label-md uppercase tracking-wider opacity-80">Ready to start</span>
+                    </div>
+                    <h3 className="text-title-lg">{app.campaign?.title || app.campaignTitle || "Assessment"}</h3>
+                    <p className="text-sm opacity-90">
+                      Status: <span className="font-semibold">{app.status || "In progress"}</span>
+                    </p>
                     <button
-                      className="secondary-button"
-                      disabled={loading || hasApplied}
-                      onClick={() => !hasApplied && handleApply(campaign.id)}
+                      type="button"
+                      className="mt-2 bg-white text-primary font-semibold h-11 px-4 rounded-lg hover:bg-surface-light transition-colors inline-flex items-center justify-center gap-2"
+                      disabled={loading || startingSession === app.id}
+                      onClick={() => handleStart(app)}
                     >
-                      {hasApplied ? "Applied" : "Apply"}
+                      <Play size={16} />
+                      <span>{startingSession === app.id ? "Starting..." : "Resume assessment"}</span>
                     </button>
                   </article>
-                );
-              })}
-              {!loading && campaigns.length === 0 && (
-                <p className="text-body-sm text-[#6b7280] col-span-2">No campaigns available right now.</p>
-              )}
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section id="campaigns" className="panel">
+            <div className="panel-header">
+              <div>
+                <Briefcase size={20} className="text-primary" />
+                <h2>Available Campaigns</h2>
+              </div>
+              <span className="text-sm text-on-surface-variant">
+                {availableCampaigns.length} open
+              </span>
             </div>
+            {loading ? (
+              <div className="card-grid">
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+            ) : error ? (
+              <EmptyState
+                icon={Sparkles}
+                variant="warning"
+                title="Could not load campaigns"
+                description={error}
+                primaryAction={{ label: "Retry", onClick: () => window.location.reload() }}
+              />
+            ) : availableCampaigns.length === 0 ? (
+              <EmptyState
+                icon={Briefcase}
+                title={search ? "No matching campaigns" : "No new campaigns right now"}
+                description={
+                  search
+                    ? "Try a different search term."
+                    : "Check back later — recruiters add new roles every week."
+                }
+              />
+            ) : (
+              <div className="card-grid">
+                {availableCampaigns.map((campaign) => (
+                  <article key={campaign.id} className="mini-card">
+                    <div className="flex items-center gap-2 text-on-surface-variant text-sm">
+                      <span className="status-chip info">{campaign.difficulty || "Medium"}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Timer size={14} />
+                        {campaign.duration || 60} min
+                      </span>
+                      {campaign.language ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Languages size={14} />
+                          {campaign.language}
+                        </span>
+                      ) : null}
+                    </div>
+                    <strong>{campaign.title}</strong>
+                    <p>{campaign.description || "Technical assessment"}</p>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={!!startingSession}
+                      onClick={() => handleApply(campaign.id)}
+                    >
+                      {startingSession === campaign.id ? "Applying..." : "Apply & Start"}
+                      <ArrowRight size={16} />
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="panel">
-            <PanelHeader title="Past performance" action="History" icon={BarChart3} />
-            <div className="timeline">
-              <DataRow label="React Platform Engineer" value="92 / 100" />
-              <DataRow label="Node.js API Engineer" value="84 / 100" />
-              <DataRow label="Graduate Developer" value="76 / 100" />
+            <div className="panel-header">
+              <div>
+                <BarChart3 size={20} className="text-primary" />
+                <h2>Past Performance</h2>
+              </div>
+              <button type="button" className="tertiary-button" onClick={() => navigate("/results")}>
+                View full history
+                <ArrowRight size={16} />
+              </button>
             </div>
+            {loading ? (
+              <div className="stack">
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </div>
+            ) : pastResults.length === 0 ? (
+              <EmptyState
+                icon={Award}
+                title="No submissions yet"
+                description="Complete an assessment to see your scores and history here."
+                primaryAction={{
+                  label: "Browse campaigns",
+                  onClick: () => document.getElementById("campaigns")?.scrollIntoView({ behavior: "smooth" })
+                }}
+              />
+            ) : (
+              <div className="timeline">
+                {pastResults.slice(0, 5).map((r) => {
+                  const score = r.score ?? 0;
+                  return (
+                    <div key={r.id || r.sessionId} className="data-row">
+                      <div className="flex flex-col">
+                        <span className="text-on-surface font-medium text-sm">
+                          {r.campaignTitle || r.campaign?.title || "Assessment"}
+                        </span>
+                        <span className="text-xs text-on-surface-variant inline-flex items-center gap-1">
+                          <Clock size={12} />
+                          {r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "Recently"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={
+                            "status-chip " +
+                            (score >= 80 ? "success" : score >= 60 ? "info" : "warning")
+                          }
+                        >
+                          {score} / 100
+                        </span>
+                        <button
+                          type="button"
+                          className="icon-button"
+                          onClick={() => navigate("/results")}
+                          aria-label="View result"
+                        >
+                          <ArrowRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {completedCount >= 1 ? (
+                  <p className="text-sm text-on-surface-variant mt-2">
+                    {completedCount} assessment{completedCount === 1 ? "" : "s"} completed • Best: {bestScore}/100
+                  </p>
+                ) : null}
+              </div>
+            )}
           </section>
         </div>
-      </section>
-    </main>
-  );
-}
-
-function PanelHeader({ title, action, icon: Icon }) {
-  return (
-    <div className="panel-header">
-      <div>
-        <Icon size={18} />
-        <h2>{title}</h2>
-      </div>
-      <button className="secondary-button">{action}</button>
+      </main>
     </div>
   );
 }
 
-function DataRow({ label, value }) {
+function MetricCard({ icon: Icon, label, value, accent = "primary" }) {
+  const accentClasses = {
+    primary: "bg-primary/10 text-primary",
+    success: "bg-success-green/10 text-success-green"
+  }[accent] || "bg-primary/10 text-primary";
   return (
-    <div className="data-row">
+    <div className="metric-card">
+      <div className={"metric-icon-wrapper " + accentClasses}>
+        <Icon size={20} strokeWidth={2} />
+      </div>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>

@@ -1,8 +1,25 @@
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "../hooks/useToast";
+
+function roleHomeFor(role) {
+  switch (role) {
+    case "CANDIDATE":
+      return "/candidate";
+    case "ADMIN":
+      return "/admin";
+    case "RECRUITER":
+      return "/recruiter";
+    default:
+      return "/login";
+  }
+}
 
 export default function LoginPage() {
-  const { login, register } = useAuth();
+  const { user, login, register } = useAuth();
+  const navigate = useNavigate();
+  const toast = useToast();
   const [tab, setTab] = useState("login");
   const [role, setRole] = useState("recruiter");
   const [loading, setLoading] = useState(false);
@@ -16,14 +33,23 @@ export default function LoginPage() {
     companyName: ""
   });
 
+  React.useEffect(() => {
+    if (user) {
+      navigate(roleHomeFor(user.role), { replace: true });
+    }
+  }, [user, navigate]);
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await login(loginForm.email, loginForm.password);
+      const data = await login(loginForm.email, loginForm.password);
+      navigate(roleHomeFor(data.user?.role), { replace: true });
+      toast.success("Welcome back!");
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -34,13 +60,16 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await register({
+      const data = await register({
         ...registerForm,
         role: role.toUpperCase(),
         companyName: role === "recruiter" ? registerForm.companyName : undefined
       });
+      navigate(roleHomeFor(data.user?.role), { replace: true });
+      toast.success("Account created! Welcome to ValuHire.");
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
