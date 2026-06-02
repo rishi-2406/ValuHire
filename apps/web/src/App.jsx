@@ -6,6 +6,7 @@ import { ToastProvider } from "./hooks/useToast";
 import LoginPage from "./pages/LoginPage";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import CandidateDashboard from "./pages/CandidateDashboard";
+import CampaignsPage from "./pages/CampaignsPage";
 import AssessmentRoom from "./pages/AssessmentRoom";
 import ResultsPage from "./pages/ResultsPage";
 import InterviewsPage from "./pages/InterviewsPage";
@@ -82,6 +83,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["CANDIDATE"]}>
             <CandidateDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/campaigns"
+        element={
+          <ProtectedRoute allowedRoles={["CANDIDATE"]}>
+            <CampaignsPage />
           </ProtectedRoute>
         }
       />

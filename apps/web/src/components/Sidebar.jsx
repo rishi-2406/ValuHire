@@ -20,7 +20,9 @@ const NAV_ITEMS = {
     { to: "/settings", label: "Settings", icon: Settings }
   ],
   candidate: [
-    { to: "/candidate", label: "Browse Campaigns", icon: Briefcase, end: true },
+    { to: "/candidate", label: "Overview", icon: LayoutDashboard, end: true },
+    { to: "/campaigns", label: "Browse Campaigns", icon: Briefcase },
+    { to: "/interviews", label: "Interviews", icon: Video },
     { to: "/results", label: "My Results", icon: BarChart3 },
     { to: "/settings", label: "Settings", icon: Settings }
   ],

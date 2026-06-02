@@ -12,9 +12,10 @@ import {
   ChevronRight,
   Briefcase,
   Play,
-  BarChart3
+  BarChart3,
+  CheckCircle2
 } from "lucide-react";
-import { applicationService, campaignService, resultsService, interviewService } from "../services/api";
+import { applicationService } from "../services/api";
 import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
 import { SkeletonCard } from "../components/Skeleton";
@@ -23,26 +24,15 @@ export default function CandidateDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
-  const [campaigns, setCampaigns] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [pastResults, setPastResults] = useState([]);
-  const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [startingSession, setStartingSession] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      campaignService.getPublicCampaigns().catch(() => ({ campaigns: [] })),
-      applicationService.getMyApplications().catch(() => ({ applications: [] })),
-      resultsService.getMyResults().catch(() => ({ results: [] })),
-      interviewService.getMyInterviews().catch(() => ({ slots: [] }))
-    ])
-      .then(([campaignData, appData, resultsData, interviewData]) => {
-        setCampaigns(campaignData.campaigns || campaignData || []);
+    applicationService.getMyApplications()
+      .then((appData) => {
         setApplications(appData.applications || appData || []);
-        setPastResults(resultsData.results || resultsData || []);
-        setInterviews(interviewData.slots || interviewData.interviews || interviewData || []);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -146,21 +136,24 @@ export default function CandidateDashboard() {
               <HelpCircle size={20} />
             </button>
             <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm ml-2 overflow-hidden border border-outline">
-              {user?.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : name.charAt(0)}
+              {user?.profilePicUrl ? <img src={user.profilePicUrl} alt="Avatar" className="w-full h-full object-cover" /> : name.charAt(0)}
             </div>
           </div>
         </header>
 
         <div className="p-8 max-w-7xl mx-auto space-y-8">
           {/* Welcome Banner */}
-          <div>
-            <h2 className="text-[2.5rem] leading-tight font-extrabold text-[#111827] mb-2 tracking-tight">
-              Welcome back, {name}!
-            </h2>
-            <div className="flex items-center gap-2 text-[#4B5563] text-lg">
-              <span className="text-[#10B981]"><Sparkles size={20} /></span>
-              <p>You're making great progress. Stay focused, your next opportunity is close.</p>
+          <div className="bg-gradient-to-r from-[#F0F4FF] to-transparent border border-[#E0E7FF] rounded-3xl p-8 mb-8 relative overflow-hidden">
+            <div className="relative z-10">
+              <h2 className="text-[2.5rem] leading-tight font-extrabold text-[#111827] mb-2 tracking-tight">
+                Welcome back, {name}!
+              </h2>
+              <div className="flex items-center gap-2 text-[#4B5563] text-lg font-medium">
+                <span className="text-[#10B981]"><Sparkles size={20} /></span>
+                <p>You're making great progress. Stay focused, your next opportunity is close.</p>
+              </div>
             </div>
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -168,31 +161,32 @@ export default function CandidateDashboard() {
             <div className="lg:col-span-2 space-y-8">
               {/* Action Required Box */}
               {pendingAction && (
-                <div className="bg-white border-l-4 border-l-[#EAB308] border-y border-r border-outline-variant/50 rounded-r-2xl p-6 shadow-sm">
+                <div className="bg-gradient-to-r from-[#FEFCE8] to-white border border-[#FEF08A] rounded-2xl p-7 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-[#EAB308]" />
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="flex items-center gap-2 text-[#EAB308] font-bold text-xs tracking-wider uppercase mb-3">
-                        <AlertTriangle size={16} />
+                      <div className="flex items-center gap-2 text-[#CA8A04] font-bold text-[11px] tracking-widest uppercase mb-3 bg-[#FEF9C3] w-max px-2.5 py-1 rounded-md">
+                        <AlertTriangle size={14} />
                         ACTION REQUIRED
                       </div>
-                      <h3 className="text-[1.75rem] font-bold text-on-surface mb-2">
+                      <h3 className="text-[1.75rem] font-bold text-[#1F2937] mb-2 leading-tight">
                         {pendingAction.campaign?.title || "System Design Assessment"}
                       </h3>
-                      <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium">
+                      <div className="flex items-center gap-2 text-[#713F12] text-sm font-semibold opacity-90">
                         <Clock size={16} />
                         Due in 2 days
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-3">
+                    <div className="flex flex-col items-end gap-3 mt-2">
                       <button
                         onClick={() => handleStart(pendingAction)}
                         disabled={startingSession === pendingAction.id}
-                        className="bg-[#EAB308] hover:bg-[#CA8A04] text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-sm"
+                        className="bg-[#EAB308] hover:bg-[#CA8A04] text-white px-7 py-3.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-[0_4px_14px_0_rgb(234,179,8,0.39)] disabled:opacity-70 disabled:shadow-none hover:-translate-y-0.5 active:translate-y-0"
                       >
                         {startingSession === pendingAction.id ? "Starting..." : "Start Assessment"}
                         <ArrowRight size={18} />
                       </button>
-                      <div className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                      <div className="flex items-center gap-1.5 text-xs text-[#854D0E] font-medium opacity-80 mr-1">
                         <Clock size={14} />
                         60-min timer preview
                       </div>
@@ -230,7 +224,7 @@ export default function CandidateDashboard() {
                     </div>
                   )) : (
                     <EmptyState
-                      icon={Briefcase}
+                      illustration="no-applications"
                       title="No active applications"
                       description="Apply to a campaign to see your progress here."
                     />
@@ -241,106 +235,49 @@ export default function CandidateDashboard() {
 
             {/* Right Column */}
             <div className="space-y-6">
-              {/* Profile Completion */}
               <div className="bg-[#F0F4FF] border border-[#DCE4FF] rounded-2xl p-8 text-center flex flex-col items-center shadow-sm">
-                <div className="relative w-32 h-32 mb-6">
-                  {(() => {
-                    let score = 20; // base score for signed up
-                    if (user?.name) score += 20;
-                    if (user?.bio) score += 20;
-                    if (user?.avatar) score += 20;
-                    if (user?.specialties?.length) score += 20;
-                    const strokeOffset = 282.7 - (282.7 * (score / 100));
+                {(() => {
+                  const missingItems = [];
+                  if (!user?.name) missingItems.push("Full Name");
+                  if (!user?.bio) missingItems.push("Bio");
+                  if (!user?.profilePicUrl) missingItems.push("Profile Picture");
+                  if (!(user?.skills?.length || user?.specialties?.length)) missingItems.push("Specialties");
+                  
+                  if (missingItems.length === 0) {
                     return (
-                      <>
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                          <circle cx="50" cy="50" r="45" fill="none" stroke="#E2E8F0" strokeWidth="8" />
-                          <circle cx="50" cy="50" r="45" fill="none" stroke="#2B7B59" strokeWidth="8" strokeDasharray="282.7" strokeDashoffset={strokeOffset} strokeLinecap="round" />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-[1.75rem] font-bold text-[#1E293B]">{score}%</span>
-                        </div>
-                      </>
+                      <div className="py-2">
+                        <h3 className="text-xl font-bold text-[#1F2937] mb-2">Add more skills</h3>
+                        <p className="text-sm text-[#4B5563] mb-6 leading-relaxed">
+                          Your profile is looking great! Add more skills to increase your chances of being noticed.
+                        </p>
+                        <button onClick={() => navigate('/settings')} className="w-full bg-white border-2 border-[#10B981] text-[#10B981] font-bold py-3 rounded-xl hover:bg-[#10B981] hover:text-white transition-all shadow-sm">
+                          Add Skills
+                        </button>
+                      </div>
                     );
-                  })()}
-                </div>
-                <h3 className="text-xl font-bold text-on-surface mb-3">Profile Completion</h3>
-                <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
-                  Complete your profile to unlock <strong className="text-[#2B7B59]">5x more opportunities</strong> and stand out to recruiters.
-                </p>
-                <button onClick={() => navigate('/settings')} className="w-full bg-white border border-[#2B7B59] text-[#2B7B59] font-bold py-2.5 rounded-lg hover:bg-[#2B7B59]/5 transition-colors">
-                  Complete Profile
-                </button>
+                  }
+                  
+                  return (
+                    <div className="py-2">
+                      <h3 className="text-xl font-bold text-[#1F2937] mb-2">Complete your profile</h3>
+                      <p className="text-sm text-[#4B5563] mb-5 leading-relaxed">
+                        Add these missing details to unlock <strong className="text-[#10B981]">5x more opportunities</strong>:
+                      </p>
+                      <ul className="text-left w-full space-y-2.5 mb-6 bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-[#DCE4FF] shadow-sm">
+                        {missingItems.map(item => (
+                          <li key={item} className="text-sm text-[#374151] flex items-center gap-2.5 font-semibold">
+                            <div className="w-2 h-2 rounded-full bg-[#EF4444] shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <button onClick={() => navigate('/settings')} className="w-full bg-[#10B981] text-white font-bold py-3 rounded-xl hover:bg-[#059669] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                        Complete Profile
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
-
-              {/* Schedule */}
-              <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 font-bold text-lg mb-6 text-on-surface">
-                  <Clock size={20} />
-                  Schedule
-                </div>
-                {interviews.length === 0 ? (
-                  <p className="text-sm text-on-surface-variant">No upcoming interviews scheduled.</p>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {interviews.slice(0, 3).map((interview) => {
-                      const dt = new Date(interview.scheduledAt || interview.startsAt);
-                      const month = dt.toLocaleString('default', { month: 'short' });
-                      const day = dt.getDate();
-                      const time = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      return (
-                        <div key={interview.id} className="flex gap-4">
-                          <div className="bg-[#EFF6FF] rounded-xl p-3 flex flex-col items-center justify-center min-w-[72px]">
-                            <span className="text-[10px] font-bold text-[#3B82F6] tracking-widest uppercase">{month}</span>
-                            <span className="text-2xl font-bold text-[#1E293B] leading-none mt-1">{day}</span>
-                          </div>
-                          <div className="flex flex-col justify-center">
-                            <h4 className="font-bold text-sm text-on-surface mb-1">{interview.campaign?.title || interview.role || "Technical Interview"}</h4>
-                            <p className="text-xs text-on-surface-variant mb-2">{time}</p>
-                            <button className="flex items-center gap-1.5 text-xs font-bold text-[#3B82F6] hover:underline">
-                              <Video size={14} /> Join Link
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Recent Results */}
-              <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 font-bold text-lg mb-6 text-on-surface">
-                  <BarChart3 size={20} />
-                  Recent Results
-                </div>
-                {pastResults.length === 0 ? (
-                  <p className="text-sm text-on-surface-variant">No completed assessments.</p>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {pastResults.slice(0, 3).map((result) => {
-                       const dt = new Date(result.createdAt || result.completedAt || Date.now());
-                       const month = dt.toLocaleString('default', { month: 'short' });
-                       const day = dt.getDate();
-                       return (
-                         <div key={result.id} className="bg-[#F8FAFC] border border-outline-variant/50 rounded-xl p-4 flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-lg bg-[#ECFDF5] flex items-center justify-center text-[#10B981]">
-                             <Code size={20} />
-                           </div>
-                           <div className="flex-1">
-                             <h4 className="font-bold text-sm text-on-surface">{result.campaign?.title || "Assessment"}</h4>
-                             <p className="text-[11px] text-on-surface-variant mt-0.5">Completed {month} {day}</p>
-                           </div>
-                           <div className="text-right">
-                             <div className="text-xl font-bold text-[#10B981]">{result.score || 0}%</div>
-                           </div>
-                         </div>
-                       )
-                    })}
-                  </div>
-                )}
-              </div>
-
             </div>
           </div>
         </div>

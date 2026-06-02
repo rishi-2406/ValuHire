@@ -71,6 +71,7 @@ model User {
   email             String              @unique
   passwordHash      String
   resumeUrl         String?
+  bio               String?
   skills            String[]            @default([])
   profilePicUrl     String?
   companyId         String?

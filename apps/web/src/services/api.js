@@ -81,7 +81,8 @@ async function request(path, options = {}, _retried = false) {
   }
 
   if (!res.ok) {
-    const error = new Error(data.message || data.error || json.error?.message || "API Error");
+    const errorMsg = data.error?.message || (typeof data.error === 'string' ? data.error : null) || data.message || json.error?.message || "API Error";
+    const error = new Error(errorMsg);
     error.statusCode = res.status;
     error.payload = json;
     throw error;

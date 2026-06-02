@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 import { useAuth } from "../hooks/useAuth";
@@ -7,10 +7,7 @@ import { userService } from "../services/api";
 import { User, Bell, Lock, Shield, Settings as SettingsIcon, X, Settings2 } from "lucide-react";
 
 const SECTIONS = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "account", label: "Account", icon: SettingsIcon },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "privacy", label: "Privacy", icon: Shield }
+  { id: "profile", label: "Profile", icon: User }
 ];
 
 export default function SettingsPage() {
@@ -27,7 +24,11 @@ export default function SettingsPage() {
   const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") || "");
   const [email] = useState(user?.email || "");
   const [bio, setBio] = useState(user?.bio || "");
-  const [specialties, setSpecialties] = useState(user?.specialties || []);
+  const [specialties, setSpecialties] = useState(user?.skills || user?.specialties || []);
+  const [newSpecialty, setNewSpecialty] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicUrl || "");
+  
+  const fileInputRef = useRef(null);
 
   // Derive avatar initials from real name
   const initials = ((nameParts[0]?.[0] || "") + (nameParts[1]?.[0] || "")).toUpperCase() || (user?.email?.[0] || "?").toUpperCase();
@@ -37,8 +38,8 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
-      const data = await userService.updateProfile({ name: fullName, bio });
-      updateUser(data.user || { name: fullName, bio });
+      const data = await userService.updateProfile({ name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl });
+      updateUser(data.user || { ...user, name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl });
       toast.success("Profile saved", { title: "Changes applied" });
     } catch (err) {
       toast.error(err.message || "Could not save profile");
@@ -48,6 +49,27 @@ export default function SettingsPage() {
   };
 
   const removeSpecialty = (s) => setSpecialties(specialties.filter((x) => x !== s));
+
+  const handleAddSpecialty = (e) => {
+    e.preventDefault();
+    if (newSpecialty.trim() && !specialties.includes(newSpecialty.trim())) {
+      setSpecialties([...specialties, newSpecialty.trim()]);
+      setNewSpecialty("");
+    }
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        toast.error("File is too large (max 1MB)");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => setAvatarUrl(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="app-shell bg-[#F8FAFC]">
@@ -117,15 +139,22 @@ export default function SettingsPage() {
 
                   {/* Avatar */}
                   <div className="flex items-center gap-6 mb-8">
-                    <div className="w-24 h-24 rounded-full bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-3xl font-bold border-2 border-transparent shadow-sm">
-                      {initials}
+                    <div className="w-24 h-24 rounded-full bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-3xl font-bold border-2 border-transparent shadow-sm overflow-hidden">
+                      {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : initials}
                     </div>
                     <div>
                       <div className="flex items-center gap-4 mb-2">
-                        <button type="button" className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface px-4 py-2 rounded font-semibold text-sm transition-colors">
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/gif"
+                          ref={fileInputRef}
+                          onChange={handleAvatarChange}
+                          className="hidden"
+                        />
+                        <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface px-4 py-2 rounded font-semibold text-sm transition-colors">
                           Change avatar
                         </button>
-                        <button type="button" className="text-[#DC2626] hover:text-[#B91C1C] font-semibold text-sm transition-colors">
+                        <button type="button" onClick={() => setAvatarUrl("")} className="text-[#DC2626] hover:text-[#B91C1C] font-semibold text-sm transition-colors">
                           Remove
                         </button>
                       </div>
@@ -182,25 +211,38 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  {/* Recruiting Specialties — recruiters only */}
-                  {isRecruiter && (
-                    <div className="border border-outline-variant/80 rounded-lg p-6 bg-[#F8FAFC]">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg font-bold text-on-surface">Recruiting Specialties</h3>
-                        <Settings2 size={20} className="text-on-surface-variant" />
-                      </div>
-                      <p className="text-sm text-on-surface-variant mb-6">Tags help candidates find you in the directory.</p>
-                      <div className="flex flex-wrap gap-2">
-                        {specialties.length === 0 && <span className="text-sm text-on-surface-variant italic">No specialties added yet.</span>}
-                        {specialties.map(s => (
-                          <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] text-white rounded-full text-xs font-semibold">
-                            {s}
-                            <button type="button" onClick={() => removeSpecialty(s)} className="hover:bg-black/10 rounded-full p-0.5"><X size={12} /></button>
-                          </span>
-                        ))}
-                      </div>
+                  {/* Specialties and Skills */}
+                  <div className="border border-outline-variant/80 rounded-lg p-6 bg-[#F8FAFC]">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-bold text-on-surface">Specialties & Skills</h3>
+                      <Settings2 size={20} className="text-on-surface-variant" />
                     </div>
-                  )}
+                    <p className="text-sm text-on-surface-variant mb-6">Tags help others find you in the directory.</p>
+                    
+                    <div className="flex gap-2 mb-4">
+                      <input 
+                        type="text" 
+                        value={newSpecialty}
+                        onChange={(e) => setNewSpecialty(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddSpecialty(e); }}
+                        placeholder="Add a skill or specialty..." 
+                        className="flex-1 border border-outline-variant/80 rounded px-4 py-2 text-sm focus:outline-none focus:border-[#2563EB] text-on-surface font-medium"
+                      />
+                      <button type="button" onClick={handleAddSpecialty} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+                        Add
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {specialties.length === 0 && <span className="text-sm text-on-surface-variant italic">No specialties added yet.</span>}
+                      {specialties.map(s => (
+                        <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] text-white rounded-full text-xs font-semibold">
+                          {s}
+                          <button type="button" onClick={() => removeSpecialty(s)} className="hover:bg-black/10 rounded-full p-0.5"><X size={12} /></button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
 
                   <div className="mt-8 flex justify-end gap-3 border-t border-outline-variant/50 pt-6">
                     <button type="button" className="bg-white border border-outline-variant/80 hover:bg-surface-light text-on-surface px-6 py-2.5 rounded font-bold text-sm transition-colors">
@@ -212,13 +254,7 @@ export default function SettingsPage() {
                   </div>
                 </form>
               )}
-              {activeSection !== "profile" && (
-                <div className="flex flex-col items-center justify-center h-full text-on-surface-variant">
-                  <SettingsIcon size={48} className="mb-4 opacity-50" />
-                  <p className="font-semibold text-lg">{SECTIONS.find(s => s.id === activeSection)?.label} settings</p>
-                  <p className="text-sm mt-2">This section is coming soon.</p>
-                </div>
-              )}
+
             </section>
           </div>
         </div>
