@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import {
@@ -30,8 +30,10 @@ function rankCandidates(list) {
     .map((c) => ({
       ...c,
       score: c.score ?? c.totalScore ?? c.percentage ?? 0,
-      name: c.name || c.candidateName || c.userName || `Candidate ${c.id?.slice(0, 6) || ""}`,
-      role: c.role || c.campaignTitle || c.position || "",
+      mcqScore: c.mcqScore ?? 0,
+      codingScore: c.codingScore ?? 0,
+      name: c.name || c.session?.candidate?.name || c.candidateName || c.userName || `Candidate ${c.id?.slice(0, 6) || ""}`,
+      role: c.role || c.session?.assessment?.campaign?.title || c.campaignTitle || c.position || "",
       integrityFlags: c.integrityFlags ?? c.flagCount ?? 0,
       status: c.status || (c.score >= 80 ? "Top match" : c.score >= 60 ? "Review" : "Pending")
     }))
@@ -44,12 +46,14 @@ export default function ResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { campaignId } = useParams();
   const [candidates, setCandidates] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
-  const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [minMcqScore, setMinMcqScore] = useState("");
+  const [minCodingScore, setMinCodingScore] = useState("");
   const [page, setPage] = useState(1);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const perPage = 10;
@@ -57,20 +61,38 @@ export default function ResultsPage() {
   const role = (user?.role || "recruiter").toLowerCase();
   const isCandidate = role === "candidate";
 
-  // Load campaigns list for recruiters (for dropdown)
+  // Load campaigns list for recruiters
   useEffect(() => {
     if (!isCandidate) {
       campaignService.getMyCampaigns()
         .then((data) => {
           const list = data.campaigns || data || [];
           setCampaigns(list);
-          if (list.length > 0) setSelectedCampaignId(list[0].id);
         })
         .catch(() => setCampaigns([]));
     }
   }, [isCandidate]);
 
-  // Load results — for recruiters, load by selected campaign; for candidates, load own history
+  const currentCampaign = campaigns.find(c => c.id === campaignId);
+  const isCurrentlyOpen = (currentCampaign?.status || "").toUpperCase() === "OPEN";
+
+  const handleToggleCampaign = async () => {
+    if (!currentCampaign) return;
+    const newStatus = isCurrentlyOpen ? "CLOSED" : "OPEN";
+    const actionText = isCurrentlyOpen ? "close" : "open";
+    
+    if (window.confirm(`Are you sure you want to ${actionText} this campaign?`)) {
+      try {
+        await campaignService.updateCampaign(currentCampaign.id, { status: newStatus });
+        setCampaigns((prev) => prev.map(c => c.id === currentCampaign.id ? { ...c, status: newStatus } : c));
+        toast.success(`Campaign ${isCurrentlyOpen ? "closed" : "opened"} successfully`);
+      } catch (err) {
+        toast.error(err.message || `Failed to ${actionText} campaign`);
+      }
+    }
+  };
+
+  // Load results
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -78,8 +100,8 @@ export default function ResultsPage() {
     let fetcher;
     if (isCandidate) {
       fetcher = resultsService.getMyResults();
-    } else if (selectedCampaignId) {
-      fetcher = resultsService.getCampaignResults(selectedCampaignId)
+    } else if (campaignId) {
+      fetcher = resultsService.getCampaignResults(campaignId)
         .then((r) => ({ results: r.results || r || [] }));
     } else {
       setLoading(false);
@@ -96,10 +118,12 @@ export default function ResultsPage() {
         setCandidates([]);
       })
       .finally(() => setLoading(false));
-  }, [isCandidate, selectedCampaignId, location.pathname]);
+  }, [isCandidate, campaignId, location.pathname]);
 
   const filtered = candidates.filter((c) => {
     if (search && !c.name?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (minMcqScore && c.mcqScore < Number(minMcqScore)) return false;
+    if (minCodingScore && c.codingScore < Number(minCodingScore)) return false;
     return true;
   });
 
@@ -128,42 +152,46 @@ export default function ResultsPage() {
       <Sidebar role={role} />
       <main className="workspace">
 
-        {/* Custom Header for Results */}
         <header className="h-20 bg-white border-b border-outline-variant/50 px-8 flex items-center justify-between sticky top-0 z-40">
-          <div>
-            <h1 className="text-2xl font-bold text-on-surface">
-              {isCandidate ? "My Assessment Results" : "Results and Rankings"}
-            </h1>
+          <div className="flex items-center gap-4">
+            {!isCandidate && (
+              <button onClick={() => navigate("/campaigns")} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-colors text-on-surface-variant border border-outline-variant/60">
+                <ChevronLeft size={20} />
+              </button>
+            )}
+            <div>
+              <h1 className="text-2xl font-bold text-on-surface">
+                {isCandidate ? "My Assessment Results" : (currentCampaign?.title || "Campaign Details")}
+              </h1>
+              {!isCandidate && currentCampaign && (
+                <div className="flex items-center gap-2 mt-0.5">
+                   <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold ${isCurrentlyOpen ? 'bg-[#D1FAE5] text-[#059669]' : 'bg-[#F3F4F6] text-[#4B5563]'}`}>
+                     {isCurrentlyOpen ? 'OPEN' : 'CLOSED'}
+                   </span>
+                   <span className="text-xs text-on-surface-variant font-semibold">Results and Rankings</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Campaign selector — recruiters only */}
-            {!isCandidate && (
-              <div className="relative">
-                <select
-                  value={selectedCampaignId}
-                  onChange={(e) => { setSelectedCampaignId(e.target.value); setPage(1); }}
-                  className="appearance-none bg-surface-container-low border border-outline-variant/60 rounded-lg pl-4 pr-10 py-2.5 text-sm font-semibold text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
-                >
-                  {campaigns.length === 0 && <option value="">No campaigns yet</option>}
-                  {campaigns.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
-              </div>
-            )}
-
-            <div className="h-8 w-px bg-outline-variant/50 mx-2" />
-
-            {/* Export + New Campaign — recruiters only */}
+            {/* Action buttons — recruiters only */}
             {!isCandidate && (
               <>
+                {currentCampaign && (
+                  isCurrentlyOpen ? (
+                    <button onClick={handleToggleCampaign} className="text-sm font-bold bg-error-coral/10 text-error-coral hover:bg-error-coral/20 px-4 py-2 rounded-lg transition-colors border border-error-coral/20">
+                      Close Campaign
+                    </button>
+                  ) : (
+                    <button onClick={handleToggleCampaign} className="text-sm font-bold bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0] px-4 py-2 rounded-lg transition-colors border border-[#059669]/20">
+                      Open Campaign
+                    </button>
+                  )
+                )}
+                <div className="h-8 w-px bg-outline-variant/50 mx-2" />
                 <button onClick={handleExport} className="flex items-center gap-2 bg-white border border-outline-variant/80 hover:bg-surface-light text-on-surface px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
                   <Download size={16} /> Export
-                </button>
-                <button onClick={() => navigate("/recruiter")} className="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
-                  <Plus size={16} /> New Campaign
                 </button>
               </>
             )}
@@ -291,9 +319,30 @@ export default function ResultsPage() {
                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                       />
                     </div>
-                    <button className="w-9 h-9 border border-outline-variant/60 rounded-lg flex items-center justify-center hover:bg-surface-container-low transition-colors">
-                      <Filter size={16} className="text-on-surface-variant" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                       <span className="text-xs font-semibold text-on-surface-variant">Min MCQ:</span>
+                       <input 
+                          type="number" 
+                          min="0"
+                          max="100"
+                          placeholder="0"
+                          className="w-16 px-2 py-1.5 bg-surface-container-low border border-outline-variant/60 rounded-md text-sm font-medium focus:outline-none focus:border-primary"
+                          value={minMcqScore}
+                          onChange={(e) => { setMinMcqScore(e.target.value); setPage(1); }}
+                       />
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <span className="text-xs font-semibold text-on-surface-variant">Min Coding:</span>
+                       <input 
+                          type="number" 
+                          min="0"
+                          max="100"
+                          placeholder="0"
+                          className="w-16 px-2 py-1.5 bg-surface-container-low border border-outline-variant/60 rounded-md text-sm font-medium focus:outline-none focus:border-primary"
+                          value={minCodingScore}
+                          onChange={(e) => { setMinCodingScore(e.target.value); setPage(1); }}
+                       />
+                    </div>
                   </div>
                 </div>
                 
@@ -303,7 +352,9 @@ export default function ResultsPage() {
                       <tr className="border-b border-outline-variant/50">
                         <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant text-center w-16">Rank</th>
                         <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant">Candidate</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant w-48">Score</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant w-32">MCQ</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant w-32">Coding</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant w-48">Overall Score</th>
                         <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant text-right">Integrity</th>
                       </tr>
                     </thead>
@@ -337,6 +388,12 @@ export default function ResultsPage() {
                                    <div className="text-xs text-on-surface-variant mt-0.5">{c.role}</div>
                                  </div>
                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                               <div className="text-sm font-semibold text-on-surface-variant">{c.mcqScore}%</div>
+                            </td>
+                            <td className="px-6 py-4">
+                               <div className="text-sm font-semibold text-on-surface-variant">{c.codingScore}%</div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">

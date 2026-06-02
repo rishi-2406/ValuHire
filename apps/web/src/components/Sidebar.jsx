@@ -15,8 +15,8 @@ import { useAuth } from "../hooks/useAuth";
 const NAV_ITEMS = {
   recruiter: [
     { to: "/recruiter", label: "Dashboard", icon: LayoutDashboard, end: true },
+    { to: "/campaigns", label: "Campaigns", icon: Briefcase },
     { to: "/interviews", label: "Interviews", icon: Video },
-    { to: "/results", label: "Results", icon: BarChart3 },
     { to: "/settings", label: "Settings", icon: Settings }
   ],
   candidate: [

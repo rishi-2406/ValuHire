@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import CandidateDashboard from "./pages/CandidateDashboard";
 import CampaignsPage from "./pages/CampaignsPage";
+import CampaignBuilderPage from "./pages/CampaignBuilderPage";
 import AssessmentRoom from "./pages/AssessmentRoom";
 import ResultsPage from "./pages/ResultsPage";
 import InterviewsPage from "./pages/InterviewsPage";
@@ -89,8 +90,16 @@ function AppRoutes() {
       <Route
         path="/campaigns"
         element={
-          <ProtectedRoute allowedRoles={["CANDIDATE"]}>
+          <ProtectedRoute allowedRoles={["CANDIDATE", "RECRUITER", "ADMIN"]}>
             <CampaignsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/campaigns/:campaignId/builder"
+        element={
+          <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN"]}>
+            <CampaignBuilderPage />
           </ProtectedRoute>
         }
       />
@@ -103,9 +112,17 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/results"
+        path="/campaigns/:campaignId"
         element={
           <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN", "CANDIDATE"]}>
+            <ResultsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/results"
+        element={
+          <ProtectedRoute allowedRoles={["CANDIDATE"]}>
             <ResultsPage />
           </ProtectedRoute>
         }

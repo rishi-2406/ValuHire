@@ -51,7 +51,10 @@ function createApplicationsRoutes({ router, prisma, middleware }) {
   }));
 
   router.post("/assessments/:id/sessions", ...candidateOnly, asyncHandler(async (req, res) => {
-    const assessment = await prisma.assessment.findUnique({ where: { id: req.params.id }, include: { campaign: true } });
+    const assessment = await prisma.assessment.findUnique({ 
+      where: { id: req.params.id }, 
+      include: { campaign: true, mcqQuestions: true, codingQuestions: { include: { testCases: true } } } 
+    });
     if (!assessment || assessment.campaign.status !== "OPEN") {
       const error = new Error("Assessment is not available");
       error.statusCode = 403;
@@ -65,11 +68,65 @@ function createApplicationsRoutes({ router, prisma, middleware }) {
       error.statusCode = 403;
       throw error;
     }
-    const expiresAt = new Date(Date.now() + assessment.durationMinutes * 60 * 1000);
-    const session = await prisma.assessmentSession.create({
-      data: { assessmentId: assessment.id, candidateId: req.user.id, expiresAt }
+
+    let session = await prisma.assessmentSession.findFirst({
+      where: { assessmentId: assessment.id, candidateId: req.user.id, status: "STARTED" }
     });
-    sendCreated(res, { session });
+
+    if (!session) {
+      const selectVariants = (questions) => {
+        const grouped = {};
+        for (const q of questions) {
+          if (!grouped[q.slotIndex]) grouped[q.slotIndex] = [];
+          grouped[q.slotIndex].push(q.id);
+        }
+        return Object.values(grouped).map(slot => slot[Math.floor(Math.random() * slot.length)]);
+      };
+
+      const selectedMcq = selectVariants(assessment.mcqQuestions);
+      const selectedCoding = selectVariants(assessment.codingQuestions);
+
+      for (let i = selectedMcq.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [selectedMcq[i], selectedMcq[j]] = [selectedMcq[j], selectedMcq[i]];
+      }
+
+      const totalDuration = (assessment.mcqDurationMinutes || 0) + (assessment.codingDurationMinutes || 0);
+      const durationToUse = totalDuration > 0 ? totalDuration : assessment.durationMinutes;
+      const expiresAt = new Date(Date.now() + durationToUse * 60 * 1000);
+
+      session = await prisma.assessmentSession.create({
+        data: { 
+          assessmentId: assessment.id, 
+          candidateId: req.user.id, 
+          expiresAt,
+          selectedVariants: { mcq: selectedMcq, coding: selectedCoding }
+        }
+      });
+    }
+
+    const selectedVariants = session.selectedVariants || { mcq: [], coding: [] };
+    const filteredMcq = selectedVariants.mcq.map(id => assessment.mcqQuestions.find(q => q.id === id)).filter(Boolean);
+    const filteredCoding = selectedVariants.coding.map(id => assessment.codingQuestions.find(q => q.id === id)).filter(Boolean);
+
+    // Strip answers from mcq for security
+    filteredMcq.forEach(q => delete q.correctKey);
+    // Strip hidden test cases
+    filteredCoding.forEach(q => {
+      if (q.testCases) {
+        q.testCases = q.testCases.filter(tc => !tc.isHidden);
+      }
+    });
+
+    const timeLeft = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 1000));
+
+    sendCreated(res, { 
+      session: { 
+        ...session, 
+        timeLeft,
+        assessment: { ...assessment, mcqQuestions: filteredMcq, codingQuestions: filteredCoding }
+      } 
+    });
   }));
 
   router.post("/assessment-sessions/:id/mcq-answers", ...candidateOnly, asyncHandler(async (req, res) => {

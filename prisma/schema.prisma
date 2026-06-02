@@ -115,6 +115,7 @@ model Campaign {
   title          String
   description    String?
   status         CampaignStatus @default(DRAFT)
+  expiresAt      DateTime?
   assessment     Assessment?
   applications   Application[]
   inviteLinks    InviteLink[]
@@ -136,23 +137,26 @@ model Application {
 }
 
 model Assessment {
-  id              String              @id @default(cuid())
-  campaignId      String              @unique
-  campaign        Campaign            @relation(fields: [campaignId], references: [id])
-  title           String
-  instructions    String?
-  durationMinutes Int
-  mcqQuestions    McqQuestion[]
-  codingQuestions CodingQuestion[]
-  sessions        AssessmentSession[]
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id                  String              @id @default(cuid())
+  campaignId          String              @unique
+  campaign            Campaign            @relation(fields: [campaignId], references: [id])
+  title               String
+  instructions        String?
+  durationMinutes     Int                 // Fallback total duration
+  mcqDurationMinutes  Int?                // Independent MCQ timer
+  codingDurationMinutes Int?              // Independent Coding timer
+  mcqQuestions        McqQuestion[]
+  codingQuestions     CodingQuestion[]
+  sessions            AssessmentSession[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 }
 
 model McqQuestion {
   id           String      @id @default(cuid())
   assessmentId String
   assessment   Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  slotIndex    Int         @default(0) // Questions with the same slotIndex are variants
   prompt       String
   options      Json
   correctKey   String
@@ -164,9 +168,11 @@ model CodingQuestion {
   id           String       @id @default(cuid())
   assessmentId String
   assessment   Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  slotIndex    Int          @default(0) // Questions with the same slotIndex are variants
   title        String
   statement    String
   difficulty   String
+  language     String       @default("javascript") // Default language expected
   constraints  String?
   points       Int          @default(10)
   testCases    TestCase[]
@@ -192,6 +198,7 @@ model AssessmentSession {
   startedAt    DateTime                @default(now())
   submittedAt  DateTime?
   expiresAt    DateTime
+  selectedVariants Json?
   mcqAnswers   McqAnswer[]
   submissions  Submission[]
   result       AssessmentResult?

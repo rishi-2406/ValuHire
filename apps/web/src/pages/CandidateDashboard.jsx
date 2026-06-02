@@ -59,8 +59,13 @@ export default function CandidateDashboard() {
 
   const handleStart = async (application) => {
     if (startingSession) return;
+    const assessmentId = application.campaign?.assessment?.id;
+    if (!assessmentId) {
+      toast.error("This campaign does not have an active assessment.");
+      return;
+    }
     setStartingSession(application.id);
-    await startAssessmentSession(application.assessmentId || application.id);
+    await startAssessmentSession(assessmentId);
     setStartingSession(null);
   };
 
@@ -212,7 +217,7 @@ export default function CandidateDashboard() {
                           <h4 className="text-xl font-bold text-on-surface">{app.campaign?.title || "Role"}</h4>
                           <div className="flex items-center gap-2 text-on-surface-variant text-sm mt-1">
                             <Briefcase size={16} />
-                            <span>{app.campaign?.company || "Company Inc."}</span>
+                            <span>{app.campaign?.company?.name || "Company Inc."}</span>
                           </div>
                         </div>
                         <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20">
@@ -241,6 +246,7 @@ export default function CandidateDashboard() {
                   if (!user?.name) missingItems.push("Full Name");
                   if (!user?.bio) missingItems.push("Bio");
                   if (!user?.profilePicUrl) missingItems.push("Profile Picture");
+                  if (!user?.resumeUrl) missingItems.push("Resume");
                   if (!(user?.skills?.length || user?.specialties?.length)) missingItems.push("Specialties");
                   
                   if (missingItems.length === 0) {

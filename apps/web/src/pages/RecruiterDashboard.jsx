@@ -57,14 +57,34 @@ export default function RecruiterDashboard() {
         duration: payload.duration,
         language: payload.language,
         tags: payload.tags,
-        status: "OPEN"
+        status: "DRAFT"
       });
       const newCampaign = data.campaign || data;
       setCampaigns((prev) => [newCampaign, ...prev]);
-      toast.success("Campaign created", { title: "Recruitment ready" });
+      toast.success("Campaign created", { title: "Redirecting to Builder..." });
+      
+      // Navigate to the full-page builder for assessments
+      navigate(`/campaigns/${newCampaign.id}/builder`);
     } catch (err) {
       toast.error(err.message || "Failed to create campaign");
       throw err;
+    }
+  };
+
+  const handleToggleCampaign = async (e, campaign) => {
+    e.stopPropagation();
+    const isCurrentlyOpen = (campaign.status || "").toUpperCase() === "OPEN";
+    const newStatus = isCurrentlyOpen ? "CLOSED" : "OPEN";
+    const actionText = isCurrentlyOpen ? "close" : "open";
+    
+    if (window.confirm(`Are you sure you want to ${actionText} this campaign?`)) {
+      try {
+        await campaignService.updateCampaign(campaign.id, { status: newStatus });
+        setCampaigns((prev) => prev.map(c => c.id === campaign.id ? { ...c, status: newStatus } : c));
+        toast.success(`Campaign ${isCurrentlyOpen ? "closed" : "opened"} successfully`);
+      } catch (err) {
+        toast.error(err.message || `Failed to ${actionText} campaign`);
+      }
     }
   };
 
@@ -80,11 +100,6 @@ export default function RecruiterDashboard() {
           eyebrow=""
           title=""
           onSearch={setSearch}
-          actions={
-            <button type="button" className="bg-[#004ac6] hover:bg-[#003ea8] text-white px-5 py-2 rounded-full font-semibold text-sm transition-colors" onClick={() => setShowCreateModal(true)}>
-              New Campaign
-            </button>
-          }
         />
 
         <div className="p-8 max-w-7xl mx-auto">
@@ -138,16 +153,22 @@ export default function RecruiterDashboard() {
             )}
           </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <section className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden flex flex-col h-fit">
+          <div className="grid grid-cols-1 gap-6">
+            <section className="bg-white rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden flex flex-col h-fit">
               <div className="p-6 border-b border-outline-variant/50 flex justify-between items-center">
                 <h2 className="text-xl font-bold text-on-surface">Campaign Pipeline</h2>
-                <button
-                  type="button"
-                  className="text-sm font-bold text-primary hover:underline"
-                >
-                  View All
-                </button>
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-sm">
+                    <Plus size={16} /> New Campaign
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/campaigns")}
+                    className="text-sm font-bold text-primary hover:underline"
+                  >
+                    View All
+                  </button>
+                </div>
               </div>
 
               {loading ? (
@@ -170,7 +191,6 @@ export default function RecruiterDashboard() {
                         <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant">Campaign Title</th>
                         <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant">Applicants</th>
                         <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant text-center">Status</th>
-                        <th className="px-6 py-4 text-xs font-semibold text-on-surface-variant text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -194,7 +214,7 @@ export default function RecruiterDashboard() {
                           return (
                             <tr
                               key={campaign.id}
-                              onClick={() => navigate("/results")}
+                              onClick={() => navigate(`/campaigns/${campaign.id}`)}
                               className="border-b border-outline-variant/30 hover:bg-surface-light transition-colors cursor-pointer last:border-0"
                             >
                               <td className="px-6 py-4">
@@ -208,20 +228,12 @@ export default function RecruiterDashboard() {
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
                                   <span className="font-bold text-on-surface min-w-[28px]">{applicants}</span>
-                                  <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${isOpen ? 'bg-[#004ac6]' : 'bg-[#6B7280]'}`} style={{ width: `${Math.min(100, (applicants / 250) * 100)}%` }} />
-                                  </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4 text-center">
                                 <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${isOpen ? 'bg-[#D1FAE5] text-[#059669] border border-[#059669]/20' : 'bg-[#F3F4F6] text-[#4B5563] border border-outline'}`}>
                                   {isOpen ? 'Open' : 'Closed'}
                                 </span>
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <button type="button" className="text-on-surface-variant hover:text-on-surface p-1">
-                                  <MoreHorizontal size={20} />
-                                </button>
                               </td>
                             </tr>
                           );
@@ -232,93 +244,6 @@ export default function RecruiterDashboard() {
                 </div>
               )}
             </section>
-
-            <div className="flex flex-col gap-6">
-              {/* Integrity Insights Card */}
-              <section className="bg-[#1E293B] text-white rounded-2xl p-8 relative overflow-hidden shadow-sm">
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex items-center gap-2 mb-6 text-white/90">
-                    <Shield size={18} />
-                    <h3 className="text-xs font-bold tracking-wider uppercase">Integrity Insights</h3>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <div className="text-[3.5rem] font-bold leading-none mb-1">0</div>
-                    <div className="text-xs text-white/70 uppercase tracking-widest font-semibold max-w-[120px] leading-tight">Active Flags</div>
-                  </div>
-                  
-                  <p className="text-sm text-white/80 mb-8 leading-relaxed">
-                    0 active flags require review across {activeCampaigns.length} active campaigns. Resolve them to maintain pipeline health.
-                  </p>
-                  
-                  <button
-                    type="button"
-                    onClick={() => navigate("/results")}
-                    className="w-full bg-[#E0E7FF] text-[#1E293B] py-3 rounded-lg text-sm font-bold hover:bg-white transition-colors mt-auto"
-                  >
-                    Review Flags
-                  </button>
-                </div>
-                {/* Decorative background shapes */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-                <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 translate-x-1/4" />
-              </section>
-
-              {/* Upcoming Interviews Card */}
-              <section className="bg-white rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-outline-variant/50 flex justify-between items-center">
-                  <h2 className="text-lg font-bold text-on-surface leading-tight">Upcoming<br/>Interviews</h2>
-                  <span className="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-xs font-bold rounded-full">Today</span>
-                </div>
-                
-                <div className="p-6 flex flex-col gap-4">
-                  {interviews.length === 0 ? (
-                    <EmptyState
-                      icon={Video}
-                      title="No upcoming interviews"
-                      description="You don't have any interviews scheduled for today."
-                    />
-                  ) : (
-                    interviews.map(interview => {
-                      const time = new Date(interview.scheduledAt || interview.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      const candidateName = interview.candidate?.name || "Candidate";
-                      const initials = candidateName.split(" ").map(n => n[0]).join("").substring(0,2).toUpperCase();
-                      const campaignTitle = interview.campaign?.title || interview.role || "Interview";
-                      return (
-                        <div key={interview.id} className="border border-outline-variant/50 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
-                          <div className="flex justify-between items-start">
-                            <div className="flex gap-3">
-                              <div className="w-10 h-10 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold">{initials}</div>
-                              <div>
-                                <div className="font-bold text-on-surface text-sm">{candidateName}</div>
-                                <div className="text-xs text-on-surface-variant mt-0.5">{campaignTitle}</div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-[#2563EB] font-bold text-sm">{time}</div>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button className="bg-[#10B981] hover:bg-[#059669] text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-                              <Video size={14} /> Join Call
-                            </button>
-                            <button className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface py-2 rounded-lg text-xs font-bold transition-colors">
-                              Notes
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-                
-                <div className="p-4 border-t border-outline-variant/50 bg-surface-light/50">
-                  <button className="w-full text-[#004ac6] font-bold text-sm hover:underline" onClick={() => navigate('/interviews')}>
-                    View Calendar
-                  </button>
-                </div>
-              </section>
-            </div>
           </div>
         </div>
       </main>

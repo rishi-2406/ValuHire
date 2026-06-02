@@ -4,7 +4,7 @@ import TopBar from "../components/TopBar";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { userService } from "../services/api";
-import { User, Bell, Lock, Shield, Settings as SettingsIcon, X, Settings2 } from "lucide-react";
+import { User, Bell, Lock, Shield, Settings as SettingsIcon, X, Settings2, CheckCircle2 } from "lucide-react";
 
 const SECTIONS = [
   { id: "profile", label: "Profile", icon: User }
@@ -161,6 +161,42 @@ export default function SettingsPage() {
                       <p className="text-xs text-on-surface-variant">JPG, GIF or PNG. 1MB max.</p>
                     </div>
                   </div>
+
+                  {/* Resume Upload (Candidate Only) */}
+                  {!isRecruiter && (
+                    <div className="flex items-center gap-6 mb-8 bg-[#F8FAFC] border border-outline-variant/50 p-6 rounded-xl">
+                      <div className="w-14 h-14 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center text-2xl border border-[#BFDBFE]">
+                        <Shield size={24} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-on-surface mb-1">Resume / CV</h3>
+                        <p className="text-xs text-on-surface-variant mb-3">Upload your latest resume. PDF up to 5MB.</p>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            id="resume-upload"
+                            onChange={(e) => {
+                               const file = e.target.files?.[0];
+                               if(file) {
+                                  toast.success("Resume uploaded temporarily (mocked)");
+                                  updateUser({ ...user, resumeUrl: URL.createObjectURL(file) });
+                               }
+                            }}
+                            className="hidden"
+                          />
+                          <button type="button" onClick={() => document.getElementById("resume-upload").click()} className="bg-white border border-[#2563EB] text-[#2563EB] hover:bg-[#EFF6FF] px-4 py-2 rounded font-semibold text-sm transition-colors">
+                            Upload Resume
+                          </button>
+                          {user?.resumeUrl && (
+                            <a href={user.resumeUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#059669] hover:underline flex items-center gap-1">
+                              <CheckCircle2 size={16} /> Attached
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Name fields */}
                   <div className="grid grid-cols-2 gap-6 mb-6">
