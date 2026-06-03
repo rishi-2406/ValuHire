@@ -9,7 +9,8 @@ import {
   Briefcase,
   Users,
   HelpCircle,
-  Search
+  Search,
+  Bell
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import NotificationBell from "./NotificationBell";
@@ -19,6 +20,7 @@ const NAV_ITEMS = {
     { to: "/recruiter", label: "Dashboard", icon: LayoutDashboard, end: true },
     { to: "/campaigns", label: "Campaigns", icon: Briefcase },
     { to: "/interviews", label: "Interviews", icon: Video },
+    { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/settings", label: "Settings", icon: Settings }
   ],
   candidate: [
@@ -26,11 +28,12 @@ const NAV_ITEMS = {
     { to: "/applications", label: "My Applications", icon: Briefcase },
     { to: "/campaigns", label: "Browse Campaigns", icon: Search },
     { to: "/interviews", label: "Interviews", icon: Video },
-    { to: "/results", label: "My Results", icon: BarChart3 },
+    { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/settings", label: "Settings", icon: Settings }
   ],
   admin: [
     { to: "/admin", label: "Console", icon: Shield, end: true },
+    { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/settings", label: "Settings", icon: Settings }
   ]
 };

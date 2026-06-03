@@ -84,6 +84,7 @@ model User {
   recruiterSlots    InterviewSlot[]     @relation("RecruiterInterviews")
   feedbackGiven     InterviewFeedback[]
   refreshTokens     RefreshToken[]
+  notifications     Notification[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 }
@@ -300,4 +301,16 @@ model InterviewFeedback {
   rating          Int?
   recommendation  String?
   createdAt       DateTime      @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  metadata  Json?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

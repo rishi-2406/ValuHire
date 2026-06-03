@@ -11,9 +11,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  BarChart3,
+  Award
 } from "lucide-react";
-import { applicationService } from "../services/api";
+import { applicationService, resultsService } from "../services/api";
 import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
 
@@ -25,10 +27,23 @@ export default function ActiveAssessmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [resultsMap, setResultsMap] = useState({});
+
   useEffect(() => {
-    applicationService.getMyApplications()
-      .then((appData) => {
+    Promise.all([
+      applicationService.getMyApplications(),
+      resultsService.getMyResults().catch(() => ({ results: [] }))
+    ])
+      .then(([appData, resData]) => {
         setApplications(appData.applications || appData || []);
+        const rMap = {};
+        const resList = resData.results || resData || [];
+        resList.forEach(r => {
+          if (r.session?.campaignId) {
+             rMap[r.session.campaignId] = r;
+          }
+        });
+        setResultsMap(rMap);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -156,6 +171,34 @@ export default function ActiveAssessmentsPage() {
                       </div>
 
                       {renderProgressSteps(app.status)}
+
+                      {isCompleted && resultsMap[app.campaign.id] && (
+                        <div className="mt-4 p-4 bg-surface-container-lowest border border-outline-variant/50 rounded-2xl flex items-center justify-between shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center font-bold shadow-sm border border-[#A7F3D0]">
+                              <Award size={20} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-0.5">Total Score</p>
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-xl font-extrabold text-on-surface">{resultsMap[app.campaign.id].totalScore ?? 0}</span>
+                                <span className="text-xs font-semibold text-on-surface-variant">pts</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="hidden sm:flex items-center gap-6">
+                            <div className="text-center">
+                              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">MCQ</p>
+                              <span className="text-sm font-bold text-on-surface">{resultsMap[app.campaign.id].mcqScore ?? 0}</span>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Coding</p>
+                              <span className="text-sm font-bold text-on-surface">{resultsMap[app.campaign.id].codingScore ?? 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 border-t md:border-t-0 md:border-l border-outline-variant/40 pt-4 md:pt-0 md:pl-6 min-w-[200px]">

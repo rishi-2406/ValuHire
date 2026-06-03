@@ -155,11 +155,8 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
                   className="flex-1 min-w-[200px] outline-none text-sm bg-transparent border-none py-1"
                 />
               </div>
-            </div>
+            </div>          </div>
 
-            </div>
-
-          </div>
         </div>
 
         {/* Footer */}

@@ -60,7 +60,7 @@ function buildDockerCommand({ language, filePath, workDir, timeoutSeconds = 5, m
     "--cpus",
     "1",
     "-v",
-    `${workDir}:/workspace:ro`,
+    `${workDir}:/workspace:rw`,
     config.image,
     "timeout",
     `${timeoutSeconds}s`,

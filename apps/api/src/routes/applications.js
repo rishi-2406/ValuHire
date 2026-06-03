@@ -118,8 +118,7 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
         candidate: {
           select: {
             id: true, name: true, email: true, bio: true, skills: true,
-            profilePicUrl: true, resumeUrl: true, githubUrl: true,
-            leetcodeUrl: true, codeforcesUrl: true, linkedinUrl: true, portfolioUrl: true
+            profilePicUrl: true, resumeUrl: true
           }
         },
         campaign: { select: { id: true, title: true } }
@@ -154,8 +153,14 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
     }
 
     let session = await prisma.assessmentSession.findFirst({
-      where: { assessmentId: assessment.id, candidateId: req.user.id, status: "STARTED" }
+      where: { assessmentId: assessment.id, candidateId: req.user.id }
     });
+
+    if (session && session.status === "SUBMITTED") {
+      const error = new Error("Assessment already submitted");
+      error.statusCode = 403;
+      throw error;
+    }
 
     if (!session) {
       const selectVariants = (questions) => {
@@ -223,6 +228,12 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
     if (!session || session.candidateId !== req.user.id) {
       const error = new Error("Assessment session not found");
       error.statusCode = 404;
+      throw error;
+    }
+    
+    if (session.status === "SUBMITTED") {
+      const error = new Error("Assessment already submitted");
+      error.statusCode = 403;
       throw error;
     }
 

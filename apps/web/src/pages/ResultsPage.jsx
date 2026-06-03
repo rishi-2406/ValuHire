@@ -59,16 +59,6 @@ function ProfileModal({ candidate, campaignId, onClose, onShortlist }) {
   const name = candidate?.name || "Candidate";
   const initials = name.split(" ").map(n => n[0]).join("").substring(0, 2);
 
-  const LINKS = [
-    { key: "githubUrl", label: "GitHub", icon: Github, color: "text-gray-800" },
-    { key: "leetcodeUrl", label: "LeetCode", icon: Code, color: "text-[#F89F1B]" },
-    { key: "codeforcesUrl", label: "Codeforces", icon: Code, color: "text-[#1B76D2]" },
-    { key: "linkedinUrl", label: "LinkedIn", icon: Linkedin, color: "text-[#0A66C2]" },
-    { key: "portfolioUrl", label: "Portfolio", icon: Globe, color: "text-[#059669]" },
-  ];
-
-  const hasLinks = LINKS.some(l => p[l.key]);
-
   return (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div
@@ -113,36 +103,19 @@ function ProfileModal({ candidate, campaignId, onClose, onShortlist }) {
               </div>
 
               {/* Contact / Links */}
-              {(hasLinks || p.resumeUrl) && (
+              {p.resumeUrl && (
                 <div className="bg-white rounded-2xl p-6 border border-outline-variant/60 shadow-sm">
                   <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-4 flex items-center gap-2"><Globe size={14}/> Connect</h4>
                   <div className="flex flex-col gap-3">
-                    {LINKS.filter(l => p[l.key]).map(link => {
-                      const Icon = link.icon;
-                      return (
-                        <a
-                          key={link.key}
-                          href={p[link.key]}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`flex items-center gap-3 text-sm font-semibold ${link.color} hover:opacity-80 transition-opacity`}
-                        >
-                          <div className={`w-8 h-8 rounded-lg bg-surface flex items-center justify-center border border-outline-variant/30`}><Icon size={16} /></div>
-                          {link.label}
-                        </a>
-                      );
-                    })}
-                    {p.resumeUrl && (
-                      <a
-                        href={p.resumeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-sm font-semibold text-[#2563EB] hover:opacity-80 transition-opacity mt-2 pt-3 border-t border-outline-variant/50"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] flex items-center justify-center border border-[#BFDBFE]"><FileText size={16} /></div>
-                        View Resume
-                      </a>
-                    )}
+                    <a
+                      href={p.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-sm font-semibold text-[#2563EB] hover:opacity-80 transition-opacity"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center border border-outline-variant/30"><FileText size={16} /></div>
+                      View Resume
+                    </a>
                   </div>
                 </div>
               )}
