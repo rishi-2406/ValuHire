@@ -1,10 +1,10 @@
 const http = require("http");
 const { Server } = require("socket.io");
 
-const app = require("./app");
+const createApp = require("./app");
 const { apiPort, webOrigin } = require("./config/env");
 
-const server = http.createServer(app);
+const server = http.createServer();
 const io = new Server(server, {
   cors: {
     origin: webOrigin,
@@ -12,7 +12,18 @@ const io = new Server(server, {
   }
 });
 
+const app = createApp(io);
+server.on("request", app);
+
 io.on("connection", (socket) => {
+  // User joins their personal notification room so we can target them
+  socket.on("joinUserRoom", ({ userId }) => {
+    if (userId) {
+      socket.join(`user:${userId}`);
+    }
+  });
+
+  // Interview/coding rooms
   socket.on("joinRoom", ({ roomId }) => {
     socket.join(roomId);
     socket.to(roomId).emit("presenceChanged", { socketId: socket.id, joined: true });

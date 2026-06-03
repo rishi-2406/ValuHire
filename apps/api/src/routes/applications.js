@@ -2,7 +2,7 @@ const { hashToken } = require("../lib/auth");
 const { buildAssessmentScore } = require("../lib/scoring");
 const { asyncHandler, requireFields, sendCreated, sendOk } = require("../lib/http");
 
-function createApplicationsRoutes({ router, prisma, middleware }) {
+function createApplicationsRoutes({ router, prisma, middleware, io }) {
   const candidateOnly = [middleware.requireAuth, middleware.requireRole("CANDIDATE")];
 
   router.get("/applications/me", ...candidateOnly, asyncHandler(async (req, res) => {
@@ -48,6 +48,85 @@ function createApplicationsRoutes({ router, prisma, middleware }) {
     });
     await prisma.inviteLink.update({ where: { id: invite.id }, data: { usedAt: new Date() } });
     sendOk(res, { application });
+  }));
+
+  // POST /applications/shortlist — recruiter bulk-shortlists candidates
+  router.post("/applications/shortlist", middleware.requireAuth, middleware.requireApprovedCompany, asyncHandler(async (req, res) => {
+    requireFields(req.body, ["campaignId", "candidateIds"]);
+    const { campaignId, candidateIds } = req.body;
+    if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
+      const error = new Error("candidateIds must be a non-empty array");
+      error.statusCode = 400;
+      throw error;
+    }
+    const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
+    if (!campaign || campaign.companyId !== req.user.companyId) {
+      const error = new Error("Campaign not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const results = [];
+    for (const candidateId of candidateIds) {
+      // Only shortlist if not already shortlisted or further advanced
+      const app = await prisma.application.findUnique({
+        where: { candidateId_campaignId: { candidateId, campaignId } },
+        include: { candidate: true }
+      });
+      if (!app) continue;
+      if (["SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"].includes(app.status)) {
+        results.push({ candidateId, alreadyShortlisted: true });
+        continue;
+      }
+      await prisma.application.update({
+        where: { candidateId_campaignId: { candidateId, campaignId } },
+        data: { status: "SHORTLISTED" }
+      });
+      // Create a persisted notification
+      const notification = await prisma.notification.create({
+        data: {
+          userId: candidateId,
+          type: "SHORTLISTED",
+          title: "You've been shortlisted! 🎉",
+          message: `Congratulations! You have been shortlisted for the role of "${campaign.title}". The recruiter will be in touch to schedule an interview.`,
+          metadata: { campaignId, campaignTitle: campaign.title }
+        }
+      });
+      // Emit real-time event if candidate is connected
+      if (io) {
+        io.to(`user:${candidateId}`).emit("new_notification", notification);
+      }
+      results.push({ candidateId, shortlisted: true, notification });
+    }
+    sendOk(res, { results });
+  }));
+
+  // GET /applications/campaign/:campaignId/shortlisted — fetch shortlisted candidates for a campaign
+  router.get("/applications/campaign/:campaignId/shortlisted", middleware.requireAuth, middleware.requireApprovedCompany, asyncHandler(async (req, res) => {
+    const campaign = await prisma.campaign.findUnique({ where: { id: req.params.campaignId } });
+    if (!campaign || campaign.companyId !== req.user.companyId) {
+      const error = new Error("Campaign not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    const applications = await prisma.application.findMany({
+      where: {
+        campaignId: req.params.campaignId,
+        status: { in: ["SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"] }
+      },
+      include: {
+        candidate: {
+          select: {
+            id: true, name: true, email: true, bio: true, skills: true,
+            profilePicUrl: true, resumeUrl: true, githubUrl: true,
+            leetcodeUrl: true, codeforcesUrl: true, linkedinUrl: true, portfolioUrl: true
+          }
+        },
+        campaign: { select: { id: true, title: true } }
+      },
+      orderBy: { appliedAt: "desc" }
+    });
+    sendOk(res, { applications });
   }));
 
   router.post("/assessments/:id/sessions", ...candidateOnly, asyncHandler(async (req, res) => {
@@ -236,15 +315,23 @@ function createApplicationsRoutes({ router, prisma, middleware }) {
       submissions: session.submissions
     });
     const durationSeconds = Math.max(0, Math.round((Date.now() - session.startedAt.getTime()) / 1000));
+    
+    // Accept tracking from client
+    const { mcqElapsed, codingElapsed } = req.body || {};
+    const mcqDurationSeconds = typeof mcqElapsed === "number" ? Math.floor(mcqElapsed) : null;
+    const codingDurationSeconds = typeof codingElapsed === "number" ? Math.floor(codingElapsed) : null;
+
     const result = await prisma.assessmentResult.upsert({
       where: { assessmentSessionId: session.id },
-      update: { ...score, durationSeconds },
+      update: { ...score, durationSeconds, mcqDurationSeconds, codingDurationSeconds },
       create: {
         assessmentSessionId: session.id,
         candidateId: req.user.id,
         assessmentId: session.assessmentId,
         ...score,
-        durationSeconds
+        durationSeconds,
+        mcqDurationSeconds,
+        codingDurationSeconds
       }
     });
     await prisma.assessmentSession.update({ where: { id: session.id }, data: { status: "SUBMITTED", submittedAt: new Date() } });

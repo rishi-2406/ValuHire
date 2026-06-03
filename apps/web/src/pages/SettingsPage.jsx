@@ -3,7 +3,7 @@ import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { userService } from "../services/api";
+import { userService, companyService } from "../services/api";
 import { User, Bell, Lock, Shield, Settings as SettingsIcon, X, Settings2, CheckCircle2 } from "lucide-react";
 
 const SECTIONS = [
@@ -27,6 +27,14 @@ export default function SettingsPage() {
   const [specialties, setSpecialties] = useState(user?.skills || user?.specialties || []);
   const [newSpecialty, setNewSpecialty] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(user?.profilePicUrl || "");
+  const [githubUrl, setGithubUrl] = useState(user?.githubUrl || "");
+  const [leetcodeUrl, setLeetcodeUrl] = useState(user?.leetcodeUrl || "");
+  const [codeforcesUrl, setCodeforcesUrl] = useState(user?.codeforcesUrl || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl || "");
+  const [portfolioUrl, setPortfolioUrl] = useState(user?.portfolioUrl || "");
+  
+  const [companyName, setCompanyName] = useState(user?.company?.name || "");
+  const [companyWebsite, setCompanyWebsite] = useState(user?.company?.website || "");
   
   const fileInputRef = useRef(null);
 
@@ -38,8 +46,17 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
-      const data = await userService.updateProfile({ name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl });
-      updateUser(data.user || { ...user, name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl });
+      if (isRecruiter) {
+        await companyService.updateCompany({ name: companyName, website: companyWebsite });
+      }
+      const data = await userService.updateProfile({
+        name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl,
+        githubUrl, leetcodeUrl, codeforcesUrl, linkedinUrl, portfolioUrl
+      });
+      updateUser({ 
+        ...data.user, 
+        company: isRecruiter ? { ...user?.company, name: companyName, website: companyWebsite } : data.user.company 
+      });
       toast.success("Profile saved", { title: "Changes applied" });
     } catch (err) {
       toast.error(err.message || "Could not save profile");
@@ -138,29 +155,31 @@ export default function SettingsPage() {
                   <div className="h-px w-full bg-outline-variant/50 mb-8" />
 
                   {/* Avatar */}
-                  <div className="flex items-center gap-6 mb-8">
-                    <div className="w-24 h-24 rounded-full bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-3xl font-bold border-2 border-transparent shadow-sm overflow-hidden">
-                      {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : initials}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-4 mb-2">
-                        <input
-                          type="file"
-                          accept="image/png, image/jpeg, image/gif"
-                          ref={fileInputRef}
-                          onChange={handleAvatarChange}
-                          className="hidden"
-                        />
-                        <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface px-4 py-2 rounded font-semibold text-sm transition-colors">
-                          Change avatar
-                        </button>
-                        <button type="button" onClick={() => setAvatarUrl("")} className="text-[#DC2626] hover:text-[#B91C1C] font-semibold text-sm transition-colors">
-                          Remove
-                        </button>
+                  {!isRecruiter && (
+                    <div className="flex items-center gap-6 mb-8">
+                      <div className="w-24 h-24 rounded-full bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-3xl font-bold border-2 border-transparent shadow-sm overflow-hidden">
+                        {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : initials}
                       </div>
-                      <p className="text-xs text-on-surface-variant">JPG, GIF or PNG. 1MB max.</p>
+                      <div>
+                        <div className="flex items-center gap-4 mb-2">
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/gif"
+                            ref={fileInputRef}
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                          />
+                          <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface px-4 py-2 rounded font-semibold text-sm transition-colors">
+                            Change avatar
+                          </button>
+                          <button type="button" onClick={() => setAvatarUrl("")} className="text-[#DC2626] hover:text-[#B91C1C] font-semibold text-sm transition-colors">
+                            Remove
+                          </button>
+                        </div>
+                        <p className="text-xs text-on-surface-variant">JPG, GIF or PNG. 1MB max.</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Resume Upload (Candidate Only) */}
                   {!isRecruiter && (
@@ -236,49 +255,113 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Bio */}
-                  <div className="mb-8">
-                    <label className="block text-sm font-semibold text-on-surface mb-2">Bio</label>
-                    <textarea
-                      value={bio}
-                      onChange={e => setBio(e.target.value)}
-                      rows={4}
-                      placeholder="Write a few sentences about yourself..."
-                      className="w-full border border-outline-variant/80 rounded px-4 py-3 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface resize-none font-medium leading-relaxed"
-                    />
-                  </div>
+                  {!isRecruiter && (
+                    <div className="mb-8">
+                      <label className="block text-sm font-semibold text-on-surface mb-2">Bio</label>
+                      <textarea
+                        value={bio}
+                        onChange={e => setBio(e.target.value)}
+                        rows={4}
+                        placeholder="Write a few sentences about yourself..."
+                        className="w-full border border-outline-variant/80 rounded px-4 py-3 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface resize-none font-medium leading-relaxed"
+                      />
+                    </div>
+                  )}
 
                   {/* Specialties and Skills */}
-                  <div className="border border-outline-variant/80 rounded-lg p-6 bg-[#F8FAFC]">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-bold text-on-surface">Specialties & Skills</h3>
-                      <Settings2 size={20} className="text-on-surface-variant" />
-                    </div>
-                    <p className="text-sm text-on-surface-variant mb-6">Tags help others find you in the directory.</p>
-                    
-                    <div className="flex gap-2 mb-4">
-                      <input 
-                        type="text" 
-                        value={newSpecialty}
-                        onChange={(e) => setNewSpecialty(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddSpecialty(e); }}
-                        placeholder="Add a skill or specialty..." 
-                        className="flex-1 border border-outline-variant/80 rounded px-4 py-2 text-sm focus:outline-none focus:border-[#2563EB] text-on-surface font-medium"
-                      />
-                      <button type="button" onClick={handleAddSpecialty} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded text-sm font-bold transition-colors">
-                        Add
-                      </button>
-                    </div>
+                  {!isRecruiter && (
+                    <div className="border border-outline-variant/80 rounded-lg p-6 bg-[#F8FAFC]">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-bold text-on-surface">Specialties & Skills</h3>
+                        <Settings2 size={20} className="text-on-surface-variant" />
+                      </div>
+                      <p className="text-sm text-on-surface-variant mb-6">Tags help others find you in the directory.</p>
+                      
+                      <div className="flex gap-2 mb-4">
+                        <input 
+                          type="text" 
+                          value={newSpecialty}
+                          onChange={(e) => setNewSpecialty(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleAddSpecialty(e); }}
+                          placeholder="Add a skill or specialty..." 
+                          className="flex-1 border border-outline-variant/80 rounded px-4 py-2 text-sm focus:outline-none focus:border-[#2563EB] text-on-surface font-medium"
+                        />
+                        <button type="button" onClick={handleAddSpecialty} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+                          Add
+                        </button>
+                      </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      {specialties.length === 0 && <span className="text-sm text-on-surface-variant italic">No specialties added yet.</span>}
-                      {specialties.map(s => (
-                        <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] text-white rounded-full text-xs font-semibold">
-                          {s}
-                          <button type="button" onClick={() => removeSpecialty(s)} className="hover:bg-black/10 rounded-full p-0.5"><X size={12} /></button>
-                        </span>
-                      ))}
+                      <div className="flex flex-wrap gap-2">
+                        {specialties.length === 0 && <span className="text-sm text-on-surface-variant italic">No specialties added yet.</span>}
+                        {specialties.map(s => (
+                          <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#6366F1] text-white rounded-full text-xs font-semibold">
+                            {s}
+                            <button type="button" onClick={() => removeSpecialty(s)} className="hover:bg-black/10 rounded-full p-0.5"><X size={12} /></button>
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Online Profiles & Social Links */}
+                  {!isRecruiter && (
+                    <div className="border border-outline-variant/80 rounded-lg p-6 bg-[#F8FAFC] mt-8">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-bold text-on-surface">Online Profiles</h3>
+                      </div>
+                      <p className="text-sm text-on-surface-variant mb-6">Add your coding profiles and portfolio links — they'll appear on your candidate profile.</p>
+                      <div className="space-y-4">
+                        {[
+                          { label: "GitHub URL", value: githubUrl, setter: setGithubUrl, placeholder: "https://github.com/username" },
+                          { label: "LeetCode URL", value: leetcodeUrl, setter: setLeetcodeUrl, placeholder: "https://leetcode.com/username" },
+                          { label: "Codeforces URL", value: codeforcesUrl, setter: setCodeforcesUrl, placeholder: "https://codeforces.com/profile/username" },
+                          { label: "LinkedIn URL", value: linkedinUrl, setter: setLinkedinUrl, placeholder: "https://linkedin.com/in/username" },
+                          { label: "Portfolio / Website", value: portfolioUrl, setter: setPortfolioUrl, placeholder: "https://myportfolio.com" },
+                        ].map(field => (
+                          <div key={field.label}>
+                            <label className="block text-sm font-semibold text-on-surface mb-1.5">{field.label}</label>
+                            <input
+                              type="url"
+                              value={field.value}
+                              onChange={e => field.setter(e.target.value)}
+                              placeholder={field.placeholder}
+                              className="w-full border border-outline-variant/80 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface font-medium"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {isRecruiter && (
+                    <div className="border border-outline-variant/80 rounded-lg p-6 bg-[#F8FAFC] mt-8">
+                      <div className="flex justify-between items-start mb-6">
+                        <h3 className="text-lg font-bold text-on-surface">Company Information</h3>
+                      </div>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-on-surface mb-1.5">Company Name</label>
+                          <input
+                            type="text"
+                            value={companyName}
+                            onChange={e => setCompanyName(e.target.value)}
+                            placeholder="Acme Corp"
+                            className="w-full border border-outline-variant/80 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-on-surface mb-1.5">Company Website</label>
+                          <input
+                            type="url"
+                            value={companyWebsite}
+                            onChange={e => setCompanyWebsite(e.target.value)}
+                            placeholder="https://acme.com"
+                            className="w-full border border-outline-variant/80 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mt-8 flex justify-end gap-3 border-t border-outline-variant/50 pt-6">
                     <button type="button" className="bg-white border border-outline-variant/80 hover:bg-surface-light text-on-surface px-6 py-2.5 rounded font-bold text-sm transition-colors">

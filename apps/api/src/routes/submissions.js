@@ -30,6 +30,18 @@ function createSubmissionRoutes({ router, prisma, middleware, queue = makeQueue(
     await queue.add("run-code", { submissionId: submission.id });
     sendCreated(res, { submission });
   }));
+
+  router.get("/submissions/:id", middleware.requireAuth, middleware.requireRole("CANDIDATE"), asyncHandler(async (req, res) => {
+    const submission = await prisma.submission.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!submission) {
+      const error = new Error("Submission not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    res.json({ submission });
+  }));
 }
 
 module.exports = createSubmissionRoutes;

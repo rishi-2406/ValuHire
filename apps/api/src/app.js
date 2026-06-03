@@ -12,8 +12,9 @@ const createApplicationsRoutes = require("./routes/applications");
 const createSubmissionRoutes = require("./routes/submissions");
 const createResultsRoutes = require("./routes/results");
 const createInterviewRoutes = require("./routes/interviews");
+const createNotificationRoutes = require("./routes/notifications");
 
-function createApp({ prismaClient = prisma, queue } = {}) {
+function createApp({ prismaClient = prisma, queue, io } = {}) {
   const app = express();
   const router = express.Router();
   const middleware = createAuthMiddleware(prismaClient);
@@ -49,10 +50,11 @@ function createApp({ prismaClient = prisma, queue } = {}) {
   createAuthRoutes({ router, prisma: prismaClient, middleware });
   createAdminRoutes({ router, prisma: prismaClient, middleware });
   createCampaignRoutes({ router, prisma: prismaClient, middleware });
-  createApplicationsRoutes({ router, prisma: prismaClient, middleware });
+  createApplicationsRoutes({ router, prisma: prismaClient, middleware, io });
   createSubmissionRoutes({ router, prisma: prismaClient, middleware, queue });
   createResultsRoutes({ router, prisma: prismaClient, middleware });
-  createInterviewRoutes({ router, prisma: prismaClient, middleware });
+  createInterviewRoutes({ router, prisma: prismaClient, middleware, io });
+  createNotificationRoutes({ router, prisma: prismaClient, middleware });
 
   app.use("/api/v1", router);
 
@@ -75,5 +77,5 @@ function createApp({ prismaClient = prisma, queue } = {}) {
   return app;
 }
 
-module.exports = createApp();
+module.exports = (io) => createApp({ io });
 module.exports.createApp = createApp;

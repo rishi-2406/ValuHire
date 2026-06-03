@@ -8,7 +8,6 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
   const [duration, setDuration] = useState("");
   const [tags, setTags] = useState(["React", "TypeScript"]);
   const [tagInput, setTagInput] = useState("");
-  const [template, setTemplate] = useState("technical");
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
@@ -34,8 +33,7 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
         description: description.trim(),
         targetRole: targetRole.trim(),
         duration,
-        tags,
-        template
+        tags
       });
       onClose?.();
     } finally {
@@ -159,37 +157,6 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-3">Assessment Template</label>
-              <div className="grid grid-cols-2 gap-4">
-                
-                {/* Template 1 */}
-                <label className={`relative border rounded-xl p-4 cursor-pointer transition-all ${template === 'technical' ? 'border-[#2563EB] bg-[#F8FAFC]' : 'border-outline-variant/80 hover:border-outline-variant bg-white'}`}>
-                  <input type="radio" name="template" value="technical" checked={template === 'technical'} onChange={() => setTemplate('technical')} className="sr-only" />
-                  <div className="flex justify-between items-start mb-3">
-                    <div className={`w-8 h-8 rounded bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center`}>
-                      <Code size={18} />
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-[5px] ${template === 'technical' ? 'border-[#2563EB] bg-white ring-1 ring-[#2563EB]' : 'border-white ring-1 ring-outline-variant'}`} />
-                  </div>
-                  <h4 className="font-semibold text-sm text-on-surface mb-1">Technical Deep Dive</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed">Includes coding exercises, system design, and technical MCQ.</p>
-                </label>
-
-                {/* Template 2 */}
-                <label className={`relative border rounded-xl p-4 cursor-pointer transition-all ${template === 'behavioral' ? 'border-[#2563EB] bg-[#F8FAFC]' : 'border-outline-variant/80 hover:border-outline-variant bg-white'}`}>
-                  <input type="radio" name="template" value="behavioral" checked={template === 'behavioral'} onChange={() => setTemplate('behavioral')} className="sr-only" />
-                  <div className="flex justify-between items-start mb-3">
-                    <div className={`w-8 h-8 rounded bg-[#F1F5F9] text-[#64748B] flex items-center justify-center`}>
-                      <Brain size={18} />
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-[5px] ${template === 'behavioral' ? 'border-[#2563EB] bg-white ring-1 ring-[#2563EB]' : 'border-white ring-1 ring-outline-variant'}`} />
-                  </div>
-                  <h4 className="font-semibold text-sm text-on-surface mb-1">Behavioral Core</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed">Focuses on soft skills, past experiences, and cultural fit.</p>
-                </label>
-
-              </div>
             </div>
 
           </div>

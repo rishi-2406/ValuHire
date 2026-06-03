@@ -12,6 +12,7 @@ import {
   Search
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import NotificationBell from "./NotificationBell";
 
 const NAV_ITEMS = {
   recruiter: [
@@ -98,15 +99,18 @@ export default function Sidebar({ role = "recruiter" }) {
           <span className="user-name">{user?.name || user?.email || "Guest"}</span>
           <span className="user-role">{roleKey}</span>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="icon-button"
-          aria-label="Sign out"
-          title="Sign out"
-        >
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell user={user} />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="icon-button"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </div>
     </aside>
   );

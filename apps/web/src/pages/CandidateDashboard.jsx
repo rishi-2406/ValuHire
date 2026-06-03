@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import {
-  Bell,
   HelpCircle,
   AlertTriangle,
   ArrowRight,
@@ -19,6 +18,7 @@ import { applicationService } from "../services/api";
 import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
 import { SkeletonCard } from "../components/Skeleton";
+import NotificationBell from "../components/NotificationBell";
 
 export default function CandidateDashboard() {
   const { user } = useAuth();
@@ -39,7 +39,7 @@ export default function CandidateDashboard() {
   }, []);
 
   const inProgressCampaigns = applications.filter(
-    (a) => a.status !== "SUBMITTED" && a.status !== "REJECTED"
+    (a) => !["SUBMITTED", "ASSESSMENT_COMPLETED", "REJECTED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"].includes(a.status)
   );
   const pendingAction = inProgressCampaigns.length > 0 ? inProgressCampaigns[0] : null;
 
@@ -134,9 +134,7 @@ export default function CandidateDashboard() {
         <header className="h-16 flex items-center justify-between px-8 bg-white border-b border-outline-variant/50 sticky top-0 z-40">
           <h1 className="text-title-lg font-bold text-on-surface">Overview</h1>
           <div className="flex items-center gap-4">
-            <button className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant">
-              <Bell size={20} />
-            </button>
+            <NotificationBell user={user} />
             <button className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant">
               <HelpCircle size={20} />
             </button>
@@ -182,7 +180,7 @@ export default function CandidateDashboard() {
                     <Clock size={20} />
                   </div>
                   <div>
-                    <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => a.campaign?.assessment && a.status !== "ASSESSMENT_COMPLETED" && a.status !== "SUBMITTED").length}</div>
+                    <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => a.campaign?.assessment && !["SUBMITTED", "ASSESSMENT_COMPLETED", "REJECTED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"].includes(a.status)).length}</div>
                     <div className="text-sm text-on-surface-variant font-semibold mt-1">Pending Test</div>
                   </div>
                 </div>

@@ -126,6 +126,10 @@ export const userService = {
   updateProfile: (data) => request("/auth/me", { method: "PATCH", body: JSON.stringify(data) })
 };
 
+export const companyService = {
+  updateCompany: (data) => request("/companies/mine", { method: "PATCH", body: JSON.stringify(data) })
+};
+
 export const campaignService = {
   getPublicCampaigns: () => request("/campaigns/public"),
   getMyCampaigns: () => request("/campaigns"),
@@ -146,7 +150,15 @@ export const applicationService = {
     request(`/assessment-sessions/${sessionId}/mcq-answers`, { method: "POST", body: JSON.stringify({ questionId, selectedKey }) }),
   submitProctorEvent: (sessionId, type, metadata) =>
     request(`/assessment-sessions/${sessionId}/proctor-events`, { method: "POST", body: JSON.stringify({ type, metadata }) }),
-  finalSubmit: (sessionId) => request(`/assessment-sessions/${sessionId}/final-submit`, { method: "POST" })
+  finalSubmit: (sessionId, data) => request(`/assessment-sessions/${sessionId}/final-submit`, { method: "POST", body: data ? JSON.stringify(data) : undefined }),
+  shortlistCandidates: (campaignId, candidateIds) =>
+    request("/applications/shortlist", { method: "POST", body: JSON.stringify({ campaignId, candidateIds }) }),
+  getShortlistedCandidates: (campaignId) =>
+    request(`/applications/campaign/${campaignId}/shortlisted`),
+  executeCode: (assessmentSessionId, codingQuestionId, code, language) =>
+    request("/submissions", { method: "POST", body: JSON.stringify({ assessmentSessionId, codingQuestionId, code, language }) }),
+  getSubmissionStatus: (submissionId) =>
+    request(`/submissions/${submissionId}`)
 };
 
 export const submissionService = {
@@ -184,5 +196,11 @@ export const adminService = {
     request(`/admin/users/${userId}/status`, { method: "PATCH", body: JSON.stringify({ status: "BANNED" }) }),
   unbanUser: (userId) =>
     request(`/admin/users/${userId}/status`, { method: "PATCH", body: JSON.stringify({ status: "ACTIVE" }) })
+};
+
+export const notificationService = {
+  getAll: () => request("/notifications"),
+  markRead: (id) => request(`/notifications/${id}/read`, { method: "PATCH" }),
+  markAllRead: () => request("/notifications/read-all", { method: "PATCH" })
 };
 

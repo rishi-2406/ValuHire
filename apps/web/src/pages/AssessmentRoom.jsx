@@ -35,6 +35,9 @@ export default function AssessmentRoom() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const [code, setCode] = useState("");
+  
+  const [mcqTime, setMcqTime] = useState(0);
+  const [codingTime, setCodingTime] = useState(0);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -73,9 +76,11 @@ export default function AssessmentRoom() {
         }
         return prev - 1;
       });
+      if (activePhase === "mcq") setMcqTime(p => p + 1);
+      if (activePhase === "coding") setCodingTime(p => p + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [sessionId, loading, timeLeft]);
+  }, [sessionId, loading, timeLeft, activePhase]);
 
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -96,20 +101,53 @@ export default function AssessmentRoom() {
   const currentLanguage = LANGUAGE_OPTIONS.find((l) => l.id === language) || LANGUAGE_OPTIONS[0];
 
   const handleRunCode = useCallback(async () => {
+    if (!activeCodingQ) return;
     setIsRunning(true);
     setActiveBottomTab("results");
-    setOutput("Running tests...");
+    setOutput("Executing code...");
 
-    setTimeout(() => {
-      setOutput("Success\\nAll test cases passed (15ms)\\nMemory: 14.2 MB");
+    try {
+      const res = await applicationService.executeCode(sessionId, activeCodingQ.id, code, language);
+      let subId = res.submission.id;
+      
+      const poll = setInterval(async () => {
+        try {
+          const statusRes = await applicationService.getSubmissionStatus(subId);
+          const st = statusRes.submission.status;
+          
+          if (st === "COMPLETED" || st === "FAILED") {
+            clearInterval(poll);
+            setIsRunning(false);
+            
+            const results = statusRes.submission.testResults || [];
+            const passed = results.filter(r => r.passed).length;
+            const total = results.length;
+            
+            if (st === "COMPLETED") {
+              setOutput(`Execution Completed (${statusRes.submission.executionTimeMs}ms)\nPassed: ${passed}/${total} test cases`);
+              if (passed === total) toast.success("All test cases passed!");
+              else toast.warning(`${passed}/${total} test cases passed.`);
+            } else {
+              setOutput(`Execution Failed\n${results[0]?.error || "Some test cases failed."}`);
+              toast.error("Code execution failed.");
+            }
+          }
+        } catch (err) {
+          clearInterval(poll);
+          setIsRunning(false);
+          setOutput(`Error checking status: ${err.message}`);
+        }
+      }, 2000);
+    } catch (err) {
       setIsRunning(false);
-      toast.success("All test cases passed!");
-    }, 1500);
-  }, []);
+      setOutput(`Error: ${err.message}`);
+      toast.error("Failed to execute code");
+    }
+  }, [sessionId, activeCodingQ, code, language, toast]);
 
   const handleSubmit = async () => {
     try {
-      await applicationService.finalSubmit(sessionId);
+      await applicationService.finalSubmit(sessionId, { mcqDurationSeconds: mcqTime, codingDurationSeconds: codingTime });
       toast.success("Assessment submitted!");
       setTimeout(() => navigate("/candidate"), 1500);
     } catch (err) {

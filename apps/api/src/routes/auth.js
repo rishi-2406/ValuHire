@@ -133,12 +133,18 @@ function createAuthRoutes({ router, prisma, middleware }) {
   }));
 
   router.patch("/auth/me", middleware.requireAuth, asyncHandler(async (req, res) => {
-    const { name, bio, skills, profilePicUrl } = req.body;
+    const { name, bio, skills, profilePicUrl, resumeUrl, githubUrl, leetcodeUrl, codeforcesUrl, linkedinUrl, portfolioUrl } = req.body;
     const updateData = {};
     if (name && typeof name === "string") updateData.name = name.trim();
     if (bio !== undefined) updateData.bio = bio;
     if (Array.isArray(skills)) updateData.skills = skills;
     if (profilePicUrl !== undefined) updateData.profilePicUrl = profilePicUrl;
+    if (resumeUrl !== undefined) updateData.resumeUrl = resumeUrl;
+    if (githubUrl !== undefined) updateData.githubUrl = githubUrl;
+    if (leetcodeUrl !== undefined) updateData.leetcodeUrl = leetcodeUrl;
+    if (codeforcesUrl !== undefined) updateData.codeforcesUrl = codeforcesUrl;
+    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl;
+    if (portfolioUrl !== undefined) updateData.portfolioUrl = portfolioUrl;
 
     const updated = await prisma.user.update({
       where: { id: req.user.id },

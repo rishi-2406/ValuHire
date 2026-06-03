@@ -56,7 +56,11 @@ function createCampaignRoutes({ router, prisma, middleware }) {
   router.get("/campaigns", ...recruiter, asyncHandler(async (req, res) => {
     const campaigns = await prisma.campaign.findMany({
       where: { companyId: req.user.companyId },
-      include: { assessment: { include: { mcqQuestions: true, codingQuestions: { include: { testCases: true } } } }, inviteLinks: true },
+      include: {
+        assessment: { include: { mcqQuestions: true, codingQuestions: { include: { testCases: true } } } },
+        inviteLinks: true,
+        _count: { select: { applications: true } }
+      },
       orderBy: { createdAt: "desc" }
     });
     sendOk(res, { campaigns });
@@ -164,6 +168,19 @@ function createCampaignRoutes({ router, prisma, middleware }) {
     });
 
     sendOk(res, { assessment });
+  }));
+
+  router.patch("/companies/mine", ...recruiter, asyncHandler(async (req, res) => {
+    const { name, website } = req.body;
+    const updateData = {};
+    if (name && typeof name === "string") updateData.name = name.trim();
+    if (website !== undefined) updateData.website = website;
+
+    const company = await prisma.company.update({
+      where: { id: req.user.companyId },
+      data: updateData
+    });
+    sendOk(res, { company });
   }));
 }
 

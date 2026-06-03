@@ -36,6 +36,7 @@ enum ApplicationStatus {
   ASSESSMENT_COMPLETED
   INTERVIEW_SCHEDULED
   REJECTED
+  SHORTLISTED
   HIRED
 }
 
@@ -102,6 +103,7 @@ model Company {
   name        String
   description String?
   status      CompanyStatus @default(PENDING)
+  website     String?
   recruiters  User[]
   campaigns   Campaign[]
   createdAt   DateTime      @default(now())
@@ -247,6 +249,8 @@ model AssessmentResult {
   totalScore          Int               @default(0)
   rank                Int?
   durationSeconds     Int?
+  mcqDurationSeconds  Int?
+  codingDurationSeconds Int?
   createdAt           DateTime          @default(now())
 }
 

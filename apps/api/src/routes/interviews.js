@@ -1,7 +1,7 @@
 const { makeOpaqueToken } = require("../lib/auth");
 const { asyncHandler, requireFields, sendCreated, sendOk } = require("../lib/http");
 
-function createInterviewRoutes({ router, prisma, middleware }) {
+function createInterviewRoutes({ router, prisma, middleware, io }) {
   router.post("/interviews", middleware.requireAuth, middleware.requireApprovedCompany, asyncHandler(async (req, res) => {
     requireFields(req.body, ["campaignId", "candidateId", "startsAt", "endsAt"]);
     const campaign = await prisma.campaign.findUnique({ where: { id: req.body.campaignId } });
@@ -24,6 +24,19 @@ function createInterviewRoutes({ router, prisma, middleware }) {
       where: { candidateId: req.body.candidateId, campaignId: campaign.id },
       data: { status: "INTERVIEW_SCHEDULED" }
     });
+    // Create notification for candidate
+    const notification = await prisma.notification.create({
+      data: {
+        userId: req.body.candidateId,
+        type: "INTERVIEW_SCHEDULED",
+        title: "Interview Scheduled! 📅",
+        message: `Your interview for "${campaign.title}" has been scheduled. Please check your Interviews tab for details.`,
+        metadata: { campaignId: campaign.id, campaignTitle: campaign.title, slotId: slot.id }
+      }
+    });
+    if (io) {
+      io.to(`user:${req.body.candidateId}`).emit("new_notification", notification);
+    }
     sendCreated(res, { slot });
   }));
 
