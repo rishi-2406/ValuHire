@@ -27,6 +27,32 @@ function createCampaignRoutes({ router, prisma, middleware }) {
     sendOk(res, { campaigns });
   }));
 
+  router.get("/campaigns/:id", middleware.requireAuth, asyncHandler(async (req, res) => {
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: req.params.id },
+      include: { 
+        company: true, 
+        assessment: {
+          include: {
+            mcqQuestions: { select: { id: true, points: true, slotIndex: true } },
+            codingQuestions: { select: { id: true, points: true, slotIndex: true } }
+          }
+        }
+      }
+    });
+    if (!campaign) {
+      const error = new Error("Campaign not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    if (req.user.role === "RECRUITER" && campaign.companyId !== req.user.companyId) {
+      const error = new Error("Campaign belongs to another company");
+      error.statusCode = 403;
+      throw error;
+    }
+    sendOk(res, { campaign });
+  }));
+
   router.get("/campaigns", ...recruiter, asyncHandler(async (req, res) => {
     const campaigns = await prisma.campaign.findMany({
       where: { companyId: req.user.companyId },

@@ -55,8 +55,13 @@ function createApplicationsRoutes({ router, prisma, middleware }) {
       where: { id: req.params.id }, 
       include: { campaign: true, mcqQuestions: true, codingQuestions: { include: { testCases: true } } } 
     });
-    if (!assessment || assessment.campaign.status !== "OPEN") {
-      const error = new Error("Assessment is not available");
+    if (!assessment) {
+      const error = new Error("Assessment not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    if (assessment.campaign.status !== "OPEN") {
+      const error = new Error(`Assessment is not available because the campaign is currently in ${assessment.campaign.status} status`);
       error.statusCode = 403;
       throw error;
     }
@@ -126,6 +131,40 @@ function createApplicationsRoutes({ router, prisma, middleware }) {
         timeLeft,
         assessment: { ...assessment, mcqQuestions: filteredMcq, codingQuestions: filteredCoding }
       } 
+    });
+  }));
+
+  router.get("/assessment-sessions/:id", ...candidateOnly, asyncHandler(async (req, res) => {
+    const session = await prisma.assessmentSession.findUnique({
+      where: { id: req.params.id },
+      include: {
+        assessment: { include: { mcqQuestions: true, codingQuestions: { include: { testCases: true } } } }
+      }
+    });
+    if (!session || session.candidateId !== req.user.id) {
+      const error = new Error("Assessment session not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const selectedVariants = session.selectedVariants || { mcq: [], coding: [] };
+    const filteredMcq = selectedVariants.mcq.map(id => session.assessment.mcqQuestions.find(q => q.id === id)).filter(Boolean);
+    const filteredCoding = selectedVariants.coding.map(id => session.assessment.codingQuestions.find(q => q.id === id)).filter(Boolean);
+
+    filteredMcq.forEach(q => delete q.correctKey);
+    filteredCoding.forEach(q => {
+      if (q.testCases) {
+        q.testCases = q.testCases.filter(tc => !tc.isHidden);
+      }
+    });
+
+    const timeLeft = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 1000));
+    sendOk(res, {
+      session: {
+        ...session,
+        timeLeft,
+        assessment: { ...session.assessment, mcqQuestions: filteredMcq, codingQuestions: filteredCoding }
+      }
     });
   }));
 

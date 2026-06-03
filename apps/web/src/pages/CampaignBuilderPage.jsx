@@ -10,7 +10,7 @@ import {
 import TopBar from "../components/TopBar";
 
 export default function CampaignBuilderPage() {
-  const { id: campaignId } = useParams();
+  const { campaignId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();

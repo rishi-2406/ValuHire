@@ -38,7 +38,7 @@ export default function AssessmentRoom() {
 
   useEffect(() => {
     if (!sessionId) return;
-    applicationService.startSession(sessionId)
+    applicationService.getSessionDetails(sessionId)
       .then((data) => {
         const session = data.session || data;
         setSessionData(session);

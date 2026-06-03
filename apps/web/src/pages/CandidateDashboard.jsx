@@ -148,99 +148,83 @@ export default function CandidateDashboard() {
 
         <div className="p-8 max-w-7xl mx-auto space-y-8">
           {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-[#F0F4FF] to-transparent border border-[#E0E7FF] rounded-3xl p-8 mb-8 relative overflow-hidden">
+          <div className="bg-white border border-outline-variant/60 rounded-3xl p-8 mb-8 relative shadow-sm flex justify-between items-center hover:shadow-md transition-shadow">
             <div className="relative z-10">
-              <h2 className="text-[2.5rem] leading-tight font-extrabold text-[#111827] mb-2 tracking-tight">
+              <h2 className="text-3xl font-extrabold text-on-surface mb-2 tracking-tight">
                 Welcome back, {name}!
               </h2>
-              <div className="flex items-center gap-2 text-[#4B5563] text-lg font-medium">
-                <span className="text-[#10B981]"><Sparkles size={20} /></span>
-                <p>You're making great progress. Stay focused, your next opportunity is close.</p>
+              <div className="text-on-surface-variant font-medium">
+                <p>Stay focused, your next opportunity is close.</p>
               </div>
             </div>
-            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
+            <div className="hidden md:flex w-16 h-16 rounded-2xl bg-surface-container-low border border-outline-variant/50 text-on-surface items-center justify-center">
+              <Briefcase size={28} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Action Required Box */}
-              {pendingAction && (
-                <div className="bg-gradient-to-r from-[#FEFCE8] to-white border border-[#FEF08A] rounded-2xl p-7 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-[#EAB308]" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 text-[#CA8A04] font-bold text-[11px] tracking-widest uppercase mb-3 bg-[#FEF9C3] w-max px-2.5 py-1 rounded-md">
-                        <AlertTriangle size={14} />
-                        ACTION REQUIRED
-                      </div>
-                      <h3 className="text-[1.75rem] font-bold text-[#1F2937] mb-2 leading-tight">
-                        {pendingAction.campaign?.title || "System Design Assessment"}
-                      </h3>
-                      <div className="flex items-center gap-2 text-[#713F12] text-sm font-semibold opacity-90">
-                        <Clock size={16} />
-                        Due in 2 days
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-3 mt-2">
-                      <button
-                        onClick={() => handleStart(pendingAction)}
-                        disabled={startingSession === pendingAction.id}
-                        className="bg-[#EAB308] hover:bg-[#CA8A04] text-white px-7 py-3.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-[0_4px_14px_0_rgb(234,179,8,0.39)] disabled:opacity-70 disabled:shadow-none hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        {startingSession === pendingAction.id ? "Starting..." : "Start Assessment"}
-                        <ArrowRight size={18} />
-                      </button>
-                      <div className="flex items-center gap-1.5 text-xs text-[#854D0E] font-medium opacity-80 mr-1">
-                        <Clock size={14} />
-                        60-min timer preview
-                      </div>
-                    </div>
+              {/* Stats Overview */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-6 bg-white rounded-3xl border border-outline-variant/60 shadow-sm flex flex-col justify-between group hover:border-[#2563EB]/40 transition-all cursor-pointer" onClick={() => navigate("/applications")}>
+                  <div className="w-10 h-10 rounded-xl bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Briefcase size={20} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-extrabold text-on-surface">{applications.length}</div>
+                    <div className="text-sm text-on-surface-variant font-semibold mt-1">Total Applied</div>
                   </div>
                 </div>
-              )}
-
-              {/* Active Applications */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-on-surface">Active Applications</h3>
-                  <button className="text-sm font-bold text-primary flex items-center gap-1 hover:underline">
-                    View All <ChevronRight size={16} />
-                  </button>
-                </div>
                 
-                <div className="space-y-4">
-                  {applications.length > 0 ? applications.map(app => (
-                    <div key={app.id} className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="text-xl font-bold text-on-surface">{app.campaign?.title || "Role"}</h4>
-                          <div className="flex items-center gap-2 text-on-surface-variant text-sm mt-1">
-                            <Briefcase size={16} />
-                            <span>{app.campaign?.company?.name || "Company Inc."}</span>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20">
-                          {app.status === "INTERVIEW" ? "Interviewing" : app.status === "SCREENING" ? "Under Review" : "Applied"}
-                        </span>
-                      </div>
-                      
-                      {renderProgressSteps(app.status)}
-                    </div>
-                  )) : (
-                    <EmptyState
-                      illustration="no-applications"
-                      title="No active applications"
-                      description="Apply to a campaign to see your progress here."
-                    />
-                  )}
+                <div className="p-6 bg-white rounded-3xl border border-outline-variant/60 shadow-sm flex flex-col justify-between group hover:border-[#D97706]/40 transition-all cursor-pointer" onClick={() => navigate("/applications")}>
+                  <div className="w-10 h-10 rounded-xl bg-[#D97706]/10 text-[#D97706] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Clock size={20} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => a.campaign?.assessment && a.status !== "ASSESSMENT_COMPLETED" && a.status !== "SUBMITTED").length}</div>
+                    <div className="text-sm text-on-surface-variant font-semibold mt-1">Pending Test</div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-white rounded-3xl border border-outline-variant/60 shadow-sm flex flex-col justify-between group hover:border-[#059669]/40 transition-all cursor-pointer" onClick={() => navigate("/applications")}>
+                  <div className="w-10 h-10 rounded-xl bg-[#059669]/10 text-[#059669] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Video size={20} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => a.status === "INTERVIEW").length}</div>
+                    <div className="text-sm text-on-surface-variant font-semibold mt-1">Interviews</div>
+                  </div>
                 </div>
               </div>
+
+              {/* Pending Assessment Reminder */}
+              {pendingAction && (
+                <div className="bg-white border border-outline-variant/60 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[#FEF9C3] text-[#CA8A04] flex items-center justify-center shrink-0 border border-[#FEF08A]/50">
+                      <AlertTriangle size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-on-surface text-lg">Pending Assessment</h4>
+                      <p className="text-sm text-on-surface-variant font-medium mt-0.5">
+                        <strong className="text-on-surface">{pendingAction.campaign?.title}</strong> at {pendingAction.campaign?.company?.name}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/campaigns/${pendingAction.campaign?.id}/details`)}
+                    className="w-full sm:w-auto bg-[#111827] hover:bg-[#1F2937] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-sm text-sm shrink-0"
+                  >
+                    Take Assessment <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Right Column */}
             <div className="space-y-6">
-              <div className="bg-[#F0F4FF] border border-[#DCE4FF] rounded-2xl p-8 text-center flex flex-col items-center shadow-sm">
+              <div className="bg-white border border-outline-variant/60 rounded-3xl p-8 shadow-sm">
                 {(() => {
                   const missingItems = [];
                   if (!user?.name) missingItems.push("Full Name");
@@ -251,33 +235,39 @@ export default function CandidateDashboard() {
                   
                   if (missingItems.length === 0) {
                     return (
-                      <div className="py-2">
-                        <h3 className="text-xl font-bold text-[#1F2937] mb-2">Add more skills</h3>
-                        <p className="text-sm text-[#4B5563] mb-6 leading-relaxed">
-                          Your profile is looking great! Add more skills to increase your chances of being noticed.
+                      <div>
+                        <div className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center mb-5 border border-outline-variant/50">
+                          <CheckCircle2 size={24} className="text-[#059669]" />
+                        </div>
+                        <h3 className="text-xl font-bold text-on-surface mb-2">Profile Complete</h3>
+                        <p className="text-sm text-on-surface-variant mb-6 font-medium leading-relaxed">
+                          Your profile is fully fleshed out. Feel free to keep adding more skills and projects.
                         </p>
-                        <button onClick={() => navigate('/settings')} className="w-full bg-white border-2 border-[#10B981] text-[#10B981] font-bold py-3 rounded-xl hover:bg-[#10B981] hover:text-white transition-all shadow-sm">
-                          Add Skills
+                        <button onClick={() => navigate('/settings')} className="w-full bg-white hover:bg-surface-container-low border border-outline-variant text-on-surface font-bold py-3 rounded-xl transition-colors shadow-sm">
+                          Edit Profile
                         </button>
                       </div>
                     );
                   }
                   
                   return (
-                    <div className="py-2">
-                      <h3 className="text-xl font-bold text-[#1F2937] mb-2">Complete your profile</h3>
-                      <p className="text-sm text-[#4B5563] mb-5 leading-relaxed">
-                        Add these missing details to unlock <strong className="text-[#10B981]">5x more opportunities</strong>:
+                    <div>
+                      <div className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center mb-5 border border-outline-variant/50">
+                        <AlertTriangle size={24} className="text-on-surface-variant" />
+                      </div>
+                      <h3 className="text-xl font-bold text-on-surface mb-2">Incomplete Profile</h3>
+                      <p className="text-sm text-on-surface-variant mb-6 font-medium leading-relaxed">
+                        Add these missing details to stand out to recruiters:
                       </p>
-                      <ul className="text-left w-full space-y-2.5 mb-6 bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-[#DCE4FF] shadow-sm">
+                      <ul className="space-y-3 mb-8">
                         {missingItems.map(item => (
-                          <li key={item} className="text-sm text-[#374151] flex items-center gap-2.5 font-semibold">
-                            <div className="w-2 h-2 rounded-full bg-[#EF4444] shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                          <li key={item} className="text-sm text-on-surface font-semibold flex items-center gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
                             {item}
                           </li>
                         ))}
                       </ul>
-                      <button onClick={() => navigate('/settings')} className="w-full bg-[#10B981] text-white font-bold py-3 rounded-xl hover:bg-[#059669] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                      <button onClick={() => navigate('/settings')} className="w-full bg-[#111827] text-white font-bold py-3 rounded-xl hover:bg-[#1F2937] transition-all shadow-sm active:scale-95">
                         Complete Profile
                       </button>
                     </div>

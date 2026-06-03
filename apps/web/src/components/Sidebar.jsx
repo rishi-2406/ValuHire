@@ -8,7 +8,8 @@ import {
   Shield,
   Briefcase,
   Users,
-  HelpCircle
+  HelpCircle,
+  Search
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -21,7 +22,8 @@ const NAV_ITEMS = {
   ],
   candidate: [
     { to: "/candidate", label: "Overview", icon: LayoutDashboard, end: true },
-    { to: "/campaigns", label: "Browse Campaigns", icon: Briefcase },
+    { to: "/applications", label: "My Applications", icon: Briefcase },
+    { to: "/campaigns", label: "Browse Campaigns", icon: Search },
     { to: "/interviews", label: "Interviews", icon: Video },
     { to: "/results", label: "My Results", icon: BarChart3 },
     { to: "/settings", label: "Settings", icon: Settings }

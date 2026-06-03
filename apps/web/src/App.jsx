@@ -13,6 +13,8 @@ import ResultsPage from "./pages/ResultsPage";
 import InterviewsPage from "./pages/InterviewsPage";
 import AdminPage from "./pages/AdminPage";
 import SettingsPage from "./pages/SettingsPage";
+import CampaignDetailsPage from "./pages/CampaignDetailsPage";
+import ActiveAssessmentsPage from "./pages/ActiveAssessmentsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import "./styles.css";
 
@@ -84,6 +86,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["CANDIDATE"]}>
             <CandidateDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/applications"
+        element={
+          <ProtectedRoute allowedRoles={["CANDIDATE"]}>
+            <ActiveAssessmentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/campaigns/:campaignId/details"
+        element={
+          <ProtectedRoute allowedRoles={["CANDIDATE"]}>
+            <CampaignDetailsPage />
           </ProtectedRoute>
         }
       />

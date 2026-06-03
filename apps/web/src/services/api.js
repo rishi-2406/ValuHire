@@ -129,6 +129,7 @@ export const userService = {
 export const campaignService = {
   getPublicCampaigns: () => request("/campaigns/public"),
   getMyCampaigns: () => request("/campaigns"),
+  getCampaignDetails: (id) => request(`/campaigns/${id}`),
   createCampaign: (data) => request("/campaigns", { method: "POST", body: JSON.stringify(data) }),
   updateCampaign: (id, data) => request(`/campaigns/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   createInviteLink: (campaignId, expiresAt) => request(`/campaigns/${campaignId}/invite-links`, { method: "POST", body: JSON.stringify({ expiresAt }) }),
@@ -140,6 +141,7 @@ export const applicationService = {
   apply: (campaignId) => request("/applications", { method: "POST", body: JSON.stringify({ campaignId }) }),
   applyWithInvite: (token) => request("/applications/invite", { method: "POST", body: JSON.stringify({ token }) }),
   startSession: (assessmentId) => request(`/assessments/${assessmentId}/sessions`, { method: "POST" }),
+  getSessionDetails: (sessionId) => request(`/assessment-sessions/${sessionId}`),
   submitMcqAnswer: (sessionId, questionId, selectedKey) =>
     request(`/assessment-sessions/${sessionId}/mcq-answers`, { method: "POST", body: JSON.stringify({ questionId, selectedKey }) }),
   submitProctorEvent: (sessionId, type, metadata) =>

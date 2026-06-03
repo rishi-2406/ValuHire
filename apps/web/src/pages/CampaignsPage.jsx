@@ -110,7 +110,11 @@ export default function CampaignsPage() {
                   <div 
                     key={c.id} 
                     onClick={() => {
-                      if (!isCandidate) navigate(`/campaigns/${c.id}`);
+                      if (isCandidate) {
+                        navigate(`/campaigns/${c.id}/details`);
+                      } else {
+                        navigate(`/campaigns/${c.id}`);
+                      }
                     }}
                     className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm flex items-center justify-between group hover:border-[#2563EB]/40 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
                   >
@@ -128,15 +132,21 @@ export default function CampaignsPage() {
                            )}
                         </div>
                         <div className="flex items-center gap-5 text-on-surface-variant text-sm mt-1.5 font-medium">
-                          {isCandidate && <span className="flex items-center gap-1.5"><Briefcase size={16} className="text-primary/70" /> {c.company?.name || "Company"}</span>}
-                          {!isCandidate && <span className="flex items-center gap-1.5"><Users size={16} className="text-primary/70" /> {applicants} Applicants</span>}
-                          <span className="flex items-center gap-1.5"><Clock size={16} className="text-primary/70" /> {c.assessment?.durationMinutes || 60} mins</span>
+                           {isCandidate && <span className="flex items-center gap-1.5"><Briefcase size={16} className="text-primary/70" /> {c.company?.name || "Company"}</span>}
+                           {!isCandidate && <span className="flex items-center gap-1.5"><Users size={16} className="text-primary/70" /> {applicants} Applicants</span>}
+                           <span className="flex items-center gap-1.5"><Clock size={16} className="text-primary/70" /> {c.assessment?.durationMinutes || 60} mins</span>
                         </div>
                       </div>
                     </div>
                     
                     {isCandidate ? (
-                      <button onClick={(e) => handleApply(e, c.id)} className="text-[#2563EB] font-bold flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0 bg-[#EFF6FF] px-6 py-2.5 rounded-xl border border-[#BFDBFE]">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/campaigns/${c.id}/details`);
+                        }} 
+                        className="text-[#2563EB] font-bold flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0 bg-[#EFF6FF] px-6 py-2.5 rounded-xl border border-[#BFDBFE]"
+                      >
                         Apply Now <ArrowRight size={18} />
                       </button>
                     ) : (
@@ -160,12 +170,11 @@ export default function CampaignsPage() {
         </div>
       </main>
 
-      {showCreateModal && (
-        <NewCampaignModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateCampaign}
-        />
-      )}
+      <NewCampaignModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={handleCreateCampaign}
+      />
     </div>
   );
 }
