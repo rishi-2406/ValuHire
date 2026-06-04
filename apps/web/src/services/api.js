@@ -174,7 +174,9 @@ export const interviewService = {
   // POST /interviews requires { campaignId, candidateId, startsAt, endsAt }
   scheduleInterview: (data) => request("/interviews", { method: "POST", body: JSON.stringify(data) }),
   submitFeedback: (interviewId, data) => request(`/interviews/${interviewId}/feedback`, { method: "POST", body: JSON.stringify(data) }),
-  getRoomByCode: (roomCode) => request(`/interviews/rooms/${roomCode}`)
+  getRoomByCode: (roomCode) => request(`/interviews/rooms/${roomCode}`),
+  runCode: (interviewId, code, language) => request(`/interviews/${interviewId}/run`, { method: "POST", body: JSON.stringify({ code, language }) }),
+  getRunJobStatus: (jobId) => request(`/interviews/jobs/${jobId}`)
 };
 
 export const resultsService = {

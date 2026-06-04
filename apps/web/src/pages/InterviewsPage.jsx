@@ -193,7 +193,7 @@ export default function InterviewsPage() {
 
         {activeRoom ? (() => {
           const activeInterview = interviews.find(i => (i.id || i.interviewId) === activeRoom) || {};
-          const initials = (activeInterview.candidateName || activeInterview.name || "C").substring(0, 2).toUpperCase();
+          const initials = (activeInterview.candidate?.name || activeInterview.candidateName || activeInterview.name || "C").substring(0, 2).toUpperCase();
           
           return (
               <InterviewLobby

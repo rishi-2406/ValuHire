@@ -35,27 +35,35 @@ io.on("connection", (socket) => {
   });
 
   socket.on("codeChange", ({ roomId, code }) => {
-    socket.to(roomId).emit("codeChange", { code });
+    socket.to(roomId).emit("codeChange", { roomId, code });
   });
 
   socket.on("cursorMove", ({ roomId, cursor }) => {
-    socket.to(roomId).emit("cursorMove", { socketId: socket.id, cursor });
+    socket.to(roomId).emit("cursorMove", { roomId, socketId: socket.id, cursor });
+  });
+  
+  socket.on("mediaStateChange", ({ roomId, videoOn, micOn }) => {
+    socket.to(roomId).emit("mediaStateChange", { roomId, videoOn, micOn });
   });
 
   socket.on("languageChange", ({ roomId, language }) => {
-    socket.to(roomId).emit("languageChange", { language });
+    socket.to(roomId).emit("languageChange", { roomId, language });
   });
 
   socket.on("webrtcOffer", ({ roomId, offer }) => {
-    socket.to(roomId).emit("webrtcOffer", { from: socket.id, offer });
+    socket.to(roomId).emit("webrtcOffer", { roomId, from: socket.id, offer });
   });
 
   socket.on("webrtcAnswer", ({ roomId, answer }) => {
-    socket.to(roomId).emit("webrtcAnswer", { from: socket.id, answer });
+    socket.to(roomId).emit("webrtcAnswer", { roomId, from: socket.id, answer });
   });
 
   socket.on("iceCandidate", ({ roomId, candidate }) => {
-    socket.to(roomId).emit("iceCandidate", { from: socket.id, candidate });
+    socket.to(roomId).emit("iceCandidate", { roomId, from: socket.id, candidate });
+  });
+
+  socket.on("questionChange", ({ roomId, questionText }) => {
+    socket.to(roomId).emit("questionChange", { roomId, questionText });
   });
 });
 

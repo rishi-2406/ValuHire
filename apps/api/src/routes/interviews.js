@@ -118,6 +118,61 @@ function createInterviewRoutes({ router, prisma, middleware, io }) {
     await prisma.interviewSlot.update({ where: { id: slot.id }, data: { status: "COMPLETED" } });
     sendOk(res, { feedback });
   }));
+
+  // Ad-hoc run code for live interview
+  router.post("/interviews/:id/run", middleware.requireAuth, asyncHandler(async (req, res) => {
+    requireFields(req.body, ["code", "language"]);
+    const slot = await prisma.interviewSlot.findUnique({ where: { id: req.params.id } });
+    if (!slot || ![slot.candidateId, slot.recruiterId].includes(req.user.id)) {
+      const error = new Error("Interview not found or access denied");
+      error.statusCode = 403;
+      throw error;
+    }
+    const { Queue } = require("bullmq");
+    const IORedis = require("ioredis");
+    const { redisUrl } = require("../config/env");
+    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+    const queue = new Queue("code-submissions", { connection });
+    
+    const job = await queue.add("run-ad-hoc", {
+      code: req.body.code,
+      language: req.body.language
+    });
+    
+    // Close connections
+    await queue.close();
+    connection.disconnect();
+    
+    sendCreated(res, { jobId: job.id });
+  }));
+
+  // Poll job status
+  router.get("/interviews/jobs/:jobId", middleware.requireAuth, asyncHandler(async (req, res) => {
+    const { Queue } = require("bullmq");
+    const IORedis = require("ioredis");
+    const { redisUrl } = require("../config/env");
+    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+    const queue = new Queue("code-submissions", { connection });
+    
+    const job = await queue.getJob(req.params.jobId);
+    if (!job) {
+      await queue.close();
+      connection.disconnect();
+      const error = new Error("Job not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    const state = await job.getState();
+    let result = null;
+    if (state === "completed") result = job.returnvalue;
+    else if (state === "failed") result = { status: "FAILED", stderr: job.failedReason };
+
+    await queue.close();
+    connection.disconnect();
+    
+    sendOk(res, { status: state, result });
+  }));
 }
 
 module.exports = createInterviewRoutes;

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 export function useMediaDevices(requestedVideo, requestedMic) {
   const [stream, setStream] = useState(null);
+  const [displayStream, setDisplayStream] = useState(null);
   
   const [micWorking, setMicWorking] = useState(false);
   const [cameraWorking, setCameraWorking] = useState(false);
@@ -9,6 +10,11 @@ export function useMediaDevices(requestedVideo, requestedMic) {
   
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [error, setError] = useState(null);
+
+  // Device selection state
+  const [devices, setDevices] = useState({ audioInputs: [], videoInputs: [] });
+  const [selectedAudioId, setSelectedAudioId] = useState("");
+  const [selectedVideoId, setSelectedVideoId] = useState("");
 
   const streamRef = useRef(null);
   const displayStreamRef = useRef(null);
@@ -25,7 +31,6 @@ export function useMediaDevices(requestedVideo, requestedMic) {
         return;
       }
       try {
-        // Fetch to root to check real connectivity
         const res = await fetch("/", { method: "HEAD", cache: "no-store" });
         if (active) {
           setNetworkWorking(res.ok);
@@ -52,6 +57,34 @@ export function useMediaDevices(requestedVideo, requestedMic) {
     };
   }, []);
 
+  // Enumerate devices initially and when permissions might change
+  useEffect(() => {
+    const updateDevices = async () => {
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devs.filter((d) => d.kind === "audioinput");
+        const videoInputs = devs.filter((d) => d.kind === "videoinput");
+        setDevices({ audioInputs, videoInputs });
+        
+        // Auto-select first available if none selected
+        if (!selectedAudioId && audioInputs.length > 0) {
+          setSelectedAudioId(audioInputs[0].deviceId);
+        }
+        if (!selectedVideoId && videoInputs.length > 0) {
+          setSelectedVideoId(videoInputs[0].deviceId);
+        }
+      } catch (err) {
+        console.error("Failed to enumerate devices:", err);
+      }
+    };
+
+    updateDevices();
+    navigator.mediaDevices.addEventListener("devicechange", updateDevices);
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
+    };
+  }, [selectedAudioId, selectedVideoId]);
+
   // Media acquisition and real testing
   useEffect(() => {
     let active = true;
@@ -69,10 +102,16 @@ export function useMediaDevices(requestedVideo, requestedMic) {
           return;
         }
 
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: requestedVideo,
-          audio: requestedMic,
-        });
+        const constraints = {
+          video: requestedVideo 
+            ? (selectedVideoId ? { deviceId: { exact: selectedVideoId } } : true)
+            : false,
+          audio: requestedMic 
+            ? (selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true)
+            : false,
+        };
+
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (!active) {
           newStream.getTracks().forEach((t) => t.stop());
@@ -89,7 +128,6 @@ export function useMediaDevices(requestedVideo, requestedMic) {
         // 1. Camera Real Check
         const videoTrack = newStream.getVideoTracks()[0];
         if (videoTrack) {
-          // If it's live, we consider it working
           if (videoTrack.readyState === "live") {
             setCameraWorking(true);
           } else {
@@ -104,7 +142,6 @@ export function useMediaDevices(requestedVideo, requestedMic) {
         // 2. Mic Real Check (Volume detection)
         const audioTrack = newStream.getAudioTracks()[0];
         if (audioTrack) {
-          // Initialize AudioContext to test volume
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (!audioContextRef.current) {
              audioContextRef.current = new AudioContext();
@@ -131,10 +168,8 @@ export function useMediaDevices(requestedVideo, requestedMic) {
             }
             const average = sum / dataArray.length;
             
-            // If sound is detected (average volume > tiny threshold)
             if (average > 2) {
               setMicWorking(true);
-              // Stop polling once we confirmed mic works
               return;
             }
             animationFrameRef.current = requestAnimationFrame(checkVolume);
@@ -169,7 +204,7 @@ export function useMediaDevices(requestedVideo, requestedMic) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [requestedVideo, requestedMic]);
+  }, [requestedVideo, requestedMic, selectedVideoId, selectedAudioId]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -196,19 +231,21 @@ export function useMediaDevices(requestedVideo, requestedMic) {
         if (displayStreamRef.current) {
           displayStreamRef.current.getTracks().forEach(t => t.stop());
           displayStreamRef.current = null;
+          setDisplayStream(null);
         }
         return;
       }
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+      const newDisplayStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
       });
-      displayStreamRef.current = displayStream;
+      displayStreamRef.current = newDisplayStream;
+      setDisplayStream(newDisplayStream);
       setIsScreenSharing(true);
 
-      // Listen for user stopping via browser native button
-      displayStream.getVideoTracks()[0].onended = () => {
+      newDisplayStream.getVideoTracks()[0].onended = () => {
         setIsScreenSharing(false);
         displayStreamRef.current = null;
+        setDisplayStream(null);
       };
     } catch (err) {
       console.error("Screen share error", err);
@@ -218,11 +255,17 @@ export function useMediaDevices(requestedVideo, requestedMic) {
 
   return {
     stream,
+    displayStream,
     micWorking,
     cameraWorking,
     networkWorking,
     isScreenSharing,
     toggleScreenShare,
     error,
+    devices,
+    selectedAudioId,
+    setSelectedAudioId,
+    selectedVideoId,
+    setSelectedVideoId
   };
 }

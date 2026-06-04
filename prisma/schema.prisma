@@ -122,6 +122,7 @@ model Campaign {
   requiredSkills String[]       @default([])
   status         CampaignStatus @default(DRAFT)
   expiresAt      DateTime?
+  interviewQuestions Json?
   assessment     Assessment?
   applications   Application[]
   inviteLinks    InviteLink[]

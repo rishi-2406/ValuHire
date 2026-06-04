@@ -98,6 +98,9 @@ function createCampaignRoutes({ router, prisma, middleware }) {
       description: req.body.description,
       status: req.body.status
     };
+    if (req.body.interviewQuestions !== undefined) {
+      updateData.interviewQuestions = req.body.interviewQuestions;
+    }
     if (req.body.expiresAt !== undefined) {
       updateData.expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null;
     }

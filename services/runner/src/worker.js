@@ -13,6 +13,32 @@ const prisma = new PrismaClient();
 const worker = new Worker(
   "code-submissions",
   async (job) => {
+    if (job.name === "run-ad-hoc") {
+      const { runProcess } = require("./lib/executor");
+      const { buildDockerCommand, getLanguageConfig } = require("./lib/adapters");
+      const fs = require("fs/promises");
+      const path = require("path");
+      const os = require("os");
+      
+      const config = getLanguageConfig(job.data.language);
+      const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "valuhire-run-"));
+      const fileName = config.language === "java" ? "Main.java" : `main.${config.extension}`;
+      const filePath = path.join(workDir, fileName);
+      await fs.writeFile(filePath, job.data.code, "utf8");
+
+      try {
+        const useDocker = process.env.VALUHIRE_USE_DOCKER === "true";
+        const commandParts = useDocker
+          ? buildDockerCommand({ language: config.language, filePath, workDir })
+          : config.command(filePath);
+        const [command, ...args] = commandParts;
+        const result = await runProcess(command, args, { input: "" });
+        return result;
+      } finally {
+        await fs.rm(workDir, { recursive: true, force: true });
+      }
+    }
+
     const submission = await prisma.submission.findUnique({
       where: { id: job.data.submissionId },
       include: { codingQuestion: { include: { testCases: true } } }
