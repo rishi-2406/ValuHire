@@ -12,9 +12,11 @@ import {
   Briefcase,
   Play,
   BarChart3,
-  CheckCircle2
+  CheckCircle2,
+  Bell
 } from "lucide-react";
 import { applicationService } from "../services/api";
+import { useNotifications } from "../hooks/useNotifications";
 import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
 import { SkeletonCard } from "../components/Skeleton";
@@ -24,6 +26,7 @@ export default function CandidateDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const { unreadCount } = useNotifications(user);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -185,12 +188,12 @@ export default function CandidateDashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-white rounded-3xl border border-outline-variant/60 shadow-sm flex flex-col justify-between group hover:border-[#059669]/40 transition-all cursor-pointer" onClick={() => navigate("/applications")}>
+                <div className="p-6 bg-white rounded-3xl border border-outline-variant/60 shadow-sm flex flex-col justify-between group hover:border-[#059669]/40 transition-all cursor-pointer" onClick={() => navigate("/interviews")}>
                   <div className="w-10 h-10 rounded-xl bg-[#059669]/10 text-[#059669] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Video size={20} />
                   </div>
                   <div>
-                    <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => a.status === "INTERVIEW").length}</div>
+                    <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => ["INTERVIEW_SCHEDULED", "INTERVIEW"].includes(a.status)).length}</div>
                     <div className="text-sm text-on-surface-variant font-semibold mt-1">Interviews</div>
                   </div>
                 </div>
@@ -220,18 +223,69 @@ export default function CandidateDashboard() {
               )}
             </div>
 
+            {/* Unread notification prompt */}
+            {unreadCount > 0 && (
+              <div
+                onClick={() => navigate("/notifications")}
+                className="cursor-pointer flex items-center gap-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-2xl px-5 py-4 hover:bg-[#DBEAFE] transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Bell size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-[#1E40AF]">
+                    You have {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
+                  </p>
+                  <p className="text-xs text-[#3B82F6] font-medium mt-0.5">Click to view your notifications</p>
+                </div>
+                <ChevronRight size={18} className="text-[#2563EB] shrink-0" />
+              </div>
+            )}
+
             {/* Right Column */}
             <div className="space-y-6">
               <div className="bg-white border border-outline-variant/60 rounded-3xl p-8 shadow-sm">
                 {(() => {
-                  const missingItems = [];
-                  if (!user?.name) missingItems.push("Full Name");
-                  if (!user?.bio) missingItems.push("Bio");
-                  if (!user?.profilePicUrl) missingItems.push("Profile Picture");
-                  if (!user?.resumeUrl) missingItems.push("Resume");
-                  if (!(user?.skills?.length || user?.specialties?.length)) missingItems.push("Specialties");
-                  
-                  if (missingItems.length === 0) {
+                  // Core required fields
+                  const coreChecks = [
+                    { label: "Full Name",        ok: !!user?.name },
+                    { label: "Bio",              ok: !!user?.bio },
+                    { label: "Profile Picture",  ok: !!user?.profilePicUrl },
+                    { label: "Resume",           ok: !!user?.resumeUrl },
+                    { label: "Skills / Specialties", ok: !!(user?.skills?.length || user?.specialties?.length) },
+                  ];
+
+                  // Profile links (at least one recommended)
+                  const linkChecks = [
+                    { label: "GitHub profile",     ok: !!user?.githubUrl },
+                    { label: "LinkedIn profile",   ok: !!user?.linkedinUrl },
+                    { label: "LeetCode profile",   ok: !!user?.leetcodeUrl },
+                    { label: "Codeforces profile", ok: !!user?.codeforcesUrl },
+                    { label: "Portfolio / Website",ok: !!user?.portfolioUrl },
+                  ];
+
+                  const missingCore  = coreChecks.filter(c => !c.ok).map(c => ({ label: c.label, isLink: false }));
+                  const missingLinks = linkChecks.filter(c => !c.ok).map(c => ({ label: c.label, isLink: true }));
+                  const hasAnyLink   = linkChecks.some(c => c.ok);
+
+                  // Count towards total: 5 core + "at least one link" counts as 1
+                  const total    = coreChecks.length + 1;
+                  const achieved = coreChecks.filter(c => c.ok).length + (hasAnyLink ? 1 : 0);
+                  const pct      = Math.round((achieved / total) * 100);
+
+                  // "Complete" = all core fields + at least one link
+                  const isComplete = missingCore.length === 0 && hasAnyLink;
+
+                  // Compile display list
+                  const displayMissing = [
+                    ...missingCore,
+                    ...(!hasAnyLink ? [{ label: "At least one profile link", isLink: true }] : []),
+                  ];
+
+                  // Additional link suggestions when core is done but some links are absent
+                  const suggestLinks = hasAnyLink && missingLinks.length > 0 ? missingLinks : [];
+
+                  if (isComplete && suggestLinks.length === 0) {
                     return (
                       <div>
                         <div className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center mb-5 border border-outline-variant/50">
@@ -247,26 +301,51 @@ export default function CandidateDashboard() {
                       </div>
                     );
                   }
-                  
+
                   return (
                     <div>
                       <div className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center mb-5 border border-outline-variant/50">
-                        <AlertTriangle size={24} className="text-on-surface-variant" />
+                        <AlertTriangle size={24} className={isComplete ? "text-[#D97706]" : "text-on-surface-variant"} />
                       </div>
-                      <h3 className="text-xl font-bold text-on-surface mb-2">Incomplete Profile</h3>
-                      <p className="text-sm text-on-surface-variant mb-6 font-medium leading-relaxed">
-                        Add these missing details to stand out to recruiters:
+
+                      <h3 className="text-xl font-bold text-on-surface mb-1">
+                        {isComplete ? "Add More Profiles" : "Incomplete Profile"}
+                      </h3>
+                      <p className="text-sm text-on-surface-variant mb-4 font-medium leading-relaxed">
+                        {isComplete
+                          ? "You look great! Consider adding more profile links:"
+                          : "Add these details to stand out to recruiters:"}
                       </p>
-                      <ul className="space-y-3 mb-8">
-                        {missingItems.map(item => (
-                          <li key={item} className="text-sm text-on-surface font-semibold flex items-center gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                      <button onClick={() => navigate('/settings')} className="w-full bg-[#111827] text-white font-bold py-3 rounded-xl hover:bg-[#1F2937] transition-all shadow-sm active:scale-95">
-                        Complete Profile
+
+                      {/* Missing items */}
+                      {displayMissing.length > 0 && (
+                        <ul className="space-y-2 mb-4">
+                          {displayMissing.map(item => (
+                            <li key={item.label} className="text-sm text-on-surface font-semibold flex items-center gap-3">
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444] shrink-0" />
+                              {item.label}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {/* Suggested extra links */}
+                      {suggestLinks.length > 0 && (
+                        <div className="border-t border-outline-variant/30 pt-3 mt-3 mb-4">
+                          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Also recommended</p>
+                          <ul className="space-y-1.5">
+                            {suggestLinks.map(item => (
+                              <li key={item.label} className="text-xs text-on-surface-variant flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#D97706] shrink-0" />
+                                {item.label}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <button onClick={() => navigate('/settings')} className="w-full bg-[#111827] text-white font-bold py-3 rounded-xl hover:bg-[#1F2937] transition-all shadow-sm active:scale-95 mt-2">
+                        {isComplete ? "Add Profile Links" : "Complete Profile"}
                       </button>
                     </div>
                   );

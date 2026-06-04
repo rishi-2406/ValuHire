@@ -9,6 +9,7 @@ import CandidateDashboard from "./pages/CandidateDashboard";
 import CampaignsPage from "./pages/CampaignsPage";
 import CampaignBuilderPage from "./pages/CampaignBuilderPage";
 import AssessmentRoom from "./pages/AssessmentRoom";
+import LiveInterviewRoom from "./pages/LiveInterviewRoom";
 import ResultsPage from "./pages/ResultsPage";
 import InterviewsPage from "./pages/InterviewsPage";
 import AdminPage from "./pages/AdminPage";
@@ -151,6 +152,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["RECRUITER", "CANDIDATE", "ADMIN"]}>
             <InterviewsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/interviews/:sessionId/live"
+        element={
+          <ProtectedRoute allowedRoles={["RECRUITER", "CANDIDATE", "ADMIN"]}>
+            <LiveInterviewRoom />
           </ProtectedRoute>
         }
       />

@@ -48,8 +48,9 @@ async function refreshAccessToken() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken: rt })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Refresh failed");
+    const json = await res.json();
+    const data = json.data !== undefined ? json.data : json;
+    if (!res.ok) throw new Error(data.message || json.message || "Refresh failed");
     setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken || rt });
     return data.accessToken;
   })();

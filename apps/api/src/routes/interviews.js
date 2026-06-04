@@ -10,6 +10,25 @@ function createInterviewRoutes({ router, prisma, middleware, io }) {
       error.statusCode = 404;
       throw error;
     }
+    
+    const startsAtDate = new Date(req.body.startsAt);
+    const endsAtDate = new Date(req.body.endsAt);
+    
+    const overlapping = await prisma.interviewSlot.findFirst({
+      where: {
+        recruiterId: req.user.id,
+        status: { notIn: ["COMPLETED", "CANCELLED"] },
+        startsAt: { lt: endsAtDate },
+        endsAt: { gt: startsAtDate }
+      }
+    });
+
+    if (overlapping) {
+      const error = new Error("You already have an active interview scheduled during this time");
+      error.statusCode = 409;
+      throw error;
+    }
+
     const slot = await prisma.interviewSlot.create({
       data: {
         campaignId: campaign.id,
@@ -24,14 +43,25 @@ function createInterviewRoutes({ router, prisma, middleware, io }) {
       where: { candidateId: req.body.candidateId, campaignId: campaign.id },
       data: { status: "INTERVIEW_SCHEDULED" }
     });
-    // Create notification for candidate
+    // Create notification for candidate with full meeting details
+    const durationMs = new Date(req.body.endsAt) - new Date(req.body.startsAt);
+    const durationMinutes = Math.round(durationMs / 60000);
     const notification = await prisma.notification.create({
       data: {
         userId: req.body.candidateId,
         type: "INTERVIEW_SCHEDULED",
         title: "Interview Scheduled! 📅",
         message: `Your interview for "${campaign.title}" has been scheduled. Please check your Interviews tab for details.`,
-        metadata: { campaignId: campaign.id, campaignTitle: campaign.title, slotId: slot.id }
+        metadata: {
+          campaignId: campaign.id,
+          campaignTitle: campaign.title,
+          slotId: slot.id,
+          scheduledAt: new Date(req.body.startsAt).toISOString(),
+          endsAt: new Date(req.body.endsAt).toISOString(),
+          durationMinutes,
+          interviewerName: req.user.name || null,
+          notes: req.body.notes || null
+        }
       }
     });
     if (io) {

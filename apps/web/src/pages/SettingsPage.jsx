@@ -32,6 +32,62 @@ export default function SettingsPage() {
   const [codeforcesUrl, setCodeforcesUrl] = useState(user?.codeforcesUrl || "");
   const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl || "");
   const [portfolioUrl, setPortfolioUrl] = useState(user?.portfolioUrl || "");
+  const [urlErrors, setUrlErrors] = useState({});
+  
+  // URL field definitions with validation patterns
+  const URL_FIELDS = [
+    {
+      key: "githubUrl",
+      label: "GitHub URL",
+      value: githubUrl,
+      setter: setGithubUrl,
+      placeholder: "https://github.com/username",
+      pattern: /^https:\/\/github\.com\/[a-zA-Z0-9_.-]+\/?$/,
+      hint: "e.g. https://github.com/yourusername"
+    },
+    {
+      key: "leetcodeUrl",
+      label: "LeetCode URL",
+      value: leetcodeUrl,
+      setter: setLeetcodeUrl,
+      placeholder: "https://leetcode.com/u/username",
+      pattern: /^https:\/\/leetcode\.com\/(u\/)?[a-zA-Z0-9_.-]+\/?$/,
+      hint: "e.g. https://leetcode.com/u/yourusername"
+    },
+    {
+      key: "codeforcesUrl",
+      label: "Codeforces URL",
+      value: codeforcesUrl,
+      setter: setCodeforcesUrl,
+      placeholder: "https://codeforces.com/profile/username",
+      pattern: /^https:\/\/codeforces\.com\/profile\/[a-zA-Z0-9_.-]+\/?$/,
+      hint: "e.g. https://codeforces.com/profile/yourusername"
+    },
+    {
+      key: "linkedinUrl",
+      label: "LinkedIn URL",
+      value: linkedinUrl,
+      setter: setLinkedinUrl,
+      placeholder: "https://linkedin.com/in/username",
+      pattern: /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_.-]+\/?$/,
+      hint: "e.g. https://linkedin.com/in/yourname"
+    },
+    {
+      key: "portfolioUrl",
+      label: "Portfolio / Website",
+      value: portfolioUrl,
+      setter: setPortfolioUrl,
+      placeholder: "https://myportfolio.com",
+      pattern: /^https?:\/\/.+\..+/,
+      hint: "Any valid URL starting with https://"
+    },
+  ];
+
+  const validateUrl = (key, value, pattern) => {
+    if (!value) return; // empty is fine — fields are optional
+    const valid = pattern.test(value.trim());
+    setUrlErrors(prev => ({ ...prev, [key]: valid ? undefined : true }));
+  };
   
   const [companyName, setCompanyName] = useState(user?.company?.name || "");
   const [companyWebsite, setCompanyWebsite] = useState(user?.company?.website || "");
@@ -43,6 +99,11 @@ export default function SettingsPage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    // Block save if any URL field has a validation error
+    if (Object.values(urlErrors).some(Boolean)) {
+      toast.error("Please fix the invalid URL fields before saving.");
+      return;
+    }
     setSaving(true);
     try {
       const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
@@ -310,25 +371,37 @@ export default function SettingsPage() {
                         <h3 className="text-lg font-bold text-on-surface">Online Profiles</h3>
                       </div>
                       <p className="text-sm text-on-surface-variant mb-6">Add your coding profiles and portfolio links — they'll appear on your candidate profile.</p>
-                      <div className="space-y-4">
-                        {[
-                          { label: "GitHub URL", value: githubUrl, setter: setGithubUrl, placeholder: "https://github.com/username" },
-                          { label: "LeetCode URL", value: leetcodeUrl, setter: setLeetcodeUrl, placeholder: "https://leetcode.com/username" },
-                          { label: "Codeforces URL", value: codeforcesUrl, setter: setCodeforcesUrl, placeholder: "https://codeforces.com/profile/username" },
-                          { label: "LinkedIn URL", value: linkedinUrl, setter: setLinkedinUrl, placeholder: "https://linkedin.com/in/username" },
-                          { label: "Portfolio / Website", value: portfolioUrl, setter: setPortfolioUrl, placeholder: "https://myportfolio.com" },
-                        ].map(field => (
-                          <div key={field.label}>
-                            <label className="block text-sm font-semibold text-on-surface mb-1.5">{field.label}</label>
-                            <input
-                              type="url"
-                              value={field.value}
-                              onChange={e => field.setter(e.target.value)}
-                              placeholder={field.placeholder}
-                              className="w-full border border-outline-variant/80 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface font-medium"
-                            />
-                          </div>
-                        ))}
+                      <div className="space-y-5">
+                        {URL_FIELDS.map(field => {
+                          const hasError = !!urlErrors[field.key];
+                          return (
+                            <div key={field.key}>
+                              <label className="block text-sm font-semibold text-on-surface mb-1.5">{field.label}</label>
+                              <input
+                                type="url"
+                                value={field.value}
+                                onChange={e => {
+                                  field.setter(e.target.value);
+                                  if (urlErrors[field.key]) {
+                                    setUrlErrors(prev => ({ ...prev, [field.key]: undefined }));
+                                  }
+                                }}
+                                onBlur={e => validateUrl(field.key, e.target.value, field.pattern)}
+                                placeholder={field.placeholder}
+                                className={`w-full border rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-1 text-on-surface font-medium transition-colors ${
+                                  hasError
+                                    ? "border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626] bg-[#FEF2F2]"
+                                    : "border-outline-variant/80 focus:border-[#2563EB] focus:ring-[#2563EB]"
+                                }`}
+                              />
+                              {hasError ? (
+                                <p className="text-xs text-[#DC2626] mt-1 font-medium">⚠ Invalid URL format — {field.hint}</p>
+                              ) : (
+                                <p className="text-xs text-on-surface-variant/60 mt-1">{field.hint}</p>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

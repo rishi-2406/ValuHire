@@ -25,7 +25,8 @@ import {
   CheckSquare,
   Square,
   ChevronDown,
-  Clock
+  Clock,
+  Plus
 } from "lucide-react";
 import { resultsService, campaignService, applicationService } from "../services/api";
 import Sidebar from "../components/Sidebar";
@@ -233,6 +234,7 @@ export default function ResultsPage() {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [scheduleTarget, setScheduleTarget] = useState(null); // { candidateId, candidateName, campaignId }
   const [shortlisting, setShortlisting] = useState(false);
+  const [interviewQuestions, setInterviewQuestions] = useState([]);
   const perPage = 10;
 
   const role = (user?.role || "recruiter").toLowerCase();
@@ -249,6 +251,12 @@ export default function ResultsPage() {
 
   const currentCampaign = campaigns.find(c => c.id === campaignId);
   const isCurrentlyOpen = (currentCampaign?.status || "").toUpperCase() === "OPEN";
+
+  useEffect(() => {
+    if (currentCampaign) {
+      setInterviewQuestions(currentCampaign.assessment?.interviewQuestions || currentCampaign.interviewQuestions || []);
+    }
+  }, [currentCampaign]);
 
   // Load assessment results
   useEffect(() => {
@@ -349,20 +357,15 @@ export default function ResultsPage() {
   };
 
   // Schedule interview
-  const handleScheduleInterview = async ({ date, time, duration }) => {
+  const handleScheduleInterview = async ({ startsAt, endsAt, notes }) => {
     if (!scheduleTarget) return;
     try {
-      const [month, day, year] = [date.split("-")[1], date.split("-")[2], date.split("-")[0]];
-      const [h, mStr] = time.replace(" PM", "").replace(" AM", "").split(":").map(Number);
-      const isPM = time.includes("PM");
-      const hour = isPM && h !== 12 ? h + 12 : h;
-      const startsAt = new Date(+year, +month - 1, +day, hour, mStr || 0).toISOString();
-      const endsAt = new Date(new Date(startsAt).getTime() + duration * 60000).toISOString();
       await interviewService.scheduleInterview({
         campaignId: scheduleTarget.campaignId,
         candidateId: scheduleTarget.candidateId,
         startsAt,
-        endsAt
+        endsAt,
+        notes: notes || undefined,
       });
       toast.success("Interview scheduled!", { title: `Invite sent to ${scheduleTarget.candidateName}` });
       await loadShortlisted();
@@ -373,6 +376,7 @@ export default function ResultsPage() {
       setScheduleTarget(null);
     }
   };
+
 
   const handleToggleCampaign = async () => {
     if (!currentCampaign) return;
@@ -469,6 +473,7 @@ export default function ResultsPage() {
               {[
                 { key: "rankings", label: "Candidate Rankings", icon: BarChart3 },
                 { key: "shortlisted", label: `Shortlisted (${shortlistedApps.length})`, icon: Star },
+                { key: "questions", label: "Interview Questions", icon: Code },
               ].map(tab => {
                 const Icon = tab.icon;
                 return (
@@ -586,8 +591,10 @@ export default function ResultsPage() {
                                 </td>
                                 <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedCandidate(c)}>
                                   <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#E0E7FF] text-[#3730A3] flex items-center justify-center font-bold text-sm shrink-0">
-                                      {c.name?.split(" ").map(n => n[0]).join("").substring(0, 2)}
+                                    <div className="w-10 h-10 rounded-full bg-[#E0E7FF] text-[#3730A3] flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden border border-[#C7D2FE]">
+                                      {c.candidateProfile?.profilePicUrl
+                                        ? <img src={c.candidateProfile.profilePicUrl} alt={c.name} className="w-full h-full object-cover" />
+                                        : c.name?.split(" ").map(n => n[0]).join("").substring(0, 2)}
                                     </div>
                                     <div>
                                       <div className="font-bold text-on-surface text-sm">{c.name}</div>
@@ -764,7 +771,7 @@ export default function ResultsPage() {
                           {app.status === "SHORTLISTED" && (
                             <button
                               id={`schedule-interview-btn-${c.id}`}
-                              onClick={() => setScheduleTarget({ candidateId: c.id, candidateName: name, campaignId })}
+                              onClick={() => setScheduleTarget({ candidateId: c.id, candidateName: name, campaignId, candidateProfilePicUrl: c.profilePicUrl })}
                               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#111827] text-white rounded-xl text-sm font-bold hover:bg-[#1F2937] transition-all shadow-sm active:scale-95"
                             >
                               <Calendar size={16} /> Schedule Interview
@@ -781,6 +788,93 @@ export default function ResultsPage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── Interview Questions Tab ── */}
+          {!isCandidate && activeTab === "questions" && (
+            <div className="bg-white border border-outline-variant/60 rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-outline-variant/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Code size={20} className="text-[#2563EB]" />
+                  <h3 className="text-xl font-bold text-on-surface">Live Interview Questions</h3>
+                </div>
+                <button 
+                  onClick={() => {
+                    const newQ = { id: Date.now().toString(), title: "New Question", statement: "Write a function to...", language: "python" };
+                    setInterviewQuestions([...interviewQuestions, newQ]);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] text-white rounded-lg text-sm font-bold hover:bg-[#1D4ED8] transition-colors"
+                >
+                  <Plus size={16} /> Add Question
+                </button>
+              </div>
+              
+              <div className="p-6 bg-surface-container-low min-h-[400px]">
+                {interviewQuestions.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-on-surface-variant">
+                    <Code size={48} className="mb-4 text-outline-variant" />
+                    <h3 className="text-lg font-bold text-on-surface mb-2">No Interview Questions</h3>
+                    <p className="text-sm">Pre-populate coding questions here to select them quickly during a live interview.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-6">
+                    {interviewQuestions.map((q, idx) => (
+                      <div key={q.id || idx} className="bg-white border border-outline-variant/60 rounded-xl p-5 shadow-sm">
+                        <div className="flex justify-between mb-4">
+                           <input 
+                             type="text" 
+                             value={q.title} 
+                             onChange={(e) => {
+                               const arr = [...interviewQuestions];
+                               arr[idx].title = e.target.value;
+                               setInterviewQuestions(arr);
+                             }}
+                             className="text-lg font-bold text-on-surface border-b border-transparent hover:border-outline-variant focus:border-primary outline-none bg-transparent w-1/2 px-1"
+                             placeholder="Question Title"
+                           />
+                           <button 
+                             onClick={() => {
+                               const arr = [...interviewQuestions];
+                               arr.splice(idx, 1);
+                               setInterviewQuestions(arr);
+                             }}
+                             className="text-error hover:bg-error/10 p-1.5 rounded-lg transition-colors"
+                           >
+                             <X size={16} />
+                           </button>
+                        </div>
+                        <textarea
+                           value={q.statement}
+                           onChange={(e) => {
+                             const arr = [...interviewQuestions];
+                             arr[idx].statement = e.target.value;
+                             setInterviewQuestions(arr);
+                           }}
+                           rows={4}
+                           className="w-full text-sm font-mono text-on-surface-variant bg-[#F8FAFC] border border-outline-variant/50 rounded-lg p-3 outline-none focus:border-primary resize-none"
+                           placeholder="Problem statement..."
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="p-4 border-t border-outline-variant/50 flex justify-end bg-white">
+                 <button 
+                   onClick={async () => {
+                     try {
+                       await campaignService.updateCampaign(campaignId, { interviewQuestions });
+                       toast.success("Questions saved for the campaign");
+                     } catch (err) {
+                       toast.error(err.message || "Failed to save questions");
+                     }
+                   }}
+                   className="flex items-center gap-2 bg-[#111827] text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-[#1F2937] transition-all shadow-sm active:scale-95"
+                 >
+                   Save Questions
+                 </button>
+              </div>
             </div>
           )}
 
@@ -803,6 +897,8 @@ export default function ResultsPage() {
           open={!!scheduleTarget}
           onClose={() => setScheduleTarget(null)}
           onSchedule={handleScheduleInterview}
+          candidateName={scheduleTarget?.candidateName}
+          candidateProfilePicUrl={scheduleTarget?.candidateProfilePicUrl}
         />
       )}
     </div>
