@@ -102,15 +102,16 @@ export function useWebRTC(roomId, localStream) {
   // Dynamic Track Replacement logic
   useEffect(() => {
     const pc = pcRef.current;
-    if (!pc || !localStream) return;
+    if (!pc) return;
 
     const transceivers = pc.getTransceivers();
     
+    // In WebRTC, receiver track is always present and determines the kind of transceiver
     const videoTransceiver = transceivers.find(t => t.receiver && t.receiver.track && t.receiver.track.kind === "video");
     const audioTransceiver = transceivers.find(t => t.receiver && t.receiver.track && t.receiver.track.kind === "audio");
 
-    const newVideoTrack = localStream.getTracks().find(t => t.kind === "video");
-    const newAudioTrack = localStream.getTracks().find(t => t.kind === "audio");
+    const newVideoTrack = localStream ? localStream.getTracks().find(t => t.kind === "video") : null;
+    const newAudioTrack = localStream ? localStream.getTracks().find(t => t.kind === "audio") : null;
 
     if (videoTransceiver && videoTransceiver.sender) {
       videoTransceiver.sender.replaceTrack(newVideoTrack || null).catch(console.error);

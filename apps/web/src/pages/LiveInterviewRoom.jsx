@@ -52,6 +52,10 @@ export default function LiveInterviewRoom() {
   const [isRunning, setIsRunning] = useState(false);
   const [output, setOutput] = useState("");
   
+  // Resizable layout state
+  const [leftWidth, setLeftWidth] = useState(400);
+  const isDragging = useRef(false);
+  
   // Track if the code change came from us to avoid echo loops
   const isLocalCodeChange = useRef(false);
   const isLocalQuestionChange = useRef(false);
@@ -72,18 +76,29 @@ export default function LiveInterviewRoom() {
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
 
   useEffect(() => {
     if (localVideoRef.current && activeLocalStream) {
       localVideoRef.current.srcObject = activeLocalStream;
+      localVideoRef.current.play().catch(console.error);
     }
-  }, [activeLocalStream]);
+  }, [activeLocalStream, videoOn]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.play().catch(console.error);
     }
   }, [remoteStream, remoteVideoOn]); // Also re-run when remoteVideoOn toggles
+
+  // Independent audio playback for remote stream
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteStream) {
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current.play().catch(console.error);
+    }
+  }, [remoteStream]);
 
   // Broadcast media states
   useEffect(() => {
@@ -100,26 +115,24 @@ export default function LiveInterviewRoom() {
 
     // If recruiter, we might want to fetch campaign questions. 
     // We can assume we get interview details from interviewService
-    if (isRecruiter) {
-       interviewService.getMyInterviews()
-         .then(data => {
-            const list = data.slots || data.interviews || data || [];
-            const found = list.find(i => (i.id || i.interviewId) === sessionId);
-            if (found) {
-               setInterviewData(found);
-               if (found.campaignId) {
-                  campaignService.getCampaignDetails(found.campaignId)
-                    .then(c => setCampaign(c))
-                    .catch(console.error);
-               }
-            }
-         })
-         .catch(err => console.error(err))
-         .finally(() => setLoading(false));
-    } else {
-       // candidate
-       setLoading(false);
-    }
+    // Fetch interview details for both recruiter and candidate
+    interviewService.getMyInterviews()
+      .then(data => {
+        const list = data.slots || data.interviews || data || [];
+        // sessionId might be the slot id or room code
+        const found = list.find(i => (i.id || i.interviewId) === sessionId || i.roomCode === sessionId);
+        if (found) {
+          setInterviewData(found);
+          // Only recruiter needs to fetch campaign details for selecting coding questions
+          if (isRecruiter && found.campaignId) {
+            campaignService.getCampaignDetails(found.campaignId)
+              .then(res => setCampaign(res.campaign || res))
+              .catch(console.error);
+          }
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
 
     const off = onRoomEvent(room, ({ type, payload }) => {
       if (type === "codeChange") {
@@ -138,9 +151,29 @@ export default function LiveInterviewRoom() {
       }
     });
 
+    const handleMouseMove = (e) => {
+      if (!isDragging.current) return;
+      // Constrain width between 300px and windowWidth - 400px
+      const newWidth = Math.max(300, Math.min(e.clientX, window.innerWidth - 400));
+      setLeftWidth(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        // Optionally dispatch resize event so Monaco Editor resizes immediately
+        window.dispatchEvent(new Event('resize'));
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
     return () => {
       off();
       leaveRoom(room);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [sessionId, isRecruiter]);
 
@@ -247,7 +280,9 @@ export default function LiveInterviewRoom() {
           </div>
           <div>
             <h1 className="font-bold text-on-surface text-lg">Live Interview Session</h1>
-            <p className="text-xs font-semibold text-on-surface-variant">Secure Connection Established</p>
+            <p className="text-xs font-semibold text-on-surface-variant">
+              {interviewData ? `with ${isRecruiter ? interviewData.candidate?.name : interviewData.recruiter?.name}` : "Secure Connection Established"}
+            </p>
           </div>
         </div>
         
@@ -288,11 +323,20 @@ export default function LiveInterviewRoom() {
         </div>
       </header>
 
+      {/* Hidden audio element to ensure remote mic plays even if remote video is unmounted */}
+      <audio ref={remoteAudioRef} autoPlay />
+
       {/* Main Content Split: Left (Problem + Cameras) | Right (Code) */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div 
+        className="flex-1 flex overflow-hidden min-h-0" 
+        style={{ cursor: isDragging.current ? 'col-resize' : 'auto' }}
+      >
         
         {/* Left Side: Cameras and Problem Statement */}
-        <div className="w-1/3 min-w-[350px] max-w-[500px] flex flex-col border-r border-outline-variant bg-[#F8FAFC]">
+        <div 
+          className="flex flex-col bg-[#F8FAFC] shrink-0"
+          style={{ width: leftWidth }}
+        >
           
           {/* Cameras Area */}
           <div className="p-4 flex gap-3 border-b border-outline-variant/50 shrink-0">
@@ -322,6 +366,7 @@ export default function LiveInterviewRoom() {
                    ref={remoteVideoRef}
                    autoPlay
                    playsInline
+                   muted
                    className="absolute inset-0 w-full h-full object-cover transform -scale-x-100"
                  />
                ) : (
@@ -330,7 +375,7 @@ export default function LiveInterviewRoom() {
                  </div>
                )}
                <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                 {isRecruiter ? "Candidate" : "Interviewer"}
+                 {isRecruiter ? (interviewData?.candidate?.name || "Candidate") : (interviewData?.recruiter?.name || "Interviewer")}
                </div>
                {!remoteMicOn && <div className="absolute top-2 right-2 bg-[#DC2626] text-white p-1 rounded-md"><MicOff size={12}/></div>}
              </div>
@@ -355,20 +400,20 @@ export default function LiveInterviewRoom() {
               )}
             </div>
             
-            {activeLeftTab === "problem" && isRecruiter && campaign?.codingQuestions?.length > 0 && (
+            {activeLeftTab === "problem" && isRecruiter && campaign?.interviewQuestions?.length > 0 && (
               <div className="px-5 py-2 border-b border-outline-variant/50 bg-[#F1F5F9]">
                 <select 
                   className="w-full bg-white border border-outline-variant rounded p-1.5 text-xs font-semibold text-on-surface-variant outline-none"
                   onChange={(e) => {
                     if (!e.target.value) return;
-                    const q = campaign.codingQuestions.find(cq => cq.id === e.target.value);
+                    const q = campaign.interviewQuestions.find(cq => (cq.id || cq.title) === e.target.value);
                     if (q) handleQuestionChange({ target: { value: q.statement } });
                     e.target.value = "";
                   }}
                 >
                   <option value="">Load question from campaign...</option>
-                  {campaign.codingQuestions.map(q => (
-                    <option key={q.id} value={q.id}>{q.title}</option>
+                  {campaign.interviewQuestions.map((q, idx) => (
+                    <option key={q.id || idx} value={q.id || q.title}>{q.title}</option>
                   ))}
                 </select>
               </div>
@@ -399,6 +444,15 @@ export default function LiveInterviewRoom() {
             </div>
           </div>
         </div>
+
+        {/* Resize Handle */}
+        <div 
+          className="w-1.5 bg-outline-variant/50 hover:bg-primary/50 active:bg-primary cursor-col-resize shrink-0 z-10 transition-colors"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            isDragging.current = true;
+          }}
+        />
 
         {/* Right Side: Code Editor */}
         <div className="flex-1 flex flex-col bg-[#1E1E1E] min-w-0">

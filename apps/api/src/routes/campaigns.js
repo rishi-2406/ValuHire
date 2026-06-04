@@ -28,14 +28,18 @@ function createCampaignRoutes({ router, prisma, middleware }) {
   }));
 
   router.get("/campaigns/:id", middleware.requireAuth, asyncHandler(async (req, res) => {
+    const isRecruiter = req.user.role === "RECRUITER";
+    const restrictedSelect = { select: { id: true, points: true, slotIndex: true } };
+    const includeQuestions = isRecruiter ? true : restrictedSelect;
+
     const campaign = await prisma.campaign.findUnique({
       where: { id: req.params.id },
       include: { 
         company: true, 
         assessment: {
           include: {
-            mcqQuestions: { select: { id: true, points: true, slotIndex: true } },
-            codingQuestions: { select: { id: true, points: true, slotIndex: true } }
+            mcqQuestions: includeQuestions,
+            codingQuestions: includeQuestions
           }
         }
       }
