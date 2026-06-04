@@ -69,14 +69,19 @@ function createCampaignRoutes({ router, prisma, middleware }) {
   router.post("/campaigns", ...recruiter, asyncHandler(async (req, res) => {
     requireFields(req.body, ["title"]);
     let expiresAt = null;
+    let durationDays = null;
     if (req.body.duration && !isNaN(Number(req.body.duration))) {
+      durationDays = Number(req.body.duration);
       expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + Number(req.body.duration));
+      expiresAt.setDate(expiresAt.getDate() + durationDays);
     }
     const campaign = await prisma.campaign.create({
       data: {
         title: req.body.title,
         description: req.body.description,
+        targetRole: req.body.targetRole,
+        durationDays,
+        requiredSkills: req.body.tags || [],
         status: req.body.status || "OPEN",
         expiresAt,
         companyId: req.user.companyId

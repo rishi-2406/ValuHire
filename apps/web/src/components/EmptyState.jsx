@@ -2,10 +2,10 @@ import { ArrowRight, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ILLUSTRATIONS = {
-  "no-applications": "/images/empty_applications.png",
-  "no-campaigns": "/images/empty_campaigns.png",
-  "no-interviews": "/images/empty_interviews.png",
-  "no-results": "/images/empty_results.png",
+  "no-applications": "/illustrations/no-applications.png",
+  "no-campaigns": "/illustrations/no-campaigns.png",
+  "no-interviews": "/illustrations/no-interviews.png",
+  "no-results": "/illustrations/no-results.png",
 };
 
 export default function EmptyState({

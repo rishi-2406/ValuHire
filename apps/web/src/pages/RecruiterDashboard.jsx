@@ -198,7 +198,7 @@ export default function RecruiterDashboard() {
                         <tr>
                           <td colSpan="4" className="px-6 py-8">
                             <EmptyState
-                              icon={FileText}
+                              illustration="no-campaigns"
                               title="No campaigns found"
                               description="Create a new campaign to start recruiting."
                               primaryAction={{ label: "New Campaign", onClick: () => setShowCreateModal(true) }}

@@ -8,6 +8,23 @@ import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
 import NewCampaignModal from "../components/NewCampaignModal";
 
+export function formatTimeAgo(dateString) {
+  if (!dateString) return "recently";
+  const date = new Date(dateString);
+  const seconds = Math.floor((new Date() - date) / 1000);
+  let interval = seconds / 31536000;
+  if (interval >= 1) return Math.floor(interval) + (Math.floor(interval) === 1 ? " year ago" : " years ago");
+  interval = seconds / 2592000;
+  if (interval >= 1) return Math.floor(interval) + (Math.floor(interval) === 1 ? " month ago" : " months ago");
+  interval = seconds / 86400;
+  if (interval >= 1) return Math.floor(interval) + (Math.floor(interval) === 1 ? " day ago" : " days ago");
+  interval = seconds / 3600;
+  if (interval >= 1) return Math.floor(interval) + (Math.floor(interval) === 1 ? " hour ago" : " hours ago");
+  interval = seconds / 60;
+  if (interval >= 1) return Math.floor(interval) + (Math.floor(interval) === 1 ? " min ago" : " mins ago");
+  return "just now";
+}
+
 export default function CampaignsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,8 +41,10 @@ export default function CampaignsPage() {
     try {
       const resp = await campaignService.createCampaign({
         title: data.title,
-        location: data.location || "Remote",
-        department: data.department,
+        description: data.description,
+        targetRole: data.targetRole,
+        duration: data.duration,
+        tags: data.tags,
         status: "DRAFT"
       });
       const newCampaign = resp.campaign || resp;
@@ -140,6 +159,10 @@ export default function CampaignsPage() {
                         </div>
                       </div>
                       
+                      <div className="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant mb-4">
+                        Published {formatTimeAgo(c.createdAt)}
+                      </div>
+                      
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -170,10 +193,13 @@ export default function CampaignsPage() {
                              {isOpen ? 'OPEN' : 'CLOSED'}
                            </span>
                         </div>
-                        <div className="flex items-center gap-5 text-on-surface-variant text-sm mt-1.5 font-medium">
-                           <span className="flex items-center gap-1.5"><Users size={16} className="text-primary/70" /> {applicants} Applicants</span>
-                           <span className="flex items-center gap-1.5"><Clock size={16} className="text-primary/70" /> {c.assessment?.durationMinutes || 60} mins</span>
-                        </div>
+                          <div className="flex items-center gap-4 text-xs font-semibold text-on-surface-variant mt-3">
+                            <span className="flex items-center gap-1.5"><Briefcase size={14} /> {c.targetRole || "General"}</span>
+                            <span className="flex items-center gap-1.5"><Users size={14} /> {c._count?.applications || 0} Applied</span>
+                            <span className="flex items-center gap-1.5 bg-surface-container-low px-2 py-0.5 rounded text-on-surface-variant">
+                              Published {formatTimeAgo(c.createdAt)}
+                            </span>
+                          </div>
                       </div>
                     </div>
                     

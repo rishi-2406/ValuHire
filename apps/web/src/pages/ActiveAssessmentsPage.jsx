@@ -39,8 +39,9 @@ export default function ActiveAssessmentsPage() {
         const rMap = {};
         const resList = resData.results || resData || [];
         resList.forEach(r => {
-          if (r.session?.campaignId) {
-             rMap[r.session.campaignId] = r;
+          const campaignId = r.session?.assessment?.campaignId || r.session?.assessment?.campaign?.id;
+          if (campaignId) {
+             rMap[campaignId] = r;
           }
         });
         setResultsMap(rMap);
@@ -51,19 +52,21 @@ export default function ActiveAssessmentsPage() {
 
   const name = user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
 
-  const renderProgressSteps = (currentStatus) => {
+  const renderProgressSteps = (currentStatus, isCompletedResult) => {
     const steps = [
-      { id: "applied", label: "Applied" },
-      { id: "screening", label: "Screening" },
-      { id: "interview", label: "Interview" },
-      { id: "offer", label: "Offer" }
+      { id: "applied", label: "Apply" },
+      { id: "assessment", label: "Take Assessment" },
+      { id: "shortlist", label: "Shortlist" },
+      { id: "interview", label: "Interview Invite" }
     ];
     
     let activeIndex = 0;
-    if (currentStatus === "SCREENING") activeIndex = 1;
-    if (currentStatus === "INTERVIEW") activeIndex = 2;
-    if (currentStatus === "OFFER") activeIndex = 3;
-    if (currentStatus === "ASSESSMENT_COMPLETED") activeIndex = 1;
+    
+    if (currentStatus === "ASSESSMENT_INVITED") activeIndex = 1;
+    if (currentStatus === "ASSESSMENT_COMPLETED" || currentStatus === "SUBMITTED" || isCompletedResult) activeIndex = 1;
+    if (currentStatus === "SHORTLISTED") activeIndex = 2;
+    if (currentStatus === "INTERVIEW_SCHEDULED" || currentStatus === "INTERVIEW") activeIndex = 3;
+    if (currentStatus === "OFFER" || currentStatus === "HIRED") activeIndex = 3;
 
     return (
       <div className="relative mt-6 px-4">
@@ -147,7 +150,7 @@ export default function ActiveAssessmentsPage() {
             <div className="space-y-6">
               {applications.map(app => {
                 const hasAssessment = !!app.campaign?.assessment;
-                const isCompleted = app.status === "ASSESSMENT_COMPLETED" || app.status === "SUBMITTED";
+                const isCompleted = app.status === "ASSESSMENT_COMPLETED" || app.status === "SUBMITTED" || (app.campaign && !!resultsMap[app.campaign.id]);
                 const isInvited = app.status === "ASSESSMENT_INVITED" || app.status === "PENDING";
                 
                 return (
@@ -170,7 +173,7 @@ export default function ActiveAssessmentsPage() {
                         </span>
                       </div>
 
-                      {renderProgressSteps(app.status)}
+                      {renderProgressSteps(app.status, isCompleted)}
 
                       {isCompleted && resultsMap[app.campaign.id] && (
                         <div className="mt-4 p-4 bg-surface-container-lowest border border-outline-variant/50 rounded-2xl flex items-center justify-between shadow-sm">

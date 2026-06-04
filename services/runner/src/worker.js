@@ -24,11 +24,14 @@ const worker = new Worker(
 
     await prisma.submission.update({ where: { id: submission.id }, data: { status: "RUNNING" } });
 
+    const isFinalSubmit = Boolean(job.data.isFinalSubmit);
+
     const result = await executeAgainstTestCases({
       code: submission.code,
       language: submission.language,
       testCases: submission.codingQuestion.testCases,
-      questionPoints: submission.codingQuestion.points
+      questionPoints: submission.codingQuestion.points,
+      isFinalSubmit
     });
 
     await prisma.submission.update({

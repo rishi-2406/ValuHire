@@ -56,7 +56,16 @@ export default {
         "success-green": "#10B981",
         "error-coral": "#EF4444",
         "warning-amber": "#F59E0B",
-        "candidate-accent": "#8B5CF6"
+        "candidate-accent": "#8B5CF6",
+        "editor-bg": "#1e1e1e",
+        "editor-surface": "#252526",
+        "editor-outline": "#3c3c3c",
+        "editor-text": "#d4d4d4",
+        "editor-keyword": "#569cd6",
+        "editor-string": "#ce9178",
+        "editor-comment": "#6a9955",
+        "editor-function": "#dcdcaa",
+        "editor-number": "#b5cea8"
       },
       borderRadius: {
         DEFAULT: "0.25rem",

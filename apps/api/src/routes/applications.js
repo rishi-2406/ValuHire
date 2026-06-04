@@ -320,6 +320,56 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
       throw error;
     }
 
+    const { Queue } = require("bullmq");
+    const IORedis = require("ioredis");
+    const { redisUrl } = require("../config/env");
+    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+    const queue = new Queue("code-submissions", { connection });
+
+    const latestSubmissionsMap = new Map();
+    for (const sub of session.submissions) {
+      const existing = latestSubmissionsMap.get(sub.codingQuestionId);
+      if (!existing || sub.createdAt > existing.createdAt) {
+        latestSubmissionsMap.set(sub.codingQuestionId, sub);
+      }
+    }
+
+    const finalSubmissionIds = [];
+    for (const [qId, sub] of latestSubmissionsMap) {
+      const finalSub = await prisma.submission.create({
+        data: {
+          assessmentSessionId: session.id,
+          candidateId: req.user.id,
+          codingQuestionId: qId,
+          code: sub.code,
+          language: sub.language,
+          status: "QUEUED"
+        }
+      });
+      finalSubmissionIds.push(finalSub.id);
+      await queue.add("run-code", { submissionId: finalSub.id, isFinalSubmit: true });
+    }
+
+    if (finalSubmissionIds.length > 0) {
+      let pending = true;
+      let iterations = 0;
+      while (pending && iterations < 30) {
+        await new Promise(r => setTimeout(r, 1000));
+        const checks = await prisma.submission.findMany({ where: { id: { in: finalSubmissionIds } } });
+        pending = checks.some(c => c.status === "QUEUED" || c.status === "RUNNING");
+        iterations++;
+      }
+      const refreshedSession = await prisma.assessmentSession.findUnique({
+        where: { id: session.id },
+        include: { submissions: true }
+      });
+      session.submissions = refreshedSession.submissions;
+    }
+    
+    // Close connections
+    await queue.close();
+    connection.disconnect();
+
     const score = buildAssessmentScore({
       mcqQuestions: session.assessment.mcqQuestions,
       mcqAnswers: session.mcqAnswers,

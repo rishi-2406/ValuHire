@@ -243,7 +243,7 @@ export default function InterviewsPage() {
                 <p className="text-sm text-error">Failed to load: {error}</p>
               ) : interviews.length === 0 ? (
                 <EmptyState
-                  icon={CalendarDays}
+                  illustration="no-interviews"
                   title="No interviews scheduled"
                   description="Schedule your first interview to start collaborating with candidates."
                   primaryAction={{ label: "Schedule interview", icon: <Plus size={18} />, onClick: () => setShowScheduleModal(true) }}

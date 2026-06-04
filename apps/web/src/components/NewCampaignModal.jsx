@@ -73,7 +73,7 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
                 id="campaign-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Q3 Senior Engineers"
+                placeholder="Frontend Developer"
                 required
                 autoFocus
                 className="w-full border border-outline-variant/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface"
@@ -114,18 +114,16 @@ export default function NewCampaignModal({ open, onClose, onCreate }) {
                 <label htmlFor="campaign-duration" className="block text-sm font-semibold text-on-surface mb-2">Campaign Duration</label>
                 <div className="relative">
                   <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none" />
-                  <select
+                  <input
                     id="campaign-duration"
+                    type="number"
+                    min="1"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
+                    placeholder="e.g., 30"
                     className="w-full border border-outline-variant/80 rounded-lg pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface appearance-none bg-white"
-                  >
-                    <option value="" disabled>Select duration...</option>
-                    <option value="30">30 Days</option>
-                    <option value="60">60 Days</option>
-                    <option value="90">90 Days</option>
-                  </select>
-                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-on-surface-variant pointer-events-none">Days</span>
                 </div>
               </div>
             </div>

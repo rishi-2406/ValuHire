@@ -49,7 +49,7 @@ function shellQuote(value) {
   return `'${String(value).replace(/'/g, "'\\''")}'`;
 }
 
-async function executeAgainstTestCases({ code, language, testCases, questionPoints, useDocker = process.env.VALUHIRE_USE_DOCKER === "true" }) {
+async function executeAgainstTestCases({ code, language, testCases, questionPoints, isFinalSubmit = false, useDocker = process.env.VALUHIRE_USE_DOCKER === "true" }) {
   const config = getLanguageConfig(language);
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "valuhire-run-"));
   const fileName = config.language === "java" ? "Main.java" : `main.${config.extension}`;
@@ -59,9 +59,11 @@ async function executeAgainstTestCases({ code, language, testCases, questionPoin
   const results = [];
   let finalStatus = "PASSED";
   let totalTime = 0;
+  
+  const targetTestCases = isFinalSubmit ? testCases : testCases.filter(tc => !tc.isHidden);
 
   try {
-    for (const testCase of testCases) {
+    for (const testCase of targetTestCases) {
       const commandParts = useDocker
         ? buildDockerCommand({ language: config.language, filePath, workDir })
         : config.command(filePath);

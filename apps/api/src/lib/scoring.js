@@ -17,7 +17,20 @@ function summarizeCoding(submissions) {
       bestByQuestion.set(submission.codingQuestionId, submission);
     }
   }
-  return Array.from(bestByQuestion.values()).reduce((total, submission) => total + submission.score, 0);
+  
+  let totalScore = 0;
+  let testCasesPassed = 0;
+  let testCasesTotal = 0;
+  
+  for (const submission of bestByQuestion.values()) {
+    totalScore += submission.score;
+    if (submission.testResults && Array.isArray(submission.testResults)) {
+      testCasesTotal += submission.testResults.length;
+      testCasesPassed += submission.testResults.filter(r => r.passed).length;
+    }
+  }
+  
+  return { score: totalScore, testCasesPassed, testCasesTotal };
 }
 
 function scoreTestCases(testCases, results, questionPoints) {
@@ -32,11 +45,13 @@ function compareTestOutput(expectedOutput, actualOutput) {
 
 function buildAssessmentScore({ mcqQuestions = [], mcqAnswers = [], submissions = [] }) {
   const mcqScore = scoreMcq(mcqQuestions, mcqAnswers);
-  const codingScore = summarizeCoding(submissions);
+  const codingSummary = summarizeCoding(submissions);
   return {
     mcqScore,
-    codingScore,
-    totalScore: mcqScore + codingScore
+    codingScore: codingSummary.score,
+    testCasesPassed: codingSummary.testCasesPassed,
+    testCasesTotal: codingSummary.testCasesTotal,
+    totalScore: mcqScore + codingSummary.score
   };
 }
 

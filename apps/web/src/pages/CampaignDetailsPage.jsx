@@ -15,8 +15,9 @@ import {
   Sparkles, 
   ShieldCheck 
 } from "lucide-react";
-import { campaignService, applicationService } from "../services/api";
+import { campaignService, applicationService, resultsService } from "../services/api";
 import Sidebar from "../components/Sidebar";
+import ResultsBreakdownModal from "../components/ResultsBreakdownModal";
 
 export default function CampaignDetailsPage() {
   const { campaignId } = useParams();
@@ -26,9 +27,12 @@ export default function CampaignDetailsPage() {
 
   const [campaign, setCampaign] = useState(null);
   const [application, setApplication] = useState(null);
+  const [hasCompletedAssessment, setHasCompletedAssessment] = useState(false);
+  const [assessmentResult, setAssessmentResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -41,6 +45,14 @@ export default function CampaignDetailsPage() {
         const list = appsData.applications || appsData || [];
         const found = list.find(app => app.campaignId === campaignId);
         setApplication(found);
+
+        const resData = await resultsService.getMyResults().catch(() => ({ results: [] }));
+        const resList = resData.results || resData || [];
+        const result = resList.find(r => (r.session?.assessment?.campaignId || r.session?.assessment?.campaign?.id) === campaignId);
+        if (result) {
+          setHasCompletedAssessment(true);
+          setAssessmentResult(result);
+        }
       } catch (err) {
         toast.error(err.message || "Failed to load campaign details");
       } finally {
@@ -137,7 +149,7 @@ export default function CampaignDetailsPage() {
   const codingDur = campaign.assessment?.codingDurationMinutes || 0;
   const totalDur = mcqDur + codingDur || campaign.assessment?.durationMinutes || 60;
 
-  const isSubmitted = application?.status === "ASSESSMENT_COMPLETED" || application?.status === "SUBMITTED";
+  const isSubmitted = application?.status === "ASSESSMENT_COMPLETED" || application?.status === "SUBMITTED" || hasCompletedAssessment;
 
   return (
     <div className="app-shell bg-[#F8FAFC]">
@@ -179,19 +191,40 @@ export default function CampaignDetailsPage() {
                   </div>
                 </div>
               )}
+
+              {isSubmitted && assessmentResult && (
+                <div className="pt-6 border-t border-outline-variant/40">
+                  <h3 className="text-lg font-bold text-on-surface mb-4">Your Results</h3>
+                  <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+                          <Sparkles size={24} />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Total Points Earned</div>
+                          <div className="text-2xl font-black text-on-surface">
+                            {assessmentResult.totalScore} <span className="text-sm font-semibold text-on-surface-variant">pts</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 pt-6 border-t border-outline-variant/30 flex justify-end">
+                      <button 
+                        onClick={() => setIsBreakdownOpen(true)}
+                        className="bg-primary text-on-primary hover:bg-primary/90 px-6 py-2 rounded-xl font-bold transition-colors shadow-sm"
+                      >
+                        View Breakdown
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-gradient-to-br from-[#EEF2FF] to-[#F5F3FF] border border-[#E0E7FF] rounded-3xl p-6 flex gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center shrink-0">
-                <Sparkles size={20} strokeWidth={2.5} />
-              </div>
-              <div>
-                <h4 className="font-bold text-on-surface text-base mb-1">AI-Powered Skill Analysis</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed font-medium">
-                  This hiring campaign uses ValuHire assessment engine. Make sure you have a quiet environment and a stable internet connection.
-                </p>
-              </div>
-            </div>
+
           </div>
 
           {/* Sidebar Action / Stats Card */}
@@ -262,14 +295,22 @@ export default function CampaignDetailsPage() {
               {/* Status & Actions */}
               <div className="pt-6 border-t border-outline-variant/40 mt-auto space-y-4">
                 {isSubmitted ? (
-                  <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl p-4 text-center space-y-2">
+                  <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl p-4 text-center space-y-4">
                     <div className="flex justify-center text-[#059669]">
                       <CheckCircle2 size={24} />
                     </div>
-                    <div className="text-sm font-bold text-[#047857]">Assessment Completed</div>
-                    <p className="text-xs text-[#065F46] font-medium leading-relaxed">
-                      You have successfully submitted your assessment. Your results will be analyzed by the recruiting team shortly.
-                    </p>
+                    <div>
+                      <div className="text-sm font-bold text-[#047857] mb-1">Assessment Completed</div>
+                      <p className="text-xs text-[#065F46] font-medium leading-relaxed">
+                        You have successfully submitted your assessment. Your results will be analyzed by the recruiting team shortly.
+                      </p>
+                    </div>
+                    {assessmentResult && (
+                      <div className="mt-4 pt-4 border-t border-[#A7F3D0]/50 flex justify-between items-center text-sm font-semibold">
+                        <span className="text-[#065F46]">Your Rank</span>
+                        <span className="text-[#047857] text-lg font-bold">#{assessmentResult.rank} <span className="text-xs font-normal">/ {assessmentResult.totalApplicants}</span></span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <>
@@ -310,6 +351,12 @@ export default function CampaignDetailsPage() {
           </div>
         </div>
       </main>
+      
+      <ResultsBreakdownModal 
+        isOpen={isBreakdownOpen} 
+        onClose={() => setIsBreakdownOpen(false)} 
+        assessmentResult={assessmentResult} 
+      />
     </div>
   );
 }

@@ -117,6 +117,9 @@ model Campaign {
   company        Company        @relation(fields: [companyId], references: [id])
   title          String
   description    String?
+  targetRole     String?
+  durationDays   Int?
+  requiredSkills String[]       @default([])
   status         CampaignStatus @default(DRAFT)
   expiresAt      DateTime?
   assessment     Assessment?
@@ -240,19 +243,22 @@ model Submission {
 }
 
 model AssessmentResult {
-  id                  String            @id @default(cuid())
-  assessmentSessionId String            @unique
-  session             AssessmentSession @relation(fields: [assessmentSessionId], references: [id], onDelete: Cascade)
-  candidateId         String
-  assessmentId        String
-  mcqScore            Int               @default(0)
-  codingScore         Int               @default(0)
-  totalScore          Int               @default(0)
-  rank                Int?
-  durationSeconds     Int?
-  mcqDurationSeconds  Int?
+  id                    String            @id @default(cuid())
+  assessmentSessionId   String            @unique
+  session               AssessmentSession @relation(fields: [assessmentSessionId], references: [id], onDelete: Cascade)
+  candidateId           String
+  assessmentId          String
+  mcqScore              Int               @default(0)
+  codingScore           Int               @default(0)
+  totalScore            Int               @default(0)
+  durationSeconds       Int               @default(0)
+  mcqDurationSeconds    Int?
   codingDurationSeconds Int?
-  createdAt           DateTime          @default(now())
+  rank                  Int?
+  totalApplicants       Int?
+  testCasesPassed       Int?
+  testCasesTotal        Int?
+  createdAt             DateTime          @default(now())
 }
 
 model ProctorEvent {
