@@ -1,14 +1,14 @@
 import React, { useRef, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { useToast } from "../hooks/useToast";
-import { useMediaDevices } from "../hooks/useMediaDevices";
-import DeviceSettingsModal from "./DeviceSettingsModal";
-import InterviewDetailsModal from "./InterviewDetailsModal";
+import { useToast } from "../../hooks/useToast";
+import { useMediaDevices } from "../../hooks/useMediaDevices";
+import DeviceSettingsModal from "../common/DeviceSettingsModal";
+import InterviewDetailsModal from "../common/InterviewDetailsModal";
 
-import { LobbyVideo } from "./InterviewLobby/LobbyVideo";
-import { LobbyControls } from "./InterviewLobby/LobbyControls";
-import { LobbyDetails } from "./InterviewLobby/LobbyDetails";
-import { LobbySystemCheck } from "./InterviewLobby/LobbySystemCheck";
+import { LobbyVideo } from "./LobbyVideo";
+import { LobbyControls } from "./LobbyControls";
+import { LobbyDetails } from "./LobbyDetails";
+import { LobbySystemCheck } from "./LobbySystemCheck";
 
 export default function InterviewLobby({
   activeInterview,

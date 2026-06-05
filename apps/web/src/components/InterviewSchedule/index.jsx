@@ -1,10 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Plus } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import EmptyState from "./EmptyState";
-import { DateNavigation } from "./InterviewSchedule/DateNavigation";
-import { InterviewCard } from "./InterviewSchedule/InterviewCard";
+import { useAuth } from "../../hooks/useAuth";
+import EmptyState from "../common/EmptyState";
+import { DateNavigation } from "./DateNavigation";
+import { InterviewCard } from "./InterviewCard";
 
 export default function InterviewSchedule({
   days,

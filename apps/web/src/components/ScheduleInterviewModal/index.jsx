@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
-import { CalendarPanel } from "./ScheduleInterviewModal/CalendarPanel";
-import { InterviewFormPanel } from "./ScheduleInterviewModal/InterviewFormPanel";
-import { useScheduleInterview } from "../hooks/useScheduleInterview";
+import { CalendarPanel } from "./CalendarPanel";
+import { InterviewFormPanel } from "./InterviewFormPanel";
+import { useScheduleInterview } from "../../hooks/useScheduleInterview";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",

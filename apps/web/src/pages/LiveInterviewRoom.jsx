@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import InterviewFeedbackModal from "../components/InterviewFeedbackModal";
+import InterviewFeedbackModal from "../components/common/InterviewFeedbackModal";
 import InterviewHeader from "../components/LiveInterviewRoom/InterviewHeader";
 import MediaPane from "../components/LiveInterviewRoom/MediaPane";
 import ProblemNotesPane from "../components/LiveInterviewRoom/ProblemNotesPane";

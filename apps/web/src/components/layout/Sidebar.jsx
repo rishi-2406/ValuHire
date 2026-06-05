@@ -12,8 +12,8 @@ import {
   Search,
   Bell
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
-import NotificationBell from "./NotificationBell";
+import { useAuth } from "../../hooks/useAuth";
+import NotificationBell from "../common/NotificationBell";
 
 const NAV_ITEMS = {
   recruiter: [

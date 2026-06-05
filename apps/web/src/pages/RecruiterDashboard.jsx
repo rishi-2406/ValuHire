@@ -10,10 +10,10 @@ import {
   CalendarDays
 } from "lucide-react";
 import { campaignService, interviewService } from "../services/api";
-import Sidebar from "../components/Sidebar";
-import TopBar from "../components/TopBar";
-import { SkeletonMetricGrid } from "../components/Skeleton";
-import NewCampaignModal from "../components/NewCampaignModal";
+import Sidebar from "../components/layout/Sidebar";
+import TopBar from "../components/layout/TopBar";
+import { SkeletonMetricGrid } from "../components/common/Skeleton";
+import NewCampaignModal from "../components/CampaignsPage/NewCampaignModal";
 import { MetricCard } from "../components/RecruiterDashboard/MetricCard";
 import { CampaignPipeline } from "../components/RecruiterDashboard/CampaignPipeline";
 

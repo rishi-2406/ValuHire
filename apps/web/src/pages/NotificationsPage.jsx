@@ -3,7 +3,7 @@ import {
   Bell, CheckCheck, Megaphone, Calendar, Star, ArrowLeft
 } from "lucide-react";
 import { useNotifications } from "../hooks/useNotifications";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { NotificationDetail, timeAgo } from "../components/NotificationsPage/NotificationDetail";

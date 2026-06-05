@@ -1,5 +1,5 @@
 import { X, User, Bell, Lock, Shield, Check } from "lucide-react";
-import { useSettingsModal } from "../hooks/useSettingsModal";
+import { useSettingsModal } from "../../hooks/useSettingsModal";
 import { ProfileSection } from "../components/SettingsModal/ProfileSection";
 import { AccountSection, NotificationsSection, PrivacySection } from "../components/SettingsModal/OtherSections";
 

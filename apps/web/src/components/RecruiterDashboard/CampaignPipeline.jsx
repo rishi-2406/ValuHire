@@ -1,6 +1,6 @@
 import { AlertTriangle, Plus } from "lucide-react";
-import EmptyState from "../EmptyState";
-import { SkeletonTable } from "../Skeleton";
+import EmptyState from "../common/EmptyState";
+import { SkeletonTable } from "../common/Skeleton";
 
 export function CampaignPipeline({
   loading,

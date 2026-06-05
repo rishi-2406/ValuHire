@@ -1,5 +1,5 @@
 import { X, Megaphone, Briefcase, Calendar, ArrowRight } from "lucide-react";
-import { useNewCampaign } from "../hooks/useNewCampaign";
+import { useNewCampaign } from "../../hooks/useNewCampaign";
 
 export default function NewCampaignModal({ open, onClose, onCreate }) {
   const {

@@ -1,5 +1,5 @@
 import { BarChart3, Star, Code, CheckCircle2 } from "lucide-react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/layout/Sidebar";
 import ScheduleInterviewModal from "../components/ScheduleInterviewModal";
 
 import ProfileModal from "../components/ResultsPage/ProfileModal";

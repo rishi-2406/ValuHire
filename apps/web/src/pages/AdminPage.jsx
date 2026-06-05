@@ -10,8 +10,8 @@ import {
   CheckCircle,
   Download
 } from "lucide-react";
-import Sidebar from "../components/Sidebar";
-import TopBar from "../components/TopBar";
+import Sidebar from "../components/layout/Sidebar";
+import TopBar from "../components/layout/TopBar";
 import { MetricCard } from "../components/AdminPage/MetricCard";
 import { PendingCompaniesTable } from "../components/AdminPage/PendingCompaniesTable";
 import { UserModerationQueue } from "../components/AdminPage/UserModerationQueue";

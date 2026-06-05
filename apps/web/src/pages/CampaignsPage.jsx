@@ -4,9 +4,9 @@ import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { Search, Plus } from "lucide-react";
 import { campaignService } from "../services/api";
-import Sidebar from "../components/Sidebar";
-import EmptyState from "../components/EmptyState";
-import NewCampaignModal from "../components/NewCampaignModal";
+import Sidebar from "../components/layout/Sidebar";
+import EmptyState from "../components/common/EmptyState";
+import NewCampaignModal from "../components/CampaignsPage/NewCampaignModal";
 import { CandidateCampaignCard } from "../components/CampaignsPage/CandidateCampaignCard";
 import { RecruiterCampaignCard } from "../components/CampaignsPage/RecruiterCampaignCard";
 

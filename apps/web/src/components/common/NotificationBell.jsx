@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { useNotifications } from "../hooks/useNotifications";
+import { useNotifications } from "../../hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";

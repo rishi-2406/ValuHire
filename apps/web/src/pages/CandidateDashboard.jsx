@@ -5,8 +5,8 @@ import { useToast } from "../hooks/useToast";
 import { HelpCircle, AlertTriangle, ArrowRight, ChevronRight, Briefcase, Bell } from "lucide-react";
 import { applicationService } from "../services/api";
 import { useNotifications } from "../hooks/useNotifications";
-import Sidebar from "../components/Sidebar";
-import NotificationBell from "../components/NotificationBell";
+import Sidebar from "../components/layout/Sidebar";
+import NotificationBell from "../components/common/NotificationBell";
 import { ProfileCompletionCard } from "../components/CandidateDashboard/ProfileCompletionCard";
 import { StatsOverview } from "../components/CandidateDashboard/StatsOverview";
 

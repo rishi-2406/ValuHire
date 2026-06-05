@@ -1,7 +1,7 @@
 import React from "react";
 import { Editor } from "@monaco-editor/react";
-import { IDEHeader } from "./AssessmentCoding/IDEHeader";
-import { ConsolePanel } from "./AssessmentCoding/ConsolePanel";
+import { IDEHeader } from "./IDEHeader";
+import { ConsolePanel } from "./ConsolePanel";
 
 export default function AssessmentCoding({
   activeCodingQ,

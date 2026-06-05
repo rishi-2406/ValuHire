@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
-import AssessmentMcq from "../components/AssessmentMcq";
+import AssessmentMcq from "../components/AssessmentRoom/AssessmentMcq";
 import AssessmentCoding from "../components/AssessmentCoding";
 import { useAssessmentRoom } from "../hooks/useAssessmentRoom";
 import { AssessmentRoomHeader } from "../components/AssessmentRoom/AssessmentRoomHeader";

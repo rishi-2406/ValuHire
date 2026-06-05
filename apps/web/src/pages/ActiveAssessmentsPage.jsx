@@ -9,8 +9,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { applicationService, resultsService } from "../services/api";
-import Sidebar from "../components/Sidebar";
-import EmptyState from "../components/EmptyState";
+import Sidebar from "../components/layout/Sidebar";
+import EmptyState from "../components/common/EmptyState";
 import { ApplicationCard } from "../components/ActiveAssessmentsPage/ApplicationCard";
 
 export default function ActiveAssessmentsPage() {

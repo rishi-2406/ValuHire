@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { campaignService } from "../services/api";
 import { Save, Code, ListChecks } from "lucide-react";
-import TopBar from "../components/TopBar";
+import TopBar from "../components/layout/TopBar";
 import { McqSection } from "../components/CampaignBuilderPage/McqSection";
 import { CodingSection } from "../components/CampaignBuilderPage/CodingSection";
 import { useCampaignBuilderData } from "../hooks/useCampaignBuilderData";
