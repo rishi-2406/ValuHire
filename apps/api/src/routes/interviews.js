@@ -116,6 +116,28 @@ function createInterviewRoutes({ router, prisma, middleware, io }) {
       }
     });
     await prisma.interviewSlot.update({ where: { id: slot.id }, data: { status: "COMPLETED" } });
+    await prisma.application.updateMany({
+      where: { candidateId: slot.candidateId, campaignId: slot.campaignId },
+      data: { status: "INTERVIEW_COMPLETED" }
+    });
+
+    // Send notification to the candidate
+    const notification = await prisma.notification.create({
+      data: {
+        userId: slot.candidateId,
+        type: "INTERVIEW_COMPLETED",
+        title: "Interview Completed! 🎉",
+        message: "Nice! You've successfully completed your interview. You will hear soon in your mail regarding the result.",
+        metadata: {
+          slotId: slot.id,
+        }
+      }
+    });
+
+    if (io) {
+      io.to(`user:${slot.candidateId}`).emit("new_notification", notification);
+    }
+
     sendOk(res, { feedback });
   }));
 

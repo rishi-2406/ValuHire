@@ -1,45 +1,18 @@
-import { useState } from "react";
-import { X, Megaphone, Briefcase, Calendar, Code, Brain, ArrowRight } from "lucide-react";
+import { X, Megaphone, Briefcase, Calendar, ArrowRight } from "lucide-react";
+import { useNewCampaign } from "../hooks/useNewCampaign";
 
 export default function NewCampaignModal({ open, onClose, onCreate }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [targetRole, setTargetRole] = useState("");
-  const [duration, setDuration] = useState("");
-  const [tags, setTags] = useState(["React", "TypeScript"]);
-  const [tagInput, setTagInput] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    title, setTitle,
+    description, setDescription,
+    targetRole, setTargetRole,
+    duration, setDuration,
+    tags, tagInput, setTagInput,
+    submitting,
+    addTag, removeTag, handleSubmit
+  } = useNewCampaign(onCreate, onClose);
 
   if (!open) return null;
-
-  const addTag = (e) => {
-    e.preventDefault();
-    const value = tagInput.trim();
-    if (value && !tags.includes(value)) {
-      setTags([...tags, value]);
-    }
-    setTagInput("");
-  };
-
-  const removeTag = (tag) => setTags(tags.filter((t) => t !== tag));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!title.trim() || !targetRole.trim()) return;
-    setSubmitting(true);
-    try {
-      await onCreate?.({
-        title: title.trim(),
-        description: description.trim(),
-        targetRole: targetRole.trim(),
-        duration,
-        tags
-      });
-      onClose?.();
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose} role="dialog" aria-modal="true">

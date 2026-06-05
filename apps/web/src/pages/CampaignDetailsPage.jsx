@@ -1,23 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { 
-  ArrowLeft, 
-  Briefcase, 
-  Clock, 
-  Play, 
-  CheckCircle2, 
-  AlertTriangle, 
-  FileText, 
-  Code, 
-  HelpCircle, 
-  Sparkles, 
-  ShieldCheck 
-} from "lucide-react";
-import { campaignService, applicationService, resultsService } from "../services/api";
+import { ArrowLeft, Briefcase, AlertTriangle } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ResultsBreakdownModal from "../components/ResultsBreakdownModal";
+import { CampaignMainDetails } from "../components/CampaignDetailsPage/CampaignMainDetails";
+import { AssessmentSummaryCard } from "../components/CampaignDetailsPage/AssessmentSummaryCard";
+import { useCampaignDetailsData } from "../hooks/useCampaignDetailsData";
 
 export default function CampaignDetailsPage() {
   const { campaignId } = useParams();
@@ -25,86 +15,19 @@ export default function CampaignDetailsPage() {
   const toast = useToast();
   const { user } = useAuth();
 
-  const [campaign, setCampaign] = useState(null);
-  const [application, setApplication] = useState(null);
-  const [hasCompletedAssessment, setHasCompletedAssessment] = useState(false);
-  const [assessmentResult, setAssessmentResult] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [applying, setApplying] = useState(false);
-  const [starting, setStarting] = useState(false);
+  const {
+    campaign,
+    application,
+    hasCompletedAssessment,
+    assessmentResult,
+    loading,
+    applying,
+    starting,
+    handleApplyOnly,
+    handleApplyAndStart
+  } = useCampaignDetailsData(campaignId, toast, navigate);
+
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const campaignData = await campaignService.getCampaignDetails(campaignId);
-        setCampaign(campaignData.campaign || campaignData);
-
-        const appsData = await applicationService.getMyApplications();
-        const list = appsData.applications || appsData || [];
-        const found = list.find(app => app.campaignId === campaignId);
-        setApplication(found);
-
-        const resData = await resultsService.getMyResults().catch(() => ({ results: [] }));
-        const resList = resData.results || resData || [];
-        const result = resList.find(r => (r.session?.assessment?.campaignId || r.session?.assessment?.campaign?.id) === campaignId);
-        if (result) {
-          setHasCompletedAssessment(true);
-          setAssessmentResult(result);
-        }
-      } catch (err) {
-        toast.error(err.message || "Failed to load campaign details");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [campaignId, toast]);
-
-  const handleApplyOnly = async () => {
-    try {
-      setApplying(true);
-      const res = await applicationService.apply(campaignId);
-      const newApp = res.application || res;
-      setApplication(newApp);
-      toast.success("Applied successfully!", { title: "You can start the assessment later from the dashboard." });
-    } catch (err) {
-      toast.error(err.message || "Failed to apply");
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const handleApplyAndStart = async () => {
-    try {
-      setStarting(true);
-      let app = application;
-      if (!app) {
-        const res = await applicationService.apply(campaignId);
-        app = res.application || res;
-        setApplication(app);
-      }
-
-      const assessmentId = campaign?.assessment?.id;
-      if (!assessmentId) {
-        toast.error("This campaign does not have an active assessment.");
-        return;
-      }
-
-      const sessionData = await applicationService.startSession(assessmentId);
-      const session = sessionData.session || sessionData;
-      if (session?.id) {
-        navigate(`/assessment/${session.id}`);
-      } else {
-        toast.error("Could not start assessment session");
-      }
-    } catch (err) {
-      toast.error(err.message || "Failed to start assessment");
-    } finally {
-      setStarting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -173,182 +96,29 @@ export default function CampaignDetailsPage() {
         </header>
 
         <div className="p-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Details Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white border border-outline-variant/60 rounded-3xl p-8 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-lg font-bold text-on-surface mb-3">Job Description & Details</h3>
-                <div className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap font-medium">
-                  {campaign.description || "No description provided for this job campaign. Please refer to the assessment parameters on the right."}
-                </div>
-              </div>
+          <CampaignMainDetails
+            campaign={campaign}
+            hasAssessment={hasAssessment}
+            isSubmitted={isSubmitted}
+            assessmentResult={assessmentResult}
+            setIsBreakdownOpen={setIsBreakdownOpen}
+          />
 
-              {hasAssessment && campaign.assessment.instructions && (
-                <div className="pt-6 border-t border-outline-variant/40">
-                  <h3 className="text-lg font-bold text-on-surface mb-3">Assessment Instructions</h3>
-                  <div className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap font-medium bg-[#F8FAFC] border border-outline-variant/50 rounded-2xl p-5">
-                    {campaign.assessment.instructions}
-                  </div>
-                </div>
-              )}
-
-              {isSubmitted && assessmentResult && (
-                <div className="pt-6 border-t border-outline-variant/40">
-                  <h3 className="text-lg font-bold text-on-surface mb-4">Your Results</h3>
-                  <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
-                          <Sparkles size={24} />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Total Points Earned</div>
-                          <div className="text-2xl font-black text-on-surface">
-                            {assessmentResult.totalScore} <span className="text-sm font-semibold text-on-surface-variant">pts</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 pt-6 border-t border-outline-variant/30 flex justify-end">
-                      <button 
-                        onClick={() => setIsBreakdownOpen(true)}
-                        className="bg-primary text-on-primary hover:bg-primary/90 px-6 py-2 rounded-xl font-bold transition-colors shadow-sm"
-                      >
-                        View Breakdown
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-
-          </div>
-
-          {/* Sidebar Action / Stats Card */}
-          <div className="space-y-6">
-            <div className="bg-white border border-outline-variant/60 rounded-3xl p-6 shadow-sm flex flex-col">
-              <h3 className="text-lg font-bold text-on-surface mb-4">Assessment Summary</h3>
-
-              {hasAssessment ? (
-                <div className="space-y-4 mb-6">
-                  {/* Total Duration */}
-                  <div className="flex items-center gap-3.5 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30">
-                    <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-                      <Clock size={18} />
-                    </div>
-                    <div>
-                      <div className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Total Duration</div>
-                      <div className="text-base font-extrabold text-on-surface">{totalDur} minutes</div>
-                    </div>
-                  </div>
-
-                  {/* MCQ Details */}
-                  {totalMcqs > 0 && (
-                    <div className="flex items-center gap-3.5 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30">
-                      <div className="w-9 h-9 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
-                        <FileText size={18} />
-                      </div>
-                      <div>
-                        <div className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">MCQ Section</div>
-                        <div className="text-base font-extrabold text-on-surface">
-                          {totalMcqs} Questions {mcqDur > 0 && `(${mcqDur}m)`}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Coding Details */}
-                  {totalCodings > 0 && (
-                    <div className="flex items-center gap-3.5 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30">
-                      <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] text-[#059669] flex items-center justify-center shrink-0">
-                        <Code size={18} />
-                      </div>
-                      <div>
-                        <div className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Coding Challenges</div>
-                        <div className="text-base font-extrabold text-on-surface">
-                          {totalCodings} Tasks {codingDur > 0 && `(${codingDur}m)`}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Total Points */}
-                  <div className="flex items-center gap-3.5 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30">
-                    <div className="w-9 h-9 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center shrink-0">
-                      <Sparkles size={18} />
-                    </div>
-                    <div>
-                      <div className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Evaluation Method</div>
-                      <div className="text-base font-extrabold text-on-surface">Structured Sandbox</div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 text-on-surface-variant font-semibold text-sm">
-                  No active assessment set up for this campaign.
-                </div>
-              )}
-
-              {/* Status & Actions */}
-              <div className="pt-6 border-t border-outline-variant/40 mt-auto space-y-4">
-                {isSubmitted ? (
-                  <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl p-4 text-center space-y-4">
-                    <div className="flex justify-center text-[#059669]">
-                      <CheckCircle2 size={24} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-[#047857] mb-1">Assessment Completed</div>
-                      <p className="text-xs text-[#065F46] font-medium leading-relaxed">
-                        You have successfully submitted your assessment. Your results will be analyzed by the recruiting team shortly.
-                      </p>
-                    </div>
-                    {assessmentResult && (
-                      <div className="mt-4 pt-4 border-t border-[#A7F3D0]/50 flex justify-between items-center text-sm font-semibold">
-                        <span className="text-[#065F46]">Your Rank</span>
-                        <span className="text-[#047857] text-lg font-bold">#{assessmentResult.rank} <span className="text-xs font-normal">/ {assessmentResult.totalApplicants}</span></span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {application ? (
-                      <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-2xl p-4 text-center">
-                        <p className="text-xs text-[#1E40AF] font-bold leading-relaxed">
-                          You have applied to this campaign. You can start the assessment whenever you are ready.
-                        </p>
-                      </div>
-                    ) : null}
-
-                    {hasAssessment && (
-                      <div className="flex flex-col gap-3">
-                        <button
-                          onClick={handleApplyAndStart}
-                          disabled={starting || applying}
-                          className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-[#2563EB]/25"
-                        >
-                          <Play size={16} fill="currentColor" />
-                          <span>{starting ? "Starting..." : application ? "Start Assessment" : "Apply & Start Assessment"}</span>
-                        </button>
-                        
-                        {!application && (
-                          <button
-                            onClick={handleApplyOnly}
-                            disabled={starting || applying}
-                            className="w-full bg-white hover:bg-surface-light border border-outline-variant text-on-surface font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all active:translate-y-0"
-                          >
-                            <span>{applying ? "Applying..." : "Apply Only"}</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+          <AssessmentSummaryCard
+            hasAssessment={hasAssessment}
+            totalDur={totalDur}
+            totalMcqs={totalMcqs}
+            mcqDur={mcqDur}
+            totalCodings={totalCodings}
+            codingDur={codingDur}
+            isSubmitted={isSubmitted}
+            assessmentResult={assessmentResult}
+            application={application}
+            starting={starting}
+            applying={applying}
+            handleApplyAndStart={handleApplyAndStart}
+            handleApplyOnly={handleApplyOnly}
+          />
         </div>
       </main>
       

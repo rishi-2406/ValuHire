@@ -112,13 +112,17 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
     const applications = await prisma.application.findMany({
       where: {
         campaignId: req.params.campaignId,
-        status: { in: ["SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"] }
+        status: { in: ["SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "HIRED"] }
       },
       include: {
         candidate: {
           select: {
             id: true, name: true, email: true, bio: true, skills: true,
-            profilePicUrl: true, resumeUrl: true
+            profilePicUrl: true, resumeUrl: true,
+            interviewSlotsAsCandidate: {
+              where: { campaignId: req.params.campaignId },
+              include: { feedback: true }
+            }
           }
         },
         campaign: { select: { id: true, title: true } }

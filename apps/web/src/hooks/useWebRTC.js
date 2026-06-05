@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { onRoomEvent, emitWebRTCOffer, emitWebRTCAnswer, emitICECandidate } from "../services/socket";
 
-export function useWebRTC(roomId, localStream) {
+export function useWebRTC(roomId, localStream, isPolite = true) {
   const [remoteStream, setRemoteStream] = useState(null);
   const pcRef = useRef(null);
 
@@ -23,31 +23,32 @@ export function useWebRTC(roomId, localStream) {
       }
     };
 
-    let negotiationPending = false;
+    let makingOffer = false;
+    let ignoreOffer = false;
+    let iceQueue = [];
 
     pc.onnegotiationneeded = async () => {
-      if (pc.signalingState !== "stable") {
-        negotiationPending = true;
-        return;
-      }
       try {
+        makingOffer = true;
         const offer = await pc.createOffer();
-        // If state changed while creating offer
-        if (pc.signalingState !== "stable") {
-           negotiationPending = true;
-           return;
-        }
         await pc.setLocalDescription(offer);
         emitWebRTCOffer(roomId, offer);
       } catch (err) {
         console.error("Negotiation error:", err);
+      } finally {
+        makingOffer = false;
       }
     };
 
     pc.onsignalingstatechange = () => {
-      if (pc.signalingState === "stable" && negotiationPending) {
-        negotiationPending = false;
-        pc.onnegotiationneeded();
+      if (pc.signalingState === "stable") {
+        // Trigger a new negotiation if there are pending transceivers
+        // This handles cases where an answer couldn't include our new tracks.
+        const transceivers = pc.getTransceivers();
+        const needsNegotiation = transceivers.some(t => t.currentDirection !== t.direction);
+        if (needsNegotiation) {
+           pc.onnegotiationneeded();
+        }
       }
     };
 
@@ -61,30 +62,57 @@ export function useWebRTC(roomId, localStream) {
     const off = onRoomEvent(roomId, async ({ type, payload }) => {
       try {
         if (type === "presenceChanged" && payload.joined) {
-          // When someone joins, create an offer
-          if (pc.signalingState !== "stable") return;
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          emitWebRTCOffer(roomId, offer);
+          // Force an offer when someone joins to ensure connection isn't lost
+          try {
+            makingOffer = true;
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            emitWebRTCOffer(roomId, offer);
+          } catch (err) {
+            console.error("Presence negotiation error:", err);
+          } finally {
+            makingOffer = false;
+          }
         } else if (type === "webrtcOffer") {
-          // Received an offer, answer it
+          const offerCollision = (pc.signalingState !== "stable") || makingOffer;
+
+          ignoreOffer = !isPolite && offerCollision;
+          if (ignoreOffer) return;
+
           if (pc.signalingState !== "stable") {
-             // Collision handling: rollback our local offer so we can accept theirs
+             // Rollback if needed
              await pc.setLocalDescription({ type: "rollback" }).catch(() => {});
           }
+
           await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+          
+          // Process queued ICE candidates
+          for (const c of iceQueue) {
+             await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.error);
+          }
+          iceQueue = [];
+
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           emitWebRTCAnswer(roomId, answer);
         } else if (type === "webrtcAnswer") {
-          // Received an answer
           if (pc.signalingState === "have-local-offer") {
              await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+             // Process queued ICE candidates
+             for (const c of iceQueue) {
+                await pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.error);
+             }
+             iceQueue = [];
           }
         } else if (type === "iceCandidate") {
-          // Received an ICE candidate
-          if (pc.remoteDescription) {
-             await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          try {
+             if (pc.remoteDescription) {
+               await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+             } else {
+               iceQueue.push(payload.candidate);
+             }
+          } catch (err) {
+             if (!ignoreOffer) console.error("ICE error:", err);
           }
         }
       } catch (err) {

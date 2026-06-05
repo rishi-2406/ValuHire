@@ -5,19 +5,13 @@ import { useToast } from "../hooks/useToast";
 import {
   Bell,
   HelpCircle,
-  Clock,
-  Briefcase,
-  ChevronRight,
-  CheckCircle2,
   AlertTriangle,
-  ArrowRight,
-  Sparkles,
-  BarChart3,
-  Award
+  ArrowRight
 } from "lucide-react";
 import { applicationService, resultsService } from "../services/api";
 import Sidebar from "../components/Sidebar";
 import EmptyState from "../components/EmptyState";
+import { ApplicationCard } from "../components/ActiveAssessmentsPage/ApplicationCard";
 
 export default function ActiveAssessmentsPage() {
   const { user } = useAuth();
@@ -51,63 +45,6 @@ export default function ActiveAssessmentsPage() {
   }, []);
 
   const name = user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
-
-  const renderProgressSteps = (currentStatus, isCompletedResult) => {
-    const steps = [
-      { id: "applied", label: "Apply" },
-      { id: "assessment", label: "Take Assessment" },
-      { id: "shortlist", label: "Shortlist" },
-      { id: "interview", label: "Interview Invite" }
-    ];
-    
-    let activeIndex = 0;
-    
-    if (currentStatus === "ASSESSMENT_INVITED") activeIndex = 1;
-    if (currentStatus === "ASSESSMENT_COMPLETED" || currentStatus === "SUBMITTED" || isCompletedResult) activeIndex = 1;
-    if (currentStatus === "SHORTLISTED") activeIndex = 2;
-    if (currentStatus === "INTERVIEW_SCHEDULED" || currentStatus === "INTERVIEW") activeIndex = 3;
-    if (currentStatus === "OFFER" || currentStatus === "HIRED") activeIndex = 3;
-
-    return (
-      <div className="relative mt-6 px-4">
-        <div className="absolute top-2.5 left-8 right-8 h-[2px] bg-outline-variant">
-          <div 
-            className="absolute top-0 left-0 h-full bg-[#2563EB]" 
-            style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
-          />
-        </div>
-        <div className="relative flex justify-between">
-          {steps.map((step, idx) => {
-            const isCompleted = idx < activeIndex;
-            const isActive = idx === activeIndex;
-            return (
-              <div key={step.id} className="flex flex-col items-center gap-2">
-                <div 
-                  className={`w-5 h-5 rounded-full flex items-center justify-center z-10 ${
-                    isCompleted 
-                      ? 'bg-[#2563EB] text-white border-2 border-[#2563EB]' 
-                      : isActive 
-                        ? 'bg-white border-[3px] border-[#2563EB]' 
-                        : 'bg-white border-2 border-outline-variant'
-                  }`}
-                >
-                  {isCompleted && (
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1 4.5L3.5 7L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" />}
-                </div>
-                <span className={`text-xs font-semibold ${isActive || isCompleted ? 'text-on-surface' : 'text-on-surface-variant'}`}>
-                  {step.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="app-shell bg-[#F8FAFC]">
@@ -148,91 +85,14 @@ export default function ActiveAssessmentsPage() {
             </div>
           ) : applications.length > 0 ? (
             <div className="space-y-6">
-              {applications.map(app => {
-                const hasAssessment = !!app.campaign?.assessment;
-                const isCompleted = app.status === "ASSESSMENT_COMPLETED" || app.status === "SUBMITTED" || (app.campaign && !!resultsMap[app.campaign.id]);
-                const isInvited = app.status === "ASSESSMENT_INVITED" || app.status === "PENDING";
-                
-                return (
-                  <div key={app.id} className="bg-white border border-outline-variant/60 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between gap-6 hover:shadow-md transition-shadow">
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold text-[#111827]">{app.campaign?.title || "Role"}</h3>
-                          <div className="flex items-center gap-2 text-on-surface-variant text-sm font-semibold mt-1">
-                            <Briefcase size={16} className="text-[#2563EB]/70" />
-                            <span>{app.campaign?.company?.name || "Company Inc."}</span>
-                          </div>
-                        </div>
-                        <span className={`px-3.5 py-1.5 rounded-full text-xs font-bold border ${
-                          isCompleted 
-                            ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]' 
-                            : 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
-                        }`}>
-                          {app.status === "INTERVIEW" ? "Interviewing" : isCompleted ? "Assessment Done" : "Assessment Pending"}
-                        </span>
-                      </div>
-
-                      {renderProgressSteps(app.status, isCompleted)}
-
-                      {isCompleted && resultsMap[app.campaign.id] && (
-                        <div className="mt-4 p-4 bg-surface-container-lowest border border-outline-variant/50 rounded-2xl flex items-center justify-between shadow-sm">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center font-bold shadow-sm border border-[#A7F3D0]">
-                              <Award size={20} />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-0.5">Total Score</p>
-                              <div className="flex items-baseline gap-1.5">
-                                <span className="text-xl font-extrabold text-on-surface">{resultsMap[app.campaign.id].totalScore ?? 0}</span>
-                                <span className="text-xs font-semibold text-on-surface-variant">pts</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="hidden sm:flex items-center gap-6">
-                            <div className="text-center">
-                              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">MCQ</p>
-                              <span className="text-sm font-bold text-on-surface">{resultsMap[app.campaign.id].mcqScore ?? 0}</span>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Coding</p>
-                              <span className="text-sm font-bold text-on-surface">{resultsMap[app.campaign.id].codingScore ?? 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 border-t md:border-t-0 md:border-l border-outline-variant/40 pt-4 md:pt-0 md:pl-6 min-w-[200px]">
-                      {hasAssessment && (
-                        <div className="text-left md:text-right">
-                          <div className="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Assessment</div>
-                          <span className={`inline-flex items-center gap-1 text-xs font-bold ${isCompleted ? 'text-[#059669]' : 'text-[#D97706]'}`}>
-                            {isCompleted ? (
-                              <><CheckCircle2 size={14} /> Completed</>
-                            ) : (
-                              <><Clock size={14} /> Pending Action</>
-                            )}
-                          </span>
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => navigate(`/campaigns/${app.campaign.id}/details`)}
-                        className={`w-full md:w-auto font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 transition-all text-sm border ${
-                          isCompleted
-                            ? 'bg-white hover:bg-surface-light border-outline-variant text-on-surface'
-                            : 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white border-transparent shadow-sm'
-                        }`}
-                      >
-                        {isCompleted ? "View Details" : "Start Assessment"}
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {applications.map(app => (
+                <ApplicationCard
+                  key={app.id}
+                  app={app}
+                  resultsMap={resultsMap}
+                  navigate={navigate}
+                />
+              ))}
             </div>
           ) : (
             <EmptyState

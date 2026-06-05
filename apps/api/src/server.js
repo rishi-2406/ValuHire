@@ -24,14 +24,20 @@ io.on("connection", (socket) => {
   });
 
   // Interview/coding rooms
-  socket.on("joinRoom", ({ roomId }) => {
+  socket.on("joinRoom", async ({ roomId }) => {
     socket.join(roomId);
-    socket.to(roomId).emit("presenceChanged", { socketId: socket.id, joined: true });
+    socket.to(roomId).emit("presenceChanged", { roomId, socketId: socket.id, joined: true });
+    
+    // Notify the joining user if someone is already there
+    const sockets = await io.in(roomId).fetchSockets();
+    if (sockets.length > 1) {
+      socket.emit("presenceChanged", { roomId, socketId: "already_there", joined: true });
+    }
   });
 
   socket.on("leaveRoom", ({ roomId }) => {
     socket.leave(roomId);
-    socket.to(roomId).emit("presenceChanged", { socketId: socket.id, joined: false });
+    socket.to(roomId).emit("presenceChanged", { roomId, socketId: socket.id, joined: false });
   });
 
   socket.on("codeChange", ({ roomId, code }) => {
@@ -64,6 +70,10 @@ io.on("connection", (socket) => {
 
   socket.on("questionChange", ({ roomId, questionText }) => {
     socket.to(roomId).emit("questionChange", { roomId, questionText });
+  });
+
+  socket.on("interviewEnded", ({ roomId }) => {
+    socket.to(roomId).emit("interviewEnded", { roomId });
   });
 });
 
