@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { userService, companyService } from "../services/api";
 
 export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) {
   const [initialState, setInitialState] = useState(null);
+  const [avatarUploaded, setAvatarUploaded] = useState(false);
+  const [resumeUploaded, setResumeUploaded] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -30,8 +32,8 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
         lastName: nameParts.slice(1).join(" ") || "",
         bio: user.bio || "",
         specialties: user.skills || user.specialties || [],
-        avatarUrl: (user.profilePicUrl === "null" ? "" : user.profilePicUrl) || "",
-        resumeUrl: (user.resumeUrl === "null" ? "" : user.resumeUrl) || "",
+        avatarUrl: (user.profilePicUrl === "null" || user.profilePicUrl === "undefined" ? "" : user.profilePicUrl) || "",
+        resumeUrl: (user.resumeUrl === "null" || user.resumeUrl === "undefined" ? "" : user.resumeUrl) || "",
         githubUrl: user.githubUrl || "",
         leetcodeUrl: user.leetcodeUrl || "",
         codeforcesUrl: user.codeforcesUrl || "",
@@ -70,10 +72,12 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
     portfolioUrl !== initialState.portfolioUrl ||
     companyName !== initialState.companyName ||
     companyWebsite !== initialState.companyWebsite ||
+    avatarUploaded ||
+    resumeUploaded ||
     JSON.stringify(specialties) !== JSON.stringify(initialState.specialties)
   ) : false;
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     if (initialState) {
       setFirstName(initialState.firstName);
       setLastName(initialState.lastName);
@@ -89,8 +93,10 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
       setCompanyName(initialState.companyName);
       setCompanyWebsite(initialState.companyWebsite);
       setUrlErrors({});
+      setAvatarUploaded(false);
+      setResumeUploaded(false);
     }
-  };
+  }, [initialState]);
 
   const fileInputRef = useRef(null);
 
@@ -142,6 +148,8 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
         ...data.user, 
         company: isRecruiter ? { ...user?.company, name: companyName, website: companyWebsite } : data.user.company 
       });
+      setAvatarUploaded(false);
+      setResumeUploaded(false);
       toast.success("Profile saved", { title: "Changes applied" });
     } catch (err) {
       toast.error(err.message || "Could not save profile");
@@ -158,7 +166,10 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
         return;
       }
       const reader = new FileReader();
-      reader.onloadend = () => setAvatarUrl(reader.result);
+      reader.onloadend = () => {
+        setAvatarUrl(reader.result);
+        setAvatarUploaded(true);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -171,7 +182,10 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
         return;
       }
       const reader = new FileReader();
-      reader.onloadend = () => setResumeUrl(reader.result);
+      reader.onloadend = () => {
+        setResumeUrl(reader.result);
+        setResumeUploaded(true);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -193,6 +207,11 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
     handleAvatarChange,
     handleResumeChange,
     isDirty,
-    resetForm
+    resetForm,
+    initialState,
+    avatarUploaded,
+    setAvatarUploaded,
+    resumeUploaded,
+    setResumeUploaded
   };
 }

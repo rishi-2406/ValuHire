@@ -26,7 +26,12 @@ export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, s
     handleAvatarChange,
     handleResumeChange,
     isDirty,
-    resetForm
+    resetForm,
+    initialState,
+    avatarUploaded,
+    setAvatarUploaded,
+    resumeUploaded,
+    setResumeUploaded
   } = useProfileForm(user, updateUser, isRecruiter, toast, setSaving);
 
   React.useEffect(() => {
@@ -90,7 +95,14 @@ export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, s
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-white border border-[#CBD5E1] hover:bg-[#F1F5F9] text-[#0F172A] px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm">
                     {avatarUrl ? "Change Photo" : "Upload Photo"}
                   </button>
-                  <button type="button" onClick={() => setAvatarUrl("")} className="text-[#EF4444] hover:text-[#B91C1C] hover:bg-red-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setAvatarUrl("");
+                      setAvatarUploaded(false);
+                    }} 
+                    className="text-[#EF4444] hover:text-[#B91C1C] hover:bg-red-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors"
+                  >
                     Remove
                   </button>
                 </div>
@@ -188,13 +200,27 @@ export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, s
                   </button>
                 )}
 
-                <button 
-                  type="button" 
-                  onClick={() => document.getElementById("resume-upload").click()} 
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm shadow-blue-500/20 flex items-center gap-2"
-                >
-                  <UploadCloud size={16} /> {hasValidResume ? "Update Resume" : "Upload Resume"}
-                </button>
+                {resumeUploaded ? (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setResumeUrl(initialState.resumeUrl);
+                      setResumeUploaded(false);
+                      document.getElementById("resume-upload").value = "";
+                    }} 
+                    className="bg-white border border-[#FECACA] hover:bg-[#FEF2F2] text-[#EF4444] px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm flex items-center gap-2"
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    onClick={() => document.getElementById("resume-upload").click()} 
+                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm shadow-blue-500/20 flex items-center gap-2"
+                  >
+                    <UploadCloud size={16} /> {hasValidResume ? "Update Resume" : "Upload Resume"}
+                  </button>
+                )}
               </div>
             </div>
 

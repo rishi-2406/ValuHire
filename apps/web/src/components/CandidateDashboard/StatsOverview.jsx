@@ -19,7 +19,16 @@ export function StatsOverview({ applications, navigate }) {
           <Clock size={20} />
         </div>
         <div>
-          <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => a.campaign?.assessment && !["SUBMITTED", "ASSESSMENT_COMPLETED", "REJECTED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"].includes(a.status)).length}</div>
+          <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => {
+            let effectiveStatus = a.status;
+            if (a.candidate?.interviewSlots) {
+              const slot = a.candidate.interviewSlots.find(s => s.campaignId === a.campaign?.id);
+              if (slot && slot.status === "COMPLETED" && effectiveStatus !== "OFFER" && effectiveStatus !== "HIRED") {
+                effectiveStatus = "INTERVIEW_COMPLETED";
+              }
+            }
+            return a.campaign?.assessment && !["SUBMITTED", "ASSESSMENT_COMPLETED", "REJECTED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "HIRED"].includes(effectiveStatus);
+          }).length}</div>
           <div className="text-sm text-on-surface-variant font-semibold mt-1">Pending Test</div>
         </div>
       </div>
@@ -29,7 +38,16 @@ export function StatsOverview({ applications, navigate }) {
           <Video size={20} />
         </div>
         <div>
-          <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => ["INTERVIEW_SCHEDULED", "INTERVIEW"].includes(a.status)).length}</div>
+          <div className="text-3xl font-extrabold text-on-surface">{applications.filter(a => {
+            let effectiveStatus = a.status;
+            if (a.candidate?.interviewSlots) {
+              const slot = a.candidate.interviewSlots.find(s => s.campaignId === a.campaign?.id);
+              if (slot && slot.status === "COMPLETED" && effectiveStatus !== "OFFER" && effectiveStatus !== "HIRED") {
+                effectiveStatus = "INTERVIEW_COMPLETED";
+              }
+            }
+            return ["INTERVIEW_SCHEDULED", "INTERVIEW"].includes(effectiveStatus);
+          }).length}</div>
           <div className="text-sm text-on-surface-variant font-semibold mt-1">Interviews</div>
         </div>
       </div>
