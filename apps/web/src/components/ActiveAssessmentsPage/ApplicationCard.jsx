@@ -4,7 +4,16 @@ import { ProgressSteps } from "./ProgressSteps";
 
 export function ApplicationCard({ app, resultsMap, navigate }) {
   const hasAssessment = !!app.campaign?.assessment;
-  const isCompleted = app.status === "ASSESSMENT_COMPLETED" || app.status === "SUBMITTED" || (app.campaign && !!resultsMap[app.campaign.id]) || ["SHORTLISTED", "INTERVIEW", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "OFFER", "HIRED"].includes(app.status);
+  
+  let effectiveStatus = app.status;
+  if (app.candidate?.interviewSlots) {
+    const slot = app.candidate.interviewSlots.find(s => s.campaignId === app.campaign?.id);
+    if (slot && slot.status === "COMPLETED" && effectiveStatus !== "OFFER" && effectiveStatus !== "HIRED") {
+      effectiveStatus = "INTERVIEW_COMPLETED";
+    }
+  }
+
+  const isCompleted = effectiveStatus === "ASSESSMENT_COMPLETED" || effectiveStatus === "SUBMITTED" || (app.campaign && !!resultsMap[app.campaign.id]) || ["SHORTLISTED", "INTERVIEW", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "OFFER", "HIRED"].includes(effectiveStatus);
   
   return (
     <div className="bg-white border border-outline-variant/60 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between gap-6 hover:shadow-md transition-shadow">
@@ -18,22 +27,23 @@ export function ApplicationCard({ app, resultsMap, navigate }) {
             </div>
           </div>
           <span className={`px-3.5 py-1.5 rounded-full text-xs font-bold border ${
-            app.status === "SHORTLISTED" ? 'bg-[#FDF4FF] text-[#C026D3] border-[#FAE8FF]' :
-            (app.status === "INTERVIEW" || app.status === "INTERVIEW_SCHEDULED") ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
-            (app.status === "INTERVIEW_COMPLETED" || app.status === "OFFER" || app.status === "HIRED") ? 'bg-[#F0FDF4] text-[#166534] border-[#BBF7D0]' :
+            effectiveStatus === "SHORTLISTED" ? 'bg-[#FDF4FF] text-[#C026D3] border-[#FAE8FF]' :
+            (effectiveStatus === "INTERVIEW" || effectiveStatus === "INTERVIEW_SCHEDULED") ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+            (effectiveStatus === "INTERVIEW_COMPLETED" || effectiveStatus === "OFFER" || effectiveStatus === "HIRED") ? 'bg-[#F0FDF4] text-[#166534] border-[#BBF7D0]' :
             isCompleted 
               ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]' 
               : 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
           }`}>
-            {app.status === "SHORTLISTED" ? "Shortlisted" :
-             (app.status === "INTERVIEW" || app.status === "INTERVIEW_SCHEDULED") ? "Interviewing" :
-             (app.status === "INTERVIEW_COMPLETED") ? "Interviewed" :
-             (app.status === "OFFER" || app.status === "HIRED") ? "Offered" :
+            {effectiveStatus === "SHORTLISTED" ? "Shortlisted" :
+             effectiveStatus === "INTERVIEW" ? "Interviewing" :
+             effectiveStatus === "INTERVIEW_SCHEDULED" ? "Interview Scheduled" :
+             (effectiveStatus === "INTERVIEW_COMPLETED") ? "Interviewed" :
+             (effectiveStatus === "OFFER" || effectiveStatus === "HIRED") ? "Offered" :
              isCompleted ? "Assessment Done" : "Assessment Pending"}
           </span>
         </div>
 
-        <ProgressSteps currentStatus={app.status} isCompletedResult={isCompleted} />
+        <ProgressSteps currentStatus={effectiveStatus} isCompletedResult={isCompleted} />
 
         {isCompleted && resultsMap[app.campaign.id] && (
           <div className="mt-4 p-4 bg-surface-container-lowest border border-outline-variant/50 rounded-2xl flex items-center justify-between shadow-sm">

@@ -79,6 +79,12 @@ export default function Sidebar({ role = "recruiter" }) {
               key={item.label}
               to={item.to}
               end={item.end}
+              onClick={(e) => {
+                if (window.__triggerUnsavedModal && !isActive(item)) {
+                  e.preventDefault();
+                  window.__triggerUnsavedModal(item.to);
+                }
+              }}
               className={({ isActive: navActive }) =>
                 "nav-item" + (navActive || isActive(item) ? " active" : "")
               }

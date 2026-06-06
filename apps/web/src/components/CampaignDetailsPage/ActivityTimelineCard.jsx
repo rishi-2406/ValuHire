@@ -22,7 +22,15 @@ export function ActivityTimelineCard({
   let activeIndex = -1;
   if (application) {
     activeIndex = 0;
-    const currentStatus = application.status;
+    let currentStatus = application.status;
+    
+    if (application.candidate?.interviewSlots) {
+      const slot = application.candidate.interviewSlots.find(s => s.campaignId === application.campaignId);
+      if (slot && slot.status === "COMPLETED" && currentStatus !== "OFFER" && currentStatus !== "HIRED") {
+        currentStatus = "INTERVIEW_COMPLETED";
+      }
+    }
+
     if (currentStatus === "ASSESSMENT_INVITED") activeIndex = 1;
     if (currentStatus === "ASSESSMENT_COMPLETED" || currentStatus === "SUBMITTED" || isSubmitted) activeIndex = 1;
     if (currentStatus === "SHORTLISTED") activeIndex = 2;
@@ -64,54 +72,40 @@ export function ActivityTimelineCard({
         </div>
 
         {/* Status & Actions */}
-        <div className="pt-6 border-t border-outline-variant/40 mt-auto space-y-4">
-          {activeIndex >= 1 && assessmentResult ? (
-            <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl p-4 text-center space-y-4">
-              <div className="flex justify-center text-[#059669]">
-                <CheckCircle2 size={24} />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-[#047857] mb-1">Assessment Completed</div>
-                <p className="text-xs text-[#065F46] font-medium leading-relaxed">
-                  Your assessment has been submitted successfully.
+        {activeIndex <= 0 && (
+          <div className="pt-6 border-t border-outline-variant/40 mt-auto space-y-4">
+            {application && activeIndex === 0 && (
+              <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-2xl p-4 text-center">
+                <p className="text-xs text-[#1E40AF] font-bold leading-relaxed">
+                  You have applied to this campaign. You can start the assessment whenever you are ready.
                 </p>
               </div>
-            </div>
-          ) : (
-            <>
-              {application && activeIndex === 0 && (
-                <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-2xl p-4 text-center">
-                  <p className="text-xs text-[#1E40AF] font-bold leading-relaxed">
-                    You have applied to this campaign. You can start the assessment whenever you are ready.
-                  </p>
-                </div>
-              )}
+            )}
 
-              {hasAssessment && activeIndex <= 0 && (
-                <div className="flex flex-col gap-3">
+            {hasAssessment && activeIndex <= 0 && (
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleApplyAndStart}
+                  disabled={starting || applying}
+                  className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-[#2563EB]/25"
+                >
+                  <Play size={16} fill="currentColor" />
+                  <span>{starting ? "Starting..." : application ? "Start Assessment" : "Apply & Start Assessment"}</span>
+                </button>
+                
+                {!application && (
                   <button
-                    onClick={handleApplyAndStart}
+                    onClick={handleApplyOnly}
                     disabled={starting || applying}
-                    className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-[#2563EB]/25"
+                    className="w-full bg-white hover:bg-surface-light border border-outline-variant text-on-surface font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all active:translate-y-0"
                   >
-                    <Play size={16} fill="currentColor" />
-                    <span>{starting ? "Starting..." : application ? "Start Assessment" : "Apply & Start Assessment"}</span>
+                    <span>{applying ? "Applying..." : "Apply Only"}</span>
                   </button>
-                  
-                  {!application && (
-                    <button
-                      onClick={handleApplyOnly}
-                      disabled={starting || applying}
-                      className="w-full bg-white hover:bg-surface-light border border-outline-variant text-on-surface font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all active:translate-y-0"
-                    >
-                      <span>{applying ? "Applying..." : "Apply Only"}</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

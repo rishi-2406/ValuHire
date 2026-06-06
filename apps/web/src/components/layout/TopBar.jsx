@@ -1,8 +1,10 @@
 import { Bell, Search, Menu } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function TopBar({ title, eyebrow, actions, onSearch, onMenuClick, showSearch = true }) {
+export default function TopBar({ title, eyebrow, actions, onSearch, onMenuClick, showSearch = true, showNotifications = true }) {
   const [searchValue, setSearchValue] = useState("");
+  const navigate = useNavigate();
 
   return (
     <div className="topbar">
@@ -41,14 +43,17 @@ export default function TopBar({ title, eyebrow, actions, onSearch, onMenuClick,
           </div>
         ) : null}
 
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Notifications"
-          title="Notifications"
-        >
-          <Bell size={20} />
-        </button>
+        {showNotifications ? (
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Notifications"
+            title="Notifications"
+            onClick={() => navigate('/notifications')}
+          >
+            <Bell size={20} />
+          </button>
+        ) : null}
 
         {actions}
       </div>

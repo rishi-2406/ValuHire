@@ -8,6 +8,8 @@ import ResultsBreakdownModal from "../components/ResultsPage/ResultsBreakdownMod
 import { CampaignMainDetails } from "../components/CampaignDetailsPage/CampaignMainDetails";
 import { ActivityTimelineCard } from "../components/CampaignDetailsPage/ActivityTimelineCard";
 import { useCampaignDetailsData } from "../hooks/useCampaignDetailsData";
+import { useInterviewRoom } from "../hooks/useInterviewRoom";
+import InterviewLobby from "../components/InterviewLobby";
 
 export default function CampaignDetailsPage() {
   const { campaignId } = useParams();
@@ -28,6 +30,9 @@ export default function CampaignDetailsPage() {
   } = useCampaignDetailsData(campaignId, toast, navigate);
 
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+  const [micOn, setMicOn] = useState(true);
+  const [videoOn, setVideoOn] = useState(true);
+  const { activeRoom, handleJoinRoom, handleLeaveRoom } = useInterviewRoom();
 
   if (loading) {
     return (
@@ -108,30 +113,57 @@ export default function CampaignDetailsPage() {
           </div>
         </header>
 
-        <div className="p-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <CampaignMainDetails
-            campaign={campaign}
-            application={application}
-            hasAssessment={hasAssessment}
-            isSubmitted={isSubmitted}
-            assessmentResult={assessmentResult}
-            setIsBreakdownOpen={setIsBreakdownOpen}
-            totalDur={totalDur}
-            totalMcqs={totalMcqs}
-            totalCodings={totalCodings}
-          />
+        {activeRoom ? (() => {
+          const interviewSlot = application?.candidate?.interviewSlots?.find(s => s.roomCode === activeRoom || s.id === activeRoom) || { id: activeRoom };
+          
+          const enrichedInterview = {
+            ...interviewSlot,
+            campaign: campaign,
+            candidateName: user?.name || application?.candidate?.name || "Candidate",
+            interviewerName: interviewSlot.interviewerName || campaign?.company?.name || "ValuHire Recruiter"
+          };
+          
+          const initials = user?.name ? user.name.substring(0, 2).toUpperCase() : "C";
+          return (
+            <InterviewLobby
+              activeInterview={enrichedInterview}
+              initials={initials}
+              user={user}
+              videoOn={videoOn}
+              setVideoOn={setVideoOn}
+              micOn={micOn}
+              setMicOn={setMicOn}
+              onLeave={handleLeaveRoom}
+              onJoin={() => navigate(`/interviews/${activeRoom}/live`)}
+            />
+          );
+        })() : (
+          <div className="p-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <CampaignMainDetails
+              campaign={campaign}
+              application={application}
+              hasAssessment={hasAssessment}
+              isSubmitted={isSubmitted}
+              assessmentResult={assessmentResult}
+              setIsBreakdownOpen={setIsBreakdownOpen}
+              totalDur={totalDur}
+              totalMcqs={totalMcqs}
+              totalCodings={totalCodings}
+              handleJoinRoom={handleJoinRoom}
+            />
 
-          <ActivityTimelineCard
-            hasAssessment={hasAssessment}
-            isSubmitted={isSubmitted}
-            assessmentResult={assessmentResult}
-            application={application}
-            starting={starting}
-            applying={applying}
-            handleApplyAndStart={handleApplyAndStart}
-            handleApplyOnly={handleApplyOnly}
-          />
-        </div>
+            <ActivityTimelineCard
+              hasAssessment={hasAssessment}
+              isSubmitted={isSubmitted}
+              assessmentResult={assessmentResult}
+              application={application}
+              starting={starting}
+              applying={applying}
+              handleApplyAndStart={handleApplyAndStart}
+              handleApplyOnly={handleApplyOnly}
+            />
+          </div>
+        )}
       </main>
       
       <ResultsBreakdownModal 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Sparkles, ChevronDown, ChevronUp, Briefcase, FileText, Award, Users, Clock, Code, Calendar, Video } from "lucide-react";
 
-export function CampaignMainDetails({ campaign, application, hasAssessment, isSubmitted, assessmentResult, setIsBreakdownOpen, totalDur, totalMcqs, totalCodings }) {
+export function CampaignMainDetails({ campaign, application, hasAssessment, isSubmitted, assessmentResult, setIsBreakdownOpen, totalDur, totalMcqs, totalCodings, handleJoinRoom }) {
   const isInterviewStage = application && ["SHORTLISTED", "INTERVIEW", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "OFFER", "HIRED"].includes(application.status);
   const interviewSlot = application?.candidate?.interviewSlots?.find(slot => slot.campaignId === campaign.id);
 
@@ -9,7 +9,7 @@ export function CampaignMainDetails({ campaign, application, hasAssessment, isSu
 
   const [expanded, setExpanded] = useState({
     jobDescription: true,
-    assessment: application && showAssessment,
+    assessment: application && showAssessment && !isInterviewStage,
     interviewDetails: isInterviewStage
   });
 
@@ -201,14 +201,12 @@ export function CampaignMainDetails({ campaign, application, hasAssessment, isSu
                     {(interviewSlot.status === "SCHEDULED" || interviewSlot.status === "LIVE") && (
                       <div className="mt-6 pt-4 border-t border-outline-variant/50">
                         <p className="text-sm text-on-surface-variant font-medium mb-3">Join your interview using the link below at the scheduled time.</p>
-                        <a 
-                          href={`/interview/${interviewSlot.roomCode}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button 
+                          onClick={() => handleJoinRoom(interviewSlot.id || interviewSlot.interviewId || interviewSlot.roomCode)}
                           className="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl font-bold transition-colors shadow-sm text-sm"
                         >
                           <Video size={16} /> Join Interview Room
-                        </a>
+                        </button>
                       </div>
                     )}
                   </div>

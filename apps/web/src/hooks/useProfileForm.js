@@ -1,25 +1,97 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { userService, companyService } from "../services/api";
 
 export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) {
-  const nameParts = (user?.name || "").split(" ");
-  const [firstName, setFirstName] = useState(nameParts[0] || "");
-  const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") || "");
+  const [initialState, setInitialState] = useState(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email] = useState(user?.email || "");
-  const [bio, setBio] = useState(user?.bio || "");
-  const [specialties, setSpecialties] = useState(user?.skills || user?.specialties || []);
-  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicUrl || "");
+  const [bio, setBio] = useState("");
+  const [specialties, setSpecialties] = useState([]);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
   
-  const [githubUrl, setGithubUrl] = useState(user?.githubUrl || "");
-  const [leetcodeUrl, setLeetcodeUrl] = useState(user?.leetcodeUrl || "");
-  const [codeforcesUrl, setCodeforcesUrl] = useState(user?.codeforcesUrl || "");
-  const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl || "");
-  const [portfolioUrl, setPortfolioUrl] = useState(user?.portfolioUrl || "");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [leetcodeUrl, setLeetcodeUrl] = useState("");
+  const [codeforcesUrl, setCodeforcesUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
   const [urlErrors, setUrlErrors] = useState({});
   
-  const [companyName, setCompanyName] = useState(user?.company?.name || "");
-  const [companyWebsite, setCompanyWebsite] = useState(user?.company?.website || "");
+  const [companyName, setCompanyName] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
   
+  useEffect(() => {
+    if (user) {
+      const nameParts = (user.name || "").split(" ");
+      const newInitial = {
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        bio: user.bio || "",
+        specialties: user.skills || user.specialties || [],
+        avatarUrl: (user.profilePicUrl === "null" ? "" : user.profilePicUrl) || "",
+        resumeUrl: (user.resumeUrl === "null" ? "" : user.resumeUrl) || "",
+        githubUrl: user.githubUrl || "",
+        leetcodeUrl: user.leetcodeUrl || "",
+        codeforcesUrl: user.codeforcesUrl || "",
+        linkedinUrl: user.linkedinUrl || "",
+        portfolioUrl: user.portfolioUrl || "",
+        companyName: user.company?.name || "",
+        companyWebsite: user.company?.website || ""
+      };
+      setInitialState(newInitial);
+      setFirstName(newInitial.firstName);
+      setLastName(newInitial.lastName);
+      setBio(newInitial.bio);
+      setSpecialties(newInitial.specialties);
+      setAvatarUrl(newInitial.avatarUrl);
+      setResumeUrl(newInitial.resumeUrl);
+      setGithubUrl(newInitial.githubUrl);
+      setLeetcodeUrl(newInitial.leetcodeUrl);
+      setCodeforcesUrl(newInitial.codeforcesUrl);
+      setLinkedinUrl(newInitial.linkedinUrl);
+      setPortfolioUrl(newInitial.portfolioUrl);
+      setCompanyName(newInitial.companyName);
+      setCompanyWebsite(newInitial.companyWebsite);
+    }
+  }, [user]);
+
+  const isDirty = initialState ? (
+    firstName !== initialState.firstName ||
+    lastName !== initialState.lastName ||
+    bio !== initialState.bio ||
+    avatarUrl !== initialState.avatarUrl ||
+    resumeUrl !== initialState.resumeUrl ||
+    githubUrl !== initialState.githubUrl ||
+    leetcodeUrl !== initialState.leetcodeUrl ||
+    codeforcesUrl !== initialState.codeforcesUrl ||
+    linkedinUrl !== initialState.linkedinUrl ||
+    portfolioUrl !== initialState.portfolioUrl ||
+    companyName !== initialState.companyName ||
+    companyWebsite !== initialState.companyWebsite ||
+    JSON.stringify(specialties) !== JSON.stringify(initialState.specialties)
+  ) : false;
+
+  const resetForm = () => {
+    if (initialState) {
+      setFirstName(initialState.firstName);
+      setLastName(initialState.lastName);
+      setBio(initialState.bio);
+      setSpecialties(initialState.specialties);
+      setAvatarUrl(initialState.avatarUrl);
+      setResumeUrl(initialState.resumeUrl);
+      setGithubUrl(initialState.githubUrl);
+      setLeetcodeUrl(initialState.leetcodeUrl);
+      setCodeforcesUrl(initialState.codeforcesUrl);
+      setLinkedinUrl(initialState.linkedinUrl);
+      setPortfolioUrl(initialState.portfolioUrl);
+      setCompanyName(initialState.companyName);
+      setCompanyWebsite(initialState.companyWebsite);
+      setUrlErrors({});
+    }
+  };
+
   const fileInputRef = useRef(null);
 
   const URL_FIELDS = [
@@ -51,7 +123,7 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
   ];
 
   const handleSave = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (Object.values(urlErrors).some(Boolean)) {
       toast.error("Please fix the invalid URL fields before saving.");
       return;
@@ -63,7 +135,7 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
         await companyService.updateCompany({ name: companyName, website: companyWebsite });
       }
       const data = await userService.updateProfile({
-        name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl,
+        name: fullName, bio, skills: specialties, profilePicUrl: avatarUrl, resumeUrl,
         githubUrl, leetcodeUrl, codeforcesUrl, linkedinUrl, portfolioUrl
       });
       updateUser({ 
@@ -91,6 +163,19 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
     }
   };
 
+  const handleResumeChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File is too large (max 5MB)");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => setResumeUrl(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
   return {
     firstName, setFirstName,
     lastName, setLastName,
@@ -98,12 +183,16 @@ export function useProfileForm(user, updateUser, isRecruiter, toast, setSaving) 
     bio, setBio,
     specialties, setSpecialties,
     avatarUrl, setAvatarUrl,
+    resumeUrl, setResumeUrl,
     urlErrors, setUrlErrors,
     companyName, setCompanyName,
     companyWebsite, setCompanyWebsite,
     fileInputRef,
     URL_FIELDS,
     handleSave,
-    handleAvatarChange
+    handleAvatarChange,
+    handleResumeChange,
+    isDirty,
+    resetForm
   };
 }

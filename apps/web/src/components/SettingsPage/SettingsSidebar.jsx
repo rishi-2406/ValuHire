@@ -1,24 +1,21 @@
 import React from "react";
-import { User } from "lucide-react";
+import { User, FileText, Link as LinkIcon, Building2 } from "lucide-react";
 
-export const SECTIONS = [
-  { id: "profile", label: "Profile", icon: User }
-];
+export function SettingsSidebar({ initials, activeSection, setActiveSection, isRecruiter }) {
+  const SECTIONS = isRecruiter 
+    ? [
+        { id: "personal", label: "Personal Info", icon: User },
+        { id: "company", label: "Company Info", icon: Building2 }
+      ]
+    : [
+        { id: "personal", label: "Personal Info", icon: User },
+        { id: "resume", label: "Resume & Skills", icon: FileText },
+        { id: "profiles", label: "Online Profiles", icon: LinkIcon }
+      ];
 
-export function SettingsSidebar({ initials, activeSection, setActiveSection }) {
   return (
-    <aside className="w-64 bg-[#F8FAFC] border-r border-outline-variant/50 p-6 flex flex-col shrink-0">
-      <div className="mb-10 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xl font-bold">
-          {initials}
-        </div>
-        <div>
-          <h2 className="font-bold text-on-surface text-lg leading-tight">ValuHire Settings</h2>
-          <p className="text-sm text-on-surface-variant">Manage your account</p>
-        </div>
-      </div>
-
-      <nav className="flex flex-col gap-1">
+    <aside className="w-72 bg-white border-r border-outline-variant/30 p-8 flex flex-col shrink-0">
+      <nav className="flex flex-col gap-2">
         {SECTIONS.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -27,9 +24,13 @@ export function SettingsSidebar({ initials, activeSection, setActiveSection }) {
               key={section.id}
               type="button"
               onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-colors text-left ${isActive ? "bg-[#2563EB] text-white" : "text-on-surface-variant hover:bg-surface-container-high"}`}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all text-left group ${
+                isActive 
+                  ? "bg-[#EFF6FF] text-[#1D4ED8]" 
+                  : "text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A]"
+              }`}
             >
-              <Icon size={18} />
+              <Icon size={18} className={`transition-colors ${isActive ? "text-[#2563EB]" : "text-[#94A3B8] group-hover:text-[#64748B]"}`} />
               <span>{section.label}</span>
             </button>
           );

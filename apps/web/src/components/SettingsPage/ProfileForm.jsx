@@ -1,12 +1,12 @@
 import React from "react";
-import { Shield, CheckCircle2 } from "lucide-react";
+import { Shield, CheckCircle2, UploadCloud, Link as LinkIcon, Building2, User, FileText } from "lucide-react";
 import { useToast } from "../../hooks/useToast";
 import { SpecialtiesSection } from "./SpecialtiesSection";
 import { OnlineProfilesSection } from "./OnlineProfilesSection";
 import { CompanyInfoSection } from "./CompanyInfoSection";
 import { useProfileForm } from "../../hooks/useProfileForm";
 
-export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, setSaving }) {
+export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, setSaving, activeSection, setIsDirty, setResetForm }) {
   const toast = useToast();
   
   const {
@@ -16,165 +16,226 @@ export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, s
     bio, setBio,
     specialties, setSpecialties,
     avatarUrl, setAvatarUrl,
+    resumeUrl, setResumeUrl,
     urlErrors, setUrlErrors,
     companyName, setCompanyName,
     companyWebsite, setCompanyWebsite,
     fileInputRef,
     URL_FIELDS,
     handleSave,
-    handleAvatarChange
+    handleAvatarChange,
+    handleResumeChange,
+    isDirty,
+    resetForm
   } = useProfileForm(user, updateUser, isRecruiter, toast, setSaving);
 
+  React.useEffect(() => {
+    if (setIsDirty) setIsDirty(isDirty);
+  }, [isDirty, setIsDirty]);
+
+  React.useEffect(() => {
+    if (setResetForm) setResetForm(() => resetForm);
+  }, [resetForm, setResetForm]);
+
+  const handleViewResume = () => {
+    if (!resumeUrl || !resumeUrl.startsWith("data:")) {
+      window.open(resumeUrl, "_blank");
+      return;
+    }
+    try {
+      const arr = resumeUrl.split(",");
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while(n--){
+          u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], {type: mime});
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch(e) {
+      toast.error("Could not open resume document.");
+    }
+  };
+
   return (
-    <form id="settings-form" onSubmit={handleSave} className="max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-on-surface mb-2">Profile Information</h1>
-        <p className="text-on-surface-variant">Update your personal details here.</p>
-      </div>
-
-      <div className="h-px w-full bg-outline-variant/50 mb-8" />
-
-      {/* Avatar */}
-      {!isRecruiter && (
-        <div className="flex items-center gap-6 mb-8">
-          <div className="w-24 h-24 rounded-full bg-[#E0E7FF] text-[#2563EB] flex items-center justify-center text-3xl font-bold border-2 border-transparent shadow-sm overflow-hidden">
-            {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : initials}
-          </div>
+    <form id="settings-form" onSubmit={handleSave} className="max-w-2xl animate-fade-in-up">
+      {/* PERSONAL INFO SECTION */}
+      {activeSection === "personal" && (
+        <div className="space-y-10">
           <div>
-            <div className="flex items-center gap-4 mb-2">
-              <input
-                type="file"
-                accept="image/png, image/jpeg, image/gif"
-                ref={fileInputRef}
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
-              <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-white border border-outline-variant hover:bg-surface-light text-on-surface px-4 py-2 rounded font-semibold text-sm transition-colors">
-                Change avatar
-              </button>
-              <button type="button" onClick={() => setAvatarUrl("")} className="text-[#DC2626] hover:text-[#B91C1C] font-semibold text-sm transition-colors">
-                Remove
-              </button>
+            <h1 className="text-3xl font-extrabold text-[#0F172A] mb-2 tracking-tight">Personal Information</h1>
+            <p className="text-[#64748B] font-medium text-sm">Update your avatar, name, and basic contact details.</p>
+          </div>
+
+          {!isRecruiter && (
+            <div className="flex flex-col sm:flex-row items-center gap-8 bg-[#F8FAFC] border border-outline-variant/40 p-8 rounded-3xl shadow-sm">
+              <div className="relative group">
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#E0E7FF] to-[#C7D2FE] text-[#2563EB] flex items-center justify-center text-4xl font-black border-4 border-white shadow-lg overflow-hidden transition-transform group-hover:scale-105">
+                  {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : initials}
+                </div>
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h3 className="text-sm font-bold text-[#0F172A] mb-1">Profile Photo</h3>
+                <p className="text-xs text-[#64748B] mb-4">We recommend an image of at least 400x400. Max 1MB.</p>
+                <div className="flex items-center justify-center sm:justify-start gap-4">
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/gif"
+                    ref={fileInputRef}
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-white border border-[#CBD5E1] hover:bg-[#F1F5F9] text-[#0F172A] px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm">
+                    {avatarUrl ? "Change Photo" : "Upload Photo"}
+                  </button>
+                  <button type="button" onClick={() => setAvatarUrl("")} className="text-[#EF4444] hover:text-[#B91C1C] hover:bg-red-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
+                    Remove
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-on-surface-variant">JPG, GIF or PNG. 1MB max.</p>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Resume Upload */}
-      {!isRecruiter && (
-        <div className="flex items-center gap-6 mb-8 bg-[#F8FAFC] border border-outline-variant/50 p-6 rounded-xl">
-          <div className="w-14 h-14 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center text-2xl border border-[#BFDBFE]">
-            <Shield size={24} />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-bold text-on-surface mb-1">Resume / CV</h3>
-            <p className="text-xs text-on-surface-variant mb-3">Upload your latest resume. PDF up to 5MB.</p>
-            <div className="flex items-center gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="group">
+              <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">First Name</label>
               <input
-                type="file"
-                accept="application/pdf"
-                id="resume-upload"
-                onChange={(e) => {
-                   const file = e.target.files?.[0];
-                   if(file) {
-                      toast.success("Resume uploaded temporarily (mocked)");
-                      updateUser({ ...user, resumeUrl: URL.createObjectURL(file) });
-                   }
-                }}
-                className="hidden"
+                type="text"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-xl px-4 py-3.5 text-sm bg-white focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/20 text-[#0F172A] font-medium transition-all group-hover:border-[#CBD5E1]"
               />
-              <button type="button" onClick={() => document.getElementById("resume-upload").click()} className="bg-white border border-[#2563EB] text-[#2563EB] hover:bg-[#EFF6FF] px-4 py-2 rounded font-semibold text-sm transition-colors">
-                Upload Resume
-              </button>
-              {user?.resumeUrl && (
-                <a href={user.resumeUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#059669] hover:underline flex items-center gap-1">
-                  <CheckCircle2 size={16} /> Attached
-                </a>
-              )}
+            </div>
+            <div className="group">
+              <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">Last Name</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-xl px-4 py-3.5 text-sm bg-white focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/20 text-[#0F172A] font-medium transition-all group-hover:border-[#CBD5E1]"
+              />
             </div>
           </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">Email Address</label>
+            <div className="relative group">
+              <input
+                type="email"
+                value={email}
+                disabled
+                className="w-full border border-[#E2E8F0] rounded-xl pl-12 pr-4 py-3.5 text-sm bg-[#F8FAFC] focus:outline-none text-[#64748B] font-medium cursor-not-allowed"
+              />
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <p className="text-xs text-[#94A3B8] font-medium mt-2 flex items-center gap-1.5"><Shield size={14} /> Email cannot be changed after registration.</p>
+          </div>
+
+          {!isRecruiter && (
+            <div>
+              <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">Professional Bio</label>
+              <textarea
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                rows={4}
+                placeholder="Write a few sentences about yourself, your experience, and your goals..."
+                className="w-full border border-[#E2E8F0] rounded-xl px-4 py-3.5 text-sm bg-white focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/20 text-[#0F172A] font-medium transition-all hover:border-[#CBD5E1] resize-none leading-relaxed"
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Name fields */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div>
-          <label className="block text-sm font-semibold text-on-surface mb-2">First Name</label>
-          <input
-            type="text"
-            value={firstName}
-            onChange={e => setFirstName(e.target.value)}
-            className="w-full border border-outline-variant/80 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface font-medium"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-on-surface mb-2">Last Name</label>
-          <input
-            type="text"
-            value={lastName}
-            onChange={e => setLastName(e.target.value)}
-            className="w-full border border-outline-variant/80 rounded px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface font-medium"
-          />
-        </div>
-      </div>
+      {/* RESUME & SKILLS SECTION */}
+      {activeSection === "resume" && !isRecruiter && (() => {
+        const hasValidResume = typeof resumeUrl === 'string' && resumeUrl.length > 10 && resumeUrl !== "null" && resumeUrl !== "undefined";
+        return (
+          <div className="space-y-10">
+            <div>
+              <h1 className="text-3xl font-extrabold text-[#0F172A] mb-2 tracking-tight">Resume & Skills</h1>
+              <p className="text-[#64748B] font-medium text-sm">Upload your latest CV and highlight your core competencies.</p>
+            </div>
 
-      {/* Email */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-on-surface mb-2">Email Address</label>
-        <div className="relative">
-          <input
-            type="email"
-            value={email}
-            disabled
-            className="w-full border border-outline-variant/80 rounded pl-10 pr-4 py-2.5 text-sm bg-surface-container-low focus:outline-none text-on-surface-variant font-medium cursor-not-allowed"
-          />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-        </div>
-        <p className="text-xs text-on-surface-variant mt-1">Email cannot be changed after registration.</p>
-      </div>
+            <div className="border border-[#E2E8F0] bg-white p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center border border-[#E2E8F0] shrink-0">
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#0F172A]">Resume Document</h3>
+                  <p className="text-xs text-[#64748B] mt-0.5">PDF format, maximum 5MB size limit.</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  id="resume-upload"
+                  onChange={handleResumeChange}
+                  className="hidden"
+                />
+                
+                {hasValidResume && (
+                  <button 
+                    type="button"
+                    onClick={handleViewResume}
+                    className="bg-white border border-[#BFDBFE] hover:bg-[#EFF6FF] text-[#2563EB] px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm flex items-center gap-2"
+                  >
+                    View Resume
+                  </button>
+                )}
 
-      {/* Bio */}
-      {!isRecruiter && (
-        <div className="mb-8">
-          <label className="block text-sm font-semibold text-on-surface mb-2">Bio</label>
-          <textarea
-            value={bio}
-            onChange={e => setBio(e.target.value)}
-            rows={4}
-            placeholder="Write a few sentences about yourself..."
-            className="w-full border border-outline-variant/80 rounded px-4 py-3 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-on-surface resize-none font-medium leading-relaxed"
-          />
+                <button 
+                  type="button" 
+                  onClick={() => document.getElementById("resume-upload").click()} 
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm shadow-blue-500/20 flex items-center gap-2"
+                >
+                  <UploadCloud size={16} /> {hasValidResume ? "Update Resume" : "Upload Resume"}
+                </button>
+              </div>
+            </div>
+
+            <SpecialtiesSection specialties={specialties} setSpecialties={setSpecialties} />
+          </div>
+        );
+      })()}
+
+      {/* ONLINE PROFILES SECTION */}
+      {activeSection === "profiles" && !isRecruiter && (
+        <div className="space-y-10">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#0F172A] mb-2 tracking-tight">Online Profiles</h1>
+            <p className="text-[#64748B] font-medium text-sm">Link your external portfolios, GitHub, and competitive programming profiles.</p>
+          </div>
+          
+          <div className="bg-white border border-[#E2E8F0] p-8 rounded-3xl shadow-sm">
+            <OnlineProfilesSection urlFields={URL_FIELDS} urlErrors={urlErrors} setUrlErrors={setUrlErrors} />
+          </div>
         </div>
       )}
 
-      {/* Specialties */}
-      {!isRecruiter && (
-        <SpecialtiesSection specialties={specialties} setSpecialties={setSpecialties} />
+      {/* COMPANY INFO SECTION */}
+      {activeSection === "company" && isRecruiter && (
+        <div className="space-y-10">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#0F172A] mb-2 tracking-tight">Company Info</h1>
+            <p className="text-[#64748B] font-medium text-sm">Manage your organization's details.</p>
+          </div>
+          
+          <div className="bg-white border border-[#E2E8F0] p-8 rounded-3xl shadow-sm">
+            <CompanyInfoSection
+              companyName={companyName}
+              setCompanyName={setCompanyName}
+              companyWebsite={companyWebsite}
+              setCompanyWebsite={setCompanyWebsite}
+            />
+          </div>
+        </div>
       )}
 
-      {/* Online Profiles */}
-      {!isRecruiter && (
-        <OnlineProfilesSection urlFields={URL_FIELDS} urlErrors={urlErrors} setUrlErrors={setUrlErrors} />
-      )}
-
-      {isRecruiter && (
-        <CompanyInfoSection
-          companyName={companyName}
-          setCompanyName={setCompanyName}
-          companyWebsite={companyWebsite}
-          setCompanyWebsite={setCompanyWebsite}
-        />
-      )}
-
-      <div className="mt-8 flex justify-end gap-3 border-t border-outline-variant/50 pt-6">
-        <button type="button" className="bg-white border border-outline-variant/80 hover:bg-surface-light text-on-surface px-6 py-2.5 rounded font-bold text-sm transition-colors">
-          Discard Changes
-        </button>
-        <button type="submit" disabled={saving} className="bg-[#41765B] hover:bg-[#2F5A44] text-white px-6 py-2.5 rounded font-bold text-sm transition-colors shadow-sm disabled:opacity-60">
-          {saving ? "Saving…" : "Save Changes"}
-        </button>
-      </div>
     </form>
   );
 }

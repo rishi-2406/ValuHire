@@ -76,6 +76,11 @@ model User {
   bio               String?
   skills            String[]            @default([])
   profilePicUrl     String?
+  githubUrl         String?
+  leetcodeUrl       String?
+  codeforcesUrl     String?
+  linkedinUrl       String?
+  portfolioUrl      String?
   companyId         String?
   company           Company?            @relation(fields: [companyId], references: [id])
   applications      Application[]

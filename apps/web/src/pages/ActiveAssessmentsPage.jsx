@@ -53,7 +53,10 @@ export default function ActiveAssessmentsPage() {
         <header className="h-16 flex items-center justify-between px-8 bg-white border-b border-outline-variant/50 sticky top-0 z-40">
           <h1 className="text-title-lg font-bold text-on-surface">My Applications</h1>
           <div className="flex items-center gap-4">
-            <button className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant">
+            <button 
+              className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant"
+              onClick={() => navigate('/notifications')}
+            >
               <Bell size={20} />
             </button>
             <button className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant">

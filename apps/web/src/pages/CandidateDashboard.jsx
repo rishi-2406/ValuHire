@@ -29,9 +29,26 @@ export default function CandidateDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const inProgressCampaigns = applications.filter(
-    (a) => !["SUBMITTED", "ASSESSMENT_COMPLETED", "REJECTED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED"].includes(a.status)
-  );
+  const getEffectiveStatus = (app) => {
+    let effectiveStatus = app.status;
+    if (app.candidate?.interviewSlots) {
+      const slot = app.candidate.interviewSlots.find(s => s.campaignId === app.campaign?.id);
+      if (slot && slot.status === "COMPLETED" && effectiveStatus !== "OFFER" && effectiveStatus !== "HIRED") {
+        effectiveStatus = "INTERVIEW_COMPLETED";
+      }
+    }
+    return effectiveStatus;
+  };
+
+  const inProgressCampaigns = applications.filter((a) => {
+    const status = getEffectiveStatus(a);
+    const postAssessmentStatuses = [
+      "SUBMITTED", "ASSESSMENT_COMPLETED", "REJECTED", "SHORTLISTED", 
+      "INTERVIEW_SCHEDULED", "INTERVIEW", "INTERVIEW_COMPLETED", 
+      "OFFER", "HIRED"
+    ];
+    return !postAssessmentStatuses.includes(status);
+  });
   const pendingAction = inProgressCampaigns.length > 0 ? inProgressCampaigns[0] : null;
 
   const startAssessmentSession = async (assessmentId) => {
