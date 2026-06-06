@@ -24,11 +24,13 @@ export default function LiveInterviewRoom() {
     loading, interviewData, campaign, code, language, questionText,
     showLangDropdown, setShowLangDropdown, micOn, setMicOn, videoOn, setVideoOn,
     interviewerNotes, setInterviewerNotes, activeLeftTab, setActiveLeftTab,
-    remoteVideoOn, remoteMicOn, remoteUserJoined, showFeedbackModal, setShowFeedbackModal,
-    isRunning, output, leftWidth, isDragging,
-    activeLocalStream, remoteStream, localVideoRef, remoteVideoRef, remoteAudioRef,
+    remoteVideoOn, remoteMicOn, remoteIsScreenSharing, remoteUserJoined, showFeedbackModal, setShowFeedbackModal,
+    isRunning, output, leftWidth, setLeftWidth, isDragging,
+    stream, displayStream, remoteCameraStream, remoteScreenStream,
+    localVideoRef, localScreenRef, remoteVideoRef, remoteScreenRef, remoteAudioRef, expandedVideoRef,
     isScreenSharing, toggleScreenShare, handleCodeChange, handleQuestionChange,
-    handleLanguageChange, handleRunCode, handleEndInterview, handleFeedbackSubmit
+    handleLanguageChange, handleRunCode, handleEndInterview, handleFeedbackSubmit,
+    expandedView, setExpandedView, miniScreenPreference, setMiniScreenPreference
   } = useInterviewRoom(sessionId, user, isRecruiter);
 
   if (loading) {
@@ -59,7 +61,7 @@ export default function LiveInterviewRoom() {
       {/* Hidden audio element to ensure remote mic plays even if remote video is unmounted */}
       <audio ref={remoteAudioRef} autoPlay />
 
-      {/* Main Content Split: Left (Problem + Cameras) | Right (Code) */}
+      {/* Main Content Split: Left (Problem + Cameras) | Right (Code or Expanded Screen) */}
       <div 
         className="flex-1 flex overflow-hidden min-h-0" 
         style={{ cursor: isDragging.current ? 'col-resize' : 'auto' }}
@@ -71,18 +73,27 @@ export default function LiveInterviewRoom() {
           style={{ width: leftWidth }}
         >
           <MediaPane
-            activeLocalStream={activeLocalStream}
+            stream={stream}
+            displayStream={displayStream}
             videoOn={videoOn}
+            micOn={micOn}
             isScreenSharing={isScreenSharing}
             localVideoRef={localVideoRef}
-            micOn={micOn}
-            remoteStream={remoteStream}
+            localScreenRef={localScreenRef}
+            remoteCameraStream={remoteCameraStream}
+            remoteScreenStream={remoteScreenStream}
             remoteVideoOn={remoteVideoOn}
+            remoteMicOn={remoteMicOn}
+            remoteIsScreenSharing={remoteIsScreenSharing}
             remoteVideoRef={remoteVideoRef}
+            remoteScreenRef={remoteScreenRef}
             remoteUserJoined={remoteUserJoined}
             isRecruiter={isRecruiter}
             interviewData={interviewData}
-            remoteMicOn={remoteMicOn}
+            expandedView={expandedView}
+            setExpandedView={setExpandedView}
+            miniScreenPreference={miniScreenPreference}
+            setMiniScreenPreference={setMiniScreenPreference}
           />
 
           <ProblemNotesPane
@@ -106,19 +117,40 @@ export default function LiveInterviewRoom() {
           }}
         />
 
-        <CodeEditorPane
-          LANGUAGE_OPTIONS={LANGUAGE_OPTIONS}
-          currentLanguage={currentLanguage}
-          showLangDropdown={showLangDropdown}
-          setShowLangDropdown={setShowLangDropdown}
-          language={language}
-          handleLanguageChange={handleLanguageChange}
-          isRunning={isRunning}
-          handleRunCode={handleRunCode}
-          code={code}
-          handleCodeChange={handleCodeChange}
-          output={output}
-        />
+        {expandedView !== "none" ? (
+          <div className="flex-1 bg-black relative min-w-0">
+            <video
+              ref={expandedVideoRef}
+              autoPlay
+              playsInline
+              className={`w-full h-full object-contain ${expandedView === "local-screen" ? "" : ""}`}
+            />
+            <button
+              onClick={() => setExpandedView("none")}
+              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black transition-colors z-50"
+              title="Close Screenshare"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-md z-50">
+              {expandedView === "local-screen" ? "Your Screen" : `${isRecruiter ? interviewData?.candidate?.name || "Candidate" : interviewData?.recruiter?.name || "Interviewer"}'s Screen`}
+            </div>
+          </div>
+        ) : (
+          <CodeEditorPane
+            LANGUAGE_OPTIONS={LANGUAGE_OPTIONS}
+            currentLanguage={currentLanguage}
+            showLangDropdown={showLangDropdown}
+            setShowLangDropdown={setShowLangDropdown}
+            language={language}
+            handleLanguageChange={handleLanguageChange}
+            isRunning={isRunning}
+            handleRunCode={handleRunCode}
+            code={code}
+            handleCodeChange={handleCodeChange}
+            output={output}
+          />
+        )}
       </div>
 
       <InterviewFeedbackModal 

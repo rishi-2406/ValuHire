@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { ArrowLeft, Briefcase, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Briefcase, AlertTriangle, Clock, FileText, Users } from "lucide-react";
 import Sidebar from "../components/layout/Sidebar";
 import ResultsBreakdownModal from "../components/ResultsPage/ResultsBreakdownModal";
 import { CampaignMainDetails } from "../components/CampaignDetailsPage/CampaignMainDetails";
-import { AssessmentSummaryCard } from "../components/CampaignDetailsPage/AssessmentSummaryCard";
+import { ActivityTimelineCard } from "../components/CampaignDetailsPage/ActivityTimelineCard";
 import { useCampaignDetailsData } from "../hooks/useCampaignDetailsData";
 
 export default function CampaignDetailsPage() {
@@ -72,45 +72,57 @@ export default function CampaignDetailsPage() {
   const codingDur = campaign.assessment?.codingDurationMinutes || 0;
   const totalDur = mcqDur + codingDur || campaign.assessment?.durationMinutes || 60;
 
-  const isSubmitted = application?.status === "ASSESSMENT_COMPLETED" || application?.status === "SUBMITTED" || hasCompletedAssessment;
+  const isSubmitted = application?.status === "ASSESSMENT_COMPLETED" || application?.status === "SUBMITTED" || hasCompletedAssessment || ["SHORTLISTED", "INTERVIEW", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "OFFER", "HIRED"].includes(application?.status);
 
   return (
     <div className="app-shell bg-[#F8FAFC]">
       <Sidebar role="candidate" />
       <main className="workspace">
-        <header className="h-20 bg-white border-b border-outline-variant/50 px-8 flex items-center gap-4 sticky top-0 z-40">
-          <button 
-            onClick={() => navigate("/campaigns")} 
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-colors text-on-surface-variant border border-outline-variant/60"
-            title="Back to Campaigns"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-on-surface">{campaign.title}</h1>
-            <p className="text-xs text-on-surface-variant font-semibold flex items-center gap-1.5 mt-0.5">
-              <Briefcase size={14} className="text-[#2563EB]/70" />
-              {campaign.company?.name || "Company Details"}
-            </p>
+        <header className="h-20 bg-white border-b border-outline-variant/50 px-8 flex items-center justify-between sticky top-0 z-40">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate("/campaigns")} 
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-colors text-on-surface-variant border border-outline-variant/60"
+              title="Back to Campaigns"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-on-surface">{campaign.title}</h1>
+              <p className="text-xs text-on-surface-variant font-semibold flex items-center gap-1.5 mt-0.5">
+                <Briefcase size={14} className="text-[#2563EB]/70" />
+                {campaign.company?.name || "Company Details"}
+              </p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center">
+                <Users size={14} />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Applicants</div>
+                <div className="text-sm font-bold text-on-surface">{campaign._count?.applications || "0"}</div>
+              </div>
+            </div>
           </div>
         </header>
 
         <div className="p-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           <CampaignMainDetails
             campaign={campaign}
+            application={application}
             hasAssessment={hasAssessment}
             isSubmitted={isSubmitted}
             assessmentResult={assessmentResult}
             setIsBreakdownOpen={setIsBreakdownOpen}
-          />
-
-          <AssessmentSummaryCard
-            hasAssessment={hasAssessment}
             totalDur={totalDur}
             totalMcqs={totalMcqs}
-            mcqDur={mcqDur}
             totalCodings={totalCodings}
-            codingDur={codingDur}
+          />
+
+          <ActivityTimelineCard
+            hasAssessment={hasAssessment}
             isSubmitted={isSubmitted}
             assessmentResult={assessmentResult}
             application={application}

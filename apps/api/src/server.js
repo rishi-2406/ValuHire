@@ -7,7 +7,7 @@ const { apiPort, webOrigin } = require("./config/env");
 const server = http.createServer();
 const io = new Server(server, {
   cors: {
-    origin: webOrigin,
+    origin: true,
     credentials: true
   }
 });
@@ -48,8 +48,8 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("cursorMove", { roomId, socketId: socket.id, cursor });
   });
   
-  socket.on("mediaStateChange", ({ roomId, videoOn, micOn }) => {
-    socket.to(roomId).emit("mediaStateChange", { roomId, videoOn, micOn });
+  socket.on("mediaStateChange", ({ roomId, videoOn, micOn, isScreenSharing, camTrackId, screenTrackId }) => {
+    socket.to(roomId).emit("mediaStateChange", { roomId, videoOn, micOn, isScreenSharing, camTrackId, screenTrackId });
   });
 
   socket.on("languageChange", ({ roomId, language }) => {

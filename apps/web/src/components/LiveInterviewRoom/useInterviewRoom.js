@@ -36,6 +36,9 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
   // Remote state
   const [remoteVideoOn, setRemoteVideoOn] = useState(true);
   const [remoteMicOn, setRemoteMicOn] = useState(true);
+  const [remoteIsScreenSharing, setRemoteIsScreenSharing] = useState(false);
+  const [remoteCamMid, setRemoteCamMid] = useState(null);
+  const [remoteScreenMid, setRemoteScreenMid] = useState(null);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -51,6 +54,10 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
   const isLocalCodeChange = useRef(false);
   const isLocalQuestionChange = useRef(false);
 
+  // Expanded View State
+  const [expandedView, setExpandedView] = useState("none"); // "none" | "local-screen" | "remote-screen"
+  const [miniScreenPreference, setMiniScreenPreference] = useState("camera"); // "camera" | "screen"
+
   // Media
   const { 
     stream, 
@@ -59,38 +66,48 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
     toggleScreenShare,
   } = useMediaDevices(videoOn, micOn);
 
-  const activeLocalStream = isScreenSharing && displayStream ? displayStream : stream;
-  const { remoteStream } = useWebRTC(`interview:${sessionId}`, activeLocalStream, isRecruiter);
+  const isScreenSharingRef = useRef(isScreenSharing);
+  useEffect(() => { isScreenSharingRef.current = isScreenSharing; }, [isScreenSharing]);
+
+  const { remoteStreams, remoteStreamsVersion, localMids } = useWebRTC(`interview:${sessionId}`, stream, displayStream, isRecruiter);
+
+  const localMidsRef = useRef(localMids);
+  useEffect(() => { localMidsRef.current = localMids; }, [localMids]);
+
+  // Derive persistent streams from MIDs
+  const remoteCameraStream = remoteStreamsVersion !== -1 && remoteCamMid ? remoteStreams[remoteCamMid] : null;
+  const remoteScreenStream = remoteStreamsVersion !== -1 && remoteScreenMid ? remoteStreams[remoteScreenMid] : null;
+  const remoteAudioStream = remoteStreamsVersion !== -1 ? Object.values(remoteStreams).find(s => s && s.getAudioTracks().length > 0) || null : null;
 
   const localVideoRef = useRef(null);
+  const localScreenRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteScreenRef = useRef(null);
   const remoteAudioRef = useRef(null);
+  const expandedVideoRef = useRef(null);
+
+
 
   useEffect(() => {
-    if (localVideoRef.current && activeLocalStream) {
-      localVideoRef.current.srcObject = activeLocalStream;
-      localVideoRef.current.play().catch(console.error);
-    }
-  }, [activeLocalStream, videoOn]);
-
-  useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(console.error);
-    }
-  }, [remoteStream, remoteVideoOn]);
-
-  useEffect(() => {
-    if (remoteAudioRef.current && remoteStream) {
-      remoteAudioRef.current.srcObject = remoteStream;
+    if (remoteAudioRef.current && remoteAudioStream) {
+      remoteAudioRef.current.srcObject = remoteAudioStream;
       remoteAudioRef.current.play().catch(console.error);
     }
-  }, [remoteStream]);
+  }, [remoteAudioStream]);
+
+  useEffect(() => {
+    // Re-bind expanded view when it changes
+    if (expandedVideoRef.current) {
+      if (expandedView === "local-screen") expandedVideoRef.current.srcObject = displayStream;
+      if (expandedView === "remote-screen") expandedVideoRef.current.srcObject = remoteScreenStream;
+      expandedVideoRef.current.play().catch(console.error);
+    }
+  }, [expandedView, displayStream, remoteScreenStream]);
 
   useEffect(() => {
     if (!sessionId) return;
-    emitMediaStateChange(`interview:${sessionId}`, videoOn, micOn);
-  }, [videoOn, micOn, sessionId]);
+    emitMediaStateChange(`interview:${sessionId}`, videoOn, micOn, isScreenSharing, localMids.cam, localMids.screen);
+  }, [videoOn, micOn, isScreenSharing, localMids, sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -128,12 +145,17 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
       } else if (type === "mediaStateChange") {
         setRemoteVideoOn(payload.videoOn);
         setRemoteMicOn(payload.micOn);
+        setRemoteIsScreenSharing(payload.isScreenSharing || false);
+        setRemoteCamMid(payload.camTrackId || null); // Socket payload uses camTrackId historically, we pass MID here
+        setRemoteScreenMid(payload.screenTrackId || null);
       } else if (type === "presenceChanged" && payload) {
         if (payload.joined) {
           setRemoteUserJoined(true);
-          emitMediaStateChange(room, videoOnRef.current, micOnRef.current);
+          emitMediaStateChange(room, videoOnRef.current, micOnRef.current, isScreenSharingRef.current, localMidsRef.current.cam, localMidsRef.current.screen);
         } else {
           setRemoteUserJoined(false);
+          // Also reset remote view if they left
+          if (expandedView === "remote-screen") setExpandedView("none");
         }
       } else if (type === "interviewEnded") {
         if (!isRecruiter) {
@@ -253,10 +275,12 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
     loading, interviewData, campaign, code, language, questionText,
     showLangDropdown, setShowLangDropdown, micOn, setMicOn, videoOn, setVideoOn,
     showNotes, setShowNotes, interviewerNotes, setInterviewerNotes, activeLeftTab, setActiveLeftTab,
-    remoteVideoOn, remoteMicOn, remoteUserJoined, showFeedbackModal, setShowFeedbackModal,
+    remoteVideoOn, remoteMicOn, remoteIsScreenSharing, remoteUserJoined, showFeedbackModal, setShowFeedbackModal,
     isRunning, output, leftWidth, setLeftWidth, isDragging,
-    activeLocalStream, remoteStream, localVideoRef, remoteVideoRef, remoteAudioRef,
+    stream, displayStream, remoteCameraStream, remoteScreenStream,
+    localVideoRef, localScreenRef, remoteVideoRef, remoteScreenRef, remoteAudioRef, expandedVideoRef,
     isScreenSharing, toggleScreenShare, handleCodeChange, handleQuestionChange,
-    handleLanguageChange, handleRunCode, handleEndInterview, handleFeedbackSubmit
+    handleLanguageChange, handleRunCode, handleEndInterview, handleFeedbackSubmit,
+    expandedView, setExpandedView, miniScreenPreference, setMiniScreenPreference
   };
 }

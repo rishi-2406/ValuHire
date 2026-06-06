@@ -29,7 +29,7 @@ export default function CompletedTab({ completedApps, loading }) {
             const name = c.name || "Candidate";
             const initials = name.split(" ").map(n => n[0]).join("").substring(0, 2);
             // Find the completed interview slot
-            const interviewSlot = c.interviewSlotsAsCandidate?.find(s => s.status === "COMPLETED");
+            const interviewSlot = c.interviewSlots?.find(s => s.status === "COMPLETED");
             const feedback = interviewSlot?.feedback;
 
             return (

@@ -36,6 +36,7 @@ function createCampaignRoutes({ router, prisma, middleware }) {
       where: { id: req.params.id },
       include: { 
         company: true, 
+        _count: { select: { applications: true } },
         assessment: {
           include: {
             mcqQuestions: includeQuestions,

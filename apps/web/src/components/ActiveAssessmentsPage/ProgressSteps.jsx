@@ -5,7 +5,8 @@ export function ProgressSteps({ currentStatus, isCompletedResult }) {
     { id: "applied", label: "Apply" },
     { id: "assessment", label: "Take Assessment" },
     { id: "shortlist", label: "Shortlist" },
-    { id: "interview", label: "Interview Invite" }
+    { id: "interview", label: "Interview Invite" },
+    { id: "interview_completed", label: "Interview Complete" }
   ];
   
   let activeIndex = 0;
@@ -14,14 +15,15 @@ export function ProgressSteps({ currentStatus, isCompletedResult }) {
   if (currentStatus === "ASSESSMENT_COMPLETED" || currentStatus === "SUBMITTED" || isCompletedResult) activeIndex = 1;
   if (currentStatus === "SHORTLISTED") activeIndex = 2;
   if (currentStatus === "INTERVIEW_SCHEDULED" || currentStatus === "INTERVIEW") activeIndex = 3;
-  if (currentStatus === "OFFER" || currentStatus === "HIRED") activeIndex = 3;
+  if (currentStatus === "INTERVIEW_COMPLETED") activeIndex = 4;
+  if (currentStatus === "OFFER" || currentStatus === "HIRED") activeIndex = 5;
 
   return (
     <div className="relative mt-6 px-4">
       <div className="absolute top-2.5 left-8 right-8 h-[2px] bg-outline-variant">
         <div 
           className="absolute top-0 left-0 h-full bg-[#2563EB]" 
-          style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
+          style={{ width: `${(Math.min(activeIndex, steps.length - 1) / (steps.length - 1)) * 100}%` }}
         />
       </div>
       <div className="relative flex justify-between">

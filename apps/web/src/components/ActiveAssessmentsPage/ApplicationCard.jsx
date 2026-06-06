@@ -4,7 +4,7 @@ import { ProgressSteps } from "./ProgressSteps";
 
 export function ApplicationCard({ app, resultsMap, navigate }) {
   const hasAssessment = !!app.campaign?.assessment;
-  const isCompleted = app.status === "ASSESSMENT_COMPLETED" || app.status === "SUBMITTED" || (app.campaign && !!resultsMap[app.campaign.id]);
+  const isCompleted = app.status === "ASSESSMENT_COMPLETED" || app.status === "SUBMITTED" || (app.campaign && !!resultsMap[app.campaign.id]) || ["SHORTLISTED", "INTERVIEW", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "OFFER", "HIRED"].includes(app.status);
   
   return (
     <div className="bg-white border border-outline-variant/60 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between gap-6 hover:shadow-md transition-shadow">
@@ -18,11 +18,18 @@ export function ApplicationCard({ app, resultsMap, navigate }) {
             </div>
           </div>
           <span className={`px-3.5 py-1.5 rounded-full text-xs font-bold border ${
+            app.status === "SHORTLISTED" ? 'bg-[#FDF4FF] text-[#C026D3] border-[#FAE8FF]' :
+            (app.status === "INTERVIEW" || app.status === "INTERVIEW_SCHEDULED") ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+            (app.status === "INTERVIEW_COMPLETED" || app.status === "OFFER" || app.status === "HIRED") ? 'bg-[#F0FDF4] text-[#166534] border-[#BBF7D0]' :
             isCompleted 
               ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]' 
               : 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
           }`}>
-            {app.status === "INTERVIEW" ? "Interviewing" : isCompleted ? "Assessment Done" : "Assessment Pending"}
+            {app.status === "SHORTLISTED" ? "Shortlisted" :
+             (app.status === "INTERVIEW" || app.status === "INTERVIEW_SCHEDULED") ? "Interviewing" :
+             (app.status === "INTERVIEW_COMPLETED") ? "Interviewed" :
+             (app.status === "OFFER" || app.status === "HIRED") ? "Offered" :
+             isCompleted ? "Assessment Done" : "Assessment Pending"}
           </span>
         </div>
 

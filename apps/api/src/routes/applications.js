@@ -8,7 +8,14 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
   router.get("/applications/me", ...candidateOnly, asyncHandler(async (req, res) => {
     const applications = await prisma.application.findMany({
       where: { candidateId: req.user.id },
-      include: { campaign: { include: { company: true, assessment: true } } },
+      include: { 
+        campaign: { include: { company: true, assessment: true } },
+        candidate: {
+          select: {
+            interviewSlots: true
+          }
+        }
+      },
       orderBy: { appliedAt: "desc" }
     });
     sendOk(res, { applications });
@@ -119,7 +126,7 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
           select: {
             id: true, name: true, email: true, bio: true, skills: true,
             profilePicUrl: true, resumeUrl: true,
-            interviewSlotsAsCandidate: {
+            interviewSlots: {
               where: { campaignId: req.params.campaignId },
               include: { feedback: true }
             }

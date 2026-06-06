@@ -102,8 +102,8 @@ export function emitQuestionChange(roomId, questionText) {
   getSocket().emit("questionChange", { roomId, questionText });
 }
 
-export function emitMediaStateChange(roomId, videoOn, micOn) {
-  getSocket().emit("mediaStateChange", { roomId, videoOn, micOn });
+export function emitMediaStateChange(roomId, videoOn, micOn, isScreenSharing, camTrackId, screenTrackId) {
+  getSocket().emit("mediaStateChange", { roomId, videoOn, micOn, isScreenSharing, camTrackId, screenTrackId });
 }
 
 export function emitInterviewEnded(roomId) {
