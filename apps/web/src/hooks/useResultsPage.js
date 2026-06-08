@@ -30,7 +30,7 @@ export function useResultsPage() {
   const toast = useToast();
   const { campaignId } = useParams();
 
-  const [activeTab, setActiveTab] = useState("rankings");
+  const [activeTab, setActiveTab] = useState("overview");
   const [candidates, setCandidates] = useState([]);
   const [shortlistedApps, setShortlistedApps] = useState([]);
   const [campaigns, setCampaigns] = useState([]);

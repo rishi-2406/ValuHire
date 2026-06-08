@@ -25,19 +25,24 @@ export default function CampaignBuilderPage() {
     mcqDurationMinutes, setMcqDurationMinutes,
     codingDurationMinutes, setCodingDurationMinutes,
     mcqSlots, codingSlots,
+    initializeData,
     addMcqSlot, addMcqVariant, updateMcqVariant, updateMcqOption, removeMcqVariant,
     addCodingSlot, addCodingVariant, updateCodingVariant, removeCodingVariant,
     addTestCase, updateTestCase, removeTestCase
   } = useCampaignBuilderData();
 
   useEffect(() => {
-    campaignService.getPublicCampaigns() 
+    campaignService.getCampaignDetails(campaignId)
       .then(data => {
-         setCampaign({ id: campaignId, title: "Assessment Builder" });
+         const camp = data.campaign || data;
+         setCampaign(camp);
+         if (camp.assessment) {
+           initializeData(camp.assessment);
+         }
       })
       .catch(err => toast.error(err.message))
       .finally(() => setLoading(false));
-  }, [campaignId, toast]);
+  }, [campaignId, toast, initializeData]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -67,7 +72,7 @@ export default function CampaignBuilderPage() {
       });
       
       toast.success("Assessment saved successfully");
-      navigate("/recruiter");
+      navigate(`/campaigns/${campaignId}`);
     } catch (err) {
       toast.error(err.message || "Failed to save assessment");
     } finally {
@@ -79,40 +84,64 @@ export default function CampaignBuilderPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
-      <TopBar 
-        eyebrow="Assessment Builder"
-        title={campaign?.title || "Setup Campaign"}
-        showSearch={false}
-        actions={
-          <div className="flex gap-3">
-            <button onClick={() => navigate('/recruiter')} className="px-4 py-2 border border-outline-variant rounded-lg text-sm font-semibold hover:bg-surface-container-low transition-colors">
-              Cancel
-            </button>
-            <button onClick={handleSave} disabled={saving} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm transition-colors disabled:opacity-70">
-              <Save size={16} />
-              {saving ? "Saving..." : "Save Assessment"}
-            </button>
+      <div className="bg-white border-b border-outline-variant/60 px-8 py-5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div>
+          <div className="text-xs font-bold text-[#2563EB] uppercase tracking-widest mb-1.5 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]"></span>
+            Assessment Builder
           </div>
-        }
-      />
+          <h1 className="text-2xl font-black text-on-surface tracking-tight">{campaign?.title || "Setup Campaign"}</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate(`/campaigns/${campaignId}`)} 
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleSave} 
+            disabled={saving} 
+            className="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1e3a8a] text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md shadow-[#2563EB]/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <Save size={18} />
+            {saving ? "Saving..." : "Save Assessment"}
+          </button>
+        </div>
+      </div>
 
       <div className="flex-1 flex max-w-[1600px] mx-auto w-full p-6 gap-6 h-[calc(100vh-80px)] overflow-hidden">
         {/* Sidebar Nav */}
-        <div className="w-64 bg-white border border-outline-variant/60 rounded-2xl p-4 shadow-sm flex flex-col gap-2 shrink-0">
-          <button 
-            onClick={() => setActiveTab("mcq")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'mcq' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-on-surface-variant hover:bg-[#F8FAFC]'}`}
-          >
-            <ListChecks size={20} />
-            MCQ Section
-          </button>
-          <button 
-            onClick={() => setActiveTab("coding")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'coding' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-on-surface-variant hover:bg-[#F8FAFC]'}`}
-          >
-            <Code size={20} />
-            Coding Section
-          </button>
+        <div className="w-72 flex flex-col gap-4 shrink-0">
+          <div className="bg-white border border-outline-variant/60 rounded-2xl p-4 shadow-sm flex flex-col gap-2">
+            <div className="px-4 py-2 text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+              Assessment Modules
+            </div>
+            <button 
+              onClick={() => setActiveTab("mcq")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'mcq' ? 'bg-[#2563EB] text-white shadow-md' : 'text-on-surface-variant hover:bg-[#F8FAFC] hover:text-on-surface'}`}
+            >
+              <ListChecks size={20} className={activeTab === 'mcq' ? 'text-white' : 'text-on-surface-variant'} />
+              MCQ Section
+            </button>
+            <button 
+              onClick={() => setActiveTab("coding")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'coding' ? 'bg-[#2563EB] text-white shadow-md' : 'text-on-surface-variant hover:bg-[#F8FAFC] hover:text-on-surface'}`}
+            >
+              <Code size={20} className={activeTab === 'coding' ? 'text-white' : 'text-on-surface-variant'} />
+              Coding Section
+            </button>
+          </div>
+          
+          <div className="bg-white border border-[#CA8A04]/20 rounded-2xl p-5 shadow-sm text-sm">
+            <div className="font-bold text-[#CA8A04] mb-2 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#EAB308] animate-pulse"></span>
+              Tips
+            </div>
+            <p className="text-on-surface-variant leading-relaxed">
+              Create multiple variants within a single question slot to prevent cheating. Ensure you add similar difficulty questions in variants. Candidates will receive one variant at random.
+            </p>
+          </div>
         </div>
 
         {/* Builder Canvas */}

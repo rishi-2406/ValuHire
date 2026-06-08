@@ -30,7 +30,8 @@ function createCampaignRoutes({ router, prisma, middleware }) {
   router.get("/campaigns/:id", middleware.requireAuth, asyncHandler(async (req, res) => {
     const isRecruiter = req.user.role === "RECRUITER";
     const restrictedSelect = { select: { id: true, points: true, slotIndex: true } };
-    const includeQuestions = isRecruiter ? true : restrictedSelect;
+    const includeMcqQuestions = isRecruiter ? true : restrictedSelect;
+    const includeCodingQuestions = isRecruiter ? { include: { testCases: true } } : restrictedSelect;
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: req.params.id },
@@ -39,8 +40,8 @@ function createCampaignRoutes({ router, prisma, middleware }) {
         _count: { select: { applications: true } },
         assessment: {
           include: {
-            mcqQuestions: includeQuestions,
-            codingQuestions: includeQuestions
+            mcqQuestions: includeMcqQuestions,
+            codingQuestions: includeCodingQuestions
           }
         }
       }
@@ -137,8 +138,91 @@ function createCampaignRoutes({ router, prisma, middleware }) {
     requireFields(req.body, ["title"]);
 
     const existing = await prisma.assessment.findUnique({ where: { campaignId: campaign.id } });
+
     if (existing) {
-      await prisma.assessment.delete({ where: { id: existing.id } });
+      const validMcqIds = (req.body.mcqQuestions || []).map(q => q.id).filter(id => typeof id === 'string' && id.startsWith('c'));
+      const validCodingIds = (req.body.codingQuestions || []).map(q => q.id).filter(id => typeof id === 'string' && id.startsWith('c'));
+
+      try {
+        const assessment = await prisma.assessment.update({
+          where: { id: existing.id },
+          data: {
+            title: req.body.title,
+            durationMinutes: Number(req.body.durationMinutes || 0),
+            mcqDurationMinutes: req.body.mcqDurationMinutes ? Number(req.body.mcqDurationMinutes) : null,
+            codingDurationMinutes: req.body.codingDurationMinutes ? Number(req.body.codingDurationMinutes) : null,
+            instructions: req.body.instructions,
+            mcqQuestions: {
+              deleteMany: { id: { notIn: validMcqIds } },
+              upsert: (req.body.mcqQuestions || []).map((question) => ({
+                where: { id: (typeof question.id === 'string' && question.id.startsWith('c')) ? question.id : 'non-existent' },
+                update: {
+                  slotIndex: Number(question.slotIndex || 0),
+                  prompt: question.prompt,
+                  options: question.options,
+                  correctKey: String(question.correctKey),
+                  points: Number(question.points || 1)
+                },
+                create: {
+                  slotIndex: Number(question.slotIndex || 0),
+                  prompt: question.prompt,
+                  options: question.options,
+                  correctKey: String(question.correctKey),
+                  points: Number(question.points || 1)
+                }
+              }))
+            },
+            codingQuestions: {
+              deleteMany: { id: { notIn: validCodingIds } },
+              upsert: (req.body.codingQuestions || []).map((question) => ({
+                where: { id: (typeof question.id === 'string' && question.id.startsWith('c')) ? question.id : 'non-existent' },
+                update: {
+                  slotIndex: Number(question.slotIndex || 0),
+                  title: question.title,
+                  statement: question.statement,
+                  difficulty: question.difficulty || "Medium",
+                  language: question.language || "javascript",
+                  constraints: question.constraints,
+                  points: Number(question.points || 10),
+                  testCases: {
+                    deleteMany: {},
+                    create: (question.testCases || []).map((testCase) => ({
+                      input: testCase.input || "",
+                      expectedOutput: testCase.expectedOutput || "",
+                      isHidden: Boolean(testCase.isHidden)
+                    }))
+                  }
+                },
+                create: {
+                  slotIndex: Number(question.slotIndex || 0),
+                  title: question.title,
+                  statement: question.statement,
+                  difficulty: question.difficulty || "Medium",
+                  language: question.language || "javascript",
+                  constraints: question.constraints,
+                  points: Number(question.points || 10),
+                  testCases: {
+                    create: (question.testCases || []).map((testCase) => ({
+                      input: testCase.input || "",
+                      expectedOutput: testCase.expectedOutput || "",
+                      isHidden: Boolean(testCase.isHidden)
+                    }))
+                  }
+                }
+              }))
+            }
+          },
+          include: { mcqQuestions: true, codingQuestions: { include: { testCases: true } } }
+        });
+        return sendOk(res, { assessment });
+      } catch (e) {
+        if (e.code === 'P2003') {
+          const error = new Error("Cannot delete questions that have already been answered by candidates.");
+          error.statusCode = 400;
+          throw error;
+        }
+        throw e;
+      }
     }
 
     const assessment = await prisma.assessment.create({
@@ -154,7 +238,7 @@ function createCampaignRoutes({ router, prisma, middleware }) {
             slotIndex: Number(question.slotIndex || 0),
             prompt: question.prompt,
             options: question.options,
-            correctKey: question.correctKey,
+            correctKey: String(question.correctKey),
             points: Number(question.points || 1)
           }))
         },

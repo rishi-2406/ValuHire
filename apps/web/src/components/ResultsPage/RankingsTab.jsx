@@ -27,11 +27,10 @@ export default function RankingsTab({
   perPage
 }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6">
 
-        {/* Rankings Table */}
-        <div className="bg-white border border-outline-variant/60 rounded-2xl shadow-sm overflow-hidden">
+      {/* Rankings Table */}
+      <div className="bg-white border border-outline-variant/60 rounded-2xl shadow-sm overflow-hidden">
           {/* Table toolbar */}
           <div className="p-6 border-b border-outline-variant/50 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
@@ -183,67 +182,6 @@ export default function RankingsTab({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Right column */}
-      <div className="space-y-6">
-        {/* Score Distribution (visual) */}
-        <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-8">
-            <BarChart3 size={20} className="text-[#2563EB]" />
-            <h3 className="text-lg font-bold text-on-surface">Score Distribution</h3>
-          </div>
-          <div className="h-48 border-b border-outline-variant/50 border-dashed flex items-end justify-between px-2 pb-1 relative mb-6">
-            <div className="absolute inset-0 flex flex-col justify-between pt-2">
-              {[0, 1, 2].map(i => <div key={i} className="border-t border-outline-variant/20 border-dashed w-full h-0" />)}
-            </div>
-            {[10, 25, 60, 85, 40].map((h, i) => (
-              <div key={i} className={`flex-1 rounded-t-sm relative z-10 mx-0.5 ${i === 3 ? "bg-[#1D4ED8]" : i === 2 ? "bg-[#3B82F6]" : i === 1 ? "bg-[#93C5FD]" : "bg-surface-container-highest"}`} style={{ height: `${h}%` }} />
-            ))}
-          </div>
-          <div className="flex justify-between text-[10px] font-bold text-on-surface-variant px-2 mb-4">
-            {["0-50", "50-70", "70-85", "85-95", "95-100"].map(l => <span key={l}>{l}</span>)}
-          </div>
-          <div className="flex justify-center items-center gap-4 text-sm">
-            <span className="text-on-surface-variant font-semibold">Avg: <strong className="text-on-surface">{avgScore}%</strong></span>
-          </div>
-        </div>
-
-        {/* Integrity Watchlist */}
-        <div className="bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={20} className="text-[#DC2626]" />
-              <h3 className="text-lg font-bold text-on-surface leading-tight">Integrity<br />Watchlist</h3>
-            </div>
-            <span className="px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-bold text-center leading-tight">
-              {candidates.filter(c => c.integrityFlags > 0).length}<br />Alerts
-            </span>
-          </div>
-          <p className="text-sm text-on-surface-variant font-medium mb-4">Candidates requiring manual review for assessment flags.</p>
-          <div className="space-y-3">
-            {candidates.filter(c => c.integrityFlags > 0).length === 0 ? (
-              <p className="text-sm text-on-surface-variant italic">No pending alerts.</p>
-            ) : (
-              candidates.filter(c => c.integrityFlags > 0).slice(0, 3).map(c => (
-                <div key={c.id || c.candidateId} onClick={() => setSelectedCandidate(c)} className="border border-[#FCA5A5] bg-[#FEF2F2] rounded-xl p-3 flex gap-3 cursor-pointer hover:bg-[#FEE2E2] transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-[#FCA5A5]/30 text-[#DC2626] flex items-center justify-center shrink-0">
-                    <AlertTriangle size={14} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div className="font-bold text-sm text-on-surface">{c.name}</div>
-                      <div className="text-xs font-bold text-[#DC2626]">{c.score}%</div>
-                    </div>
-                    <div className="text-xs font-semibold text-[#DC2626] mt-0.5">{c.integrityFlags} Flags</div>
-                  </div>
-                  <ChevronRight size={16} className="text-[#DC2626] self-center" />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

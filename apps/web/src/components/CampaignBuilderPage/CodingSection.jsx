@@ -79,7 +79,7 @@ export function CodingSection({
                      </h4>
                      
                      <div className="space-y-3">
-                       {variant.testCases.map((tc, tcIdx) => (
+                       {(variant.testCases || []).map((tc, tcIdx) => (
                          <div key={tcIdx} className="flex items-start gap-2 bg-white p-2 rounded border border-outline-variant/50">
                            <div className="flex-1 space-y-2">
                              <input type="text" placeholder="Input (e.g. 1 2 3)" value={tc.input} onChange={e => updateTestCase(sIdx, vIdx, tcIdx, 'input', e.target.value)} className="w-full text-xs border border-outline-variant rounded px-2 py-1 outline-none font-mono" />

@@ -1,4 +1,4 @@
-import { BarChart3, Star, Code, CheckCircle2 } from "lucide-react";
+import { BarChart3, Star, Code, CheckCircle2, ArrowLeft } from "lucide-react";
 import Sidebar from "../components/layout/Sidebar";
 import ScheduleInterviewModal from "../components/ScheduleInterviewModal";
 
@@ -49,32 +49,49 @@ export default function ResultsPage() {
         />
 
         <div className="p-8 max-w-[1600px] mx-auto space-y-6">
-          <MetricsCards 
-            totalCandidates={totalCandidates}
-            qualifiedMatches={qualifiedMatches}
-            conversionRate={conversionRate}
-            integrityPassRate={integrityPassRate}
-            avgScore={avgScore}
-          />
+          {(isCandidate || activeTab === "overview") && (
+            <MetricsCards 
+              totalCandidates={totalCandidates}
+              qualifiedMatches={qualifiedMatches}
+              conversionRate={conversionRate}
+              integrityPassRate={integrityPassRate}
+              avgScore={avgScore}
+              campaignId={campaignId}
+              role={role}
+            />
+          )}
 
-          {/* Tabs (recruiter only) */}
-          {!isCandidate && (
-            <div className="flex gap-1 bg-[#F1F5F9] rounded-xl p-1 w-fit">
+          {/* Back button when inside a specific view */}
+          {!isCandidate && activeTab !== "overview" && (
+            <button
+              onClick={() => setActiveTab("overview")}
+              className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface transition-colors w-fit bg-white px-4 py-2 rounded-xl border border-outline-variant/60 shadow-sm"
+            >
+              <ArrowLeft size={16} /> Back to Overview
+            </button>
+          )}
+
+          {/* Overview Cards (recruiter only) */}
+          {!isCandidate && activeTab === "overview" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { key: "rankings", label: "Candidate Rankings", icon: BarChart3 },
-                { key: "shortlisted", label: `Shortlisted (${pendingApps.length})`, icon: Star },
-                { key: "completed", label: `Completed (${completedApps.length})`, icon: CheckCircle2 },
-                { key: "questions", label: "Interview Questions", icon: Code },
-              ].map(tab => {
-                const Icon = tab.icon;
+                { key: "rankings", label: "Candidate Rankings", icon: BarChart3, desc: "View and filter all candidate results", color: "bg-[#EFF6FF] text-[#2563EB]" },
+                { key: "shortlisted", label: `Shortlisted (${pendingApps.length})`, icon: Star, desc: "Candidates waiting for interview", color: "bg-[#FEFCE8] text-[#CA8A04]" },
+                { key: "completed", label: `Completed (${completedApps.length})`, icon: CheckCircle2, desc: "Candidates with completed interviews", color: "bg-[#ECFDF5] text-[#059669]" },
+                { key: "questions", label: "Interview Questions", icon: Code, desc: "Manage questions for this campaign", color: "bg-[#F3E8FF] text-[#9333EA]" },
+              ].map(card => {
+                const Icon = card.icon;
                 return (
                   <button
-                    key={tab.key}
-                    id={`tab-${tab.key}`}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab.key ? "bg-white text-[#2563EB] shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
+                    key={card.key}
+                    onClick={() => setActiveTab(card.key)}
+                    className="flex flex-col text-left bg-white border border-outline-variant/60 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-[#2563EB]/30 transition-all group"
                   >
-                    <Icon size={15} /> {tab.label}
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
+                      <Icon size={24} />
+                    </div>
+                    <div className="text-lg font-bold text-on-surface mb-1">{card.label}</div>
+                    <div className="text-sm text-on-surface-variant">{card.desc}</div>
                   </button>
                 );
               })}
