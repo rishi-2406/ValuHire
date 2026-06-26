@@ -151,9 +151,14 @@ export default function RankingsTab({
                         </td>
                         <td className="px-6 py-4 text-right cursor-pointer" onClick={() => setSelectedCandidate(c)}>
                           {hasFlags ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-bold border border-[#DC2626]/20">
-                              <AlertTriangle size={12} /> {c.integrityFlags} Flags
-                            </span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-bold border border-[#DC2626]/20">
+                                <AlertTriangle size={12} /> {c.integrityFlags} Flags
+                              </span>
+                              {c.integrityFlags >= 5 && (
+                                <span className="text-[10px] font-bold text-[#DC2626]">Auto-Submitted</span>
+                              )}
+                            </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#D1FAE5] text-[#059669] rounded-full text-xs font-bold border border-[#059669]/20">
                               <ShieldCheck size={12} /> Pass

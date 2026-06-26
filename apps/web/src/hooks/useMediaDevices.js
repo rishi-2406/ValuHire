@@ -21,39 +21,17 @@ export function useMediaDevices(requestedVideo, requestedMic) {
   const audioContextRef = useRef(null);
   const animationFrameRef = useRef(null);
 
-  // Real Network Check via fetch
+  // Real Network Check via native APIs
   useEffect(() => {
-    let active = true;
+    const updateOnlineStatus = () => setNetworkWorking(navigator.onLine);
+    updateOnlineStatus();
 
-    const testNetwork = async () => {
-      if (!navigator.onLine) {
-        if (active) setNetworkWorking(false);
-        return;
-      }
-      try {
-        const res = await fetch("/", { method: "HEAD", cache: "no-store" });
-        if (active) {
-          setNetworkWorking(res.ok);
-        }
-      } catch (err) {
-        if (active) setNetworkWorking(false);
-      }
-    };
-
-    testNetwork();
-    const interval = setInterval(testNetwork, 5000);
-
-    const handleOnline = () => testNetwork();
-    const handleOffline = () => setNetworkWorking(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
 
     return () => {
-      active = false;
-      clearInterval(interval);
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
 

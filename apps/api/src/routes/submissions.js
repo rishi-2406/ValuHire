@@ -1,14 +1,6 @@
-const { Queue } = require("bullmq");
-const IORedis = require("ioredis");
-const { redisUrl } = require("../config/env");
 const { asyncHandler, requireFields, sendCreated } = require("../lib/http");
 
-function makeQueue() {
-  const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-  return new Queue("code-submissions", { connection });
-}
-
-function createSubmissionRoutes({ router, prisma, middleware, queue = makeQueue() }) {
+function createSubmissionRoutes({ router, prisma, middleware, queue }) {
   router.post("/submissions", middleware.requireAuth, middleware.requireRole("CANDIDATE"), asyncHandler(async (req, res) => {
     requireFields(req.body, ["codingQuestionId", "code", "language"]);
     const question = await prisma.codingQuestion.findUnique({ where: { id: req.body.codingQuestionId } });

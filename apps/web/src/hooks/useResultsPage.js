@@ -6,7 +6,7 @@ import { resultsService, campaignService, applicationService, interviewService }
 
 function rankCandidates(list) {
   return [...list]
-    .filter((c) => typeof c.score === "number" || c.totalScore || c.percentage)
+    .filter((c) => typeof c.score === "number" || typeof c.totalScore === "number" || typeof c.percentage === "number")
     .map((c) => ({
       ...c,
       score: c.score ?? c.totalScore ?? c.percentage ?? 0,
@@ -18,7 +18,8 @@ function rankCandidates(list) {
       candidateId: c.candidateId || c.session?.candidateId || c.id,
       candidateProfile: c.session?.candidate || null,
       role: c.role || c.session?.assessment?.campaign?.title || "",
-      integrityFlags: c.integrityFlags ?? c.flagCount ?? 0,
+      proctorEvents: c.session?.proctorEvents || [],
+      integrityFlags: c.proctorEventCount ?? c.session?.proctorEvents?.length ?? c.integrityFlags ?? c.flagCount ?? 0,
     }))
     .sort((a, b) => b.score - a.score)
     .map((c, i) => ({ ...c, rank: i + 1 }));

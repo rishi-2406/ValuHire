@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, ChevronDown, ChevronUp, Briefcase, FileText, Award, Users, Clock, Code, Calendar, Video } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp, Briefcase, FileText, Award, Users, Clock, Code, Calendar, Video, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export function CampaignMainDetails({ campaign, application, hasAssessment, isSubmitted, assessmentResult, setIsBreakdownOpen, totalDur, totalMcqs, totalCodings, handleJoinRoom }) {
   const isInterviewStage = application && ["SHORTLISTED", "INTERVIEW", "INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED", "OFFER", "HIRED"].includes(application.status);
@@ -70,37 +70,60 @@ export function CampaignMainDetails({ campaign, application, hasAssessment, isSu
               <div className="p-6 pt-0 border-t border-outline-variant/30">
                 {isSubmitted && assessmentResult ? (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                      {/* Points Card */}
-                      <div className="relative overflow-hidden bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] rounded-3xl p-6 text-white shadow-md shadow-[#2563EB]/20">
-                        <div className="absolute -top-4 -right-4 p-4 opacity-10 rotate-12">
-                          <Sparkles size={100} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-                          <div className="text-blue-200 font-bold uppercase tracking-widest text-[10px]">Total Points Earned</div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-5xl font-black tracking-tighter">{assessmentResult.totalScore}</span>
-                            <span className="text-lg font-bold text-blue-300">pts</span>
+                    {(() => {
+                      const flags = assessmentResult.session?.proctorEvents?.length ?? assessmentResult.proctorEventCount ?? assessmentResult.integrityFlags ?? 0;
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                          {/* Points Card */}
+                          <div className="relative overflow-hidden bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] rounded-3xl p-6 text-white shadow-md shadow-[#2563EB]/20">
+                            <div className="absolute -top-4 -right-4 p-4 opacity-10 rotate-12">
+                              <Sparkles size={100} />
+                            </div>
+                            <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                              <div className="text-blue-200 font-bold uppercase tracking-widest text-[10px]">Total Points Earned</div>
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-5xl font-black tracking-tighter">{assessmentResult.totalScore}</span>
+                                <span className="text-lg font-bold text-blue-300">pts</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
 
-                      {/* Rank Card */}
-                      {assessmentResult.rank && (
-                        <div className="relative overflow-hidden bg-gradient-to-br from-[#059669] to-[#064E3B] rounded-3xl p-6 text-white shadow-md shadow-[#059669]/20">
-                          <div className="absolute -top-4 -right-4 p-4 opacity-10 rotate-12">
-                            <Award size={100} />
-                          </div>
-                          <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-                            <div className="text-emerald-200 font-bold uppercase tracking-widest text-[10px]">Your Rank</div>
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-5xl font-black tracking-tighter">#{assessmentResult.rank}</span>
-                              <span className="text-lg font-bold text-emerald-300">/ {assessmentResult.totalApplicants}</span>
+                          {/* Rank Card */}
+                          {assessmentResult.rank ? (
+                            <div className="relative overflow-hidden bg-gradient-to-br from-[#059669] to-[#064E3B] rounded-3xl p-6 text-white shadow-md shadow-[#059669]/20">
+                              <div className="absolute -top-4 -right-4 p-4 opacity-10 rotate-12">
+                                <Award size={100} />
+                              </div>
+                              <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                                <div className="text-emerald-200 font-bold uppercase tracking-widest text-[10px]">Your Rank</div>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-5xl font-black tracking-tighter">#{assessmentResult.rank}</span>
+                                  <span className="text-lg font-bold text-emerald-300">/ {assessmentResult.totalApplicants}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : <div />}
+
+                          {/* Integrity Card */}
+                          <div className={`relative overflow-hidden bg-gradient-to-br ${flags > 0 ? 'from-[#DC2626] to-[#991B1B]' : 'from-[#059669] to-[#064E3B]'} rounded-3xl p-6 text-white shadow-md`}>
+                            <div className="absolute -top-4 -right-4 p-4 opacity-10 rotate-12">
+                              {flags > 0 ? <AlertTriangle size={100} /> : <ShieldCheck size={100} />}
+                            </div>
+                            <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                              <div className="text-white/70 font-bold uppercase tracking-widest text-[10px]">Integrity Status</div>
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-3xl font-black tracking-tighter leading-tight">
+                                  {flags > 0 ? `${flags} Flags` : 'Passed'}
+                                </span>
+                                {flags >= 5 && (
+                                  <span className="text-xs font-bold text-red-200 bg-red-900/50 px-2 py-1 rounded w-fit uppercase tracking-wider">Auto-Submitted</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                     
                     <div className="mt-6 flex justify-end">
                       <button 

@@ -1,7 +1,7 @@
 const { makeOpaqueToken } = require("../lib/auth");
 const { asyncHandler, requireFields, sendCreated, sendOk } = require("../lib/http");
 
-function createInterviewRoutes({ router, prisma, middleware, io }) {
+function createInterviewRoutes({ router, prisma, middleware, io, queue }) {
   router.post("/interviews", middleware.requireAuth, middleware.requireApprovedCompany, asyncHandler(async (req, res) => {
     requireFields(req.body, ["campaignId", "candidateId", "startsAt", "endsAt"]);
     const campaign = await prisma.campaign.findUnique({ where: { id: req.body.campaignId } });
@@ -150,36 +150,18 @@ function createInterviewRoutes({ router, prisma, middleware, io }) {
       error.statusCode = 403;
       throw error;
     }
-    const { Queue } = require("bullmq");
-    const IORedis = require("ioredis");
-    const { redisUrl } = require("../config/env");
-    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-    const queue = new Queue("code-submissions", { connection });
-    
     const job = await queue.add("run-ad-hoc", {
       code: req.body.code,
       language: req.body.language
     });
-    
-    // Close connections
-    await queue.close();
-    connection.disconnect();
     
     sendCreated(res, { jobId: job.id });
   }));
 
   // Poll job status
   router.get("/interviews/jobs/:jobId", middleware.requireAuth, asyncHandler(async (req, res) => {
-    const { Queue } = require("bullmq");
-    const IORedis = require("ioredis");
-    const { redisUrl } = require("../config/env");
-    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-    const queue = new Queue("code-submissions", { connection });
-    
     const job = await queue.getJob(req.params.jobId);
     if (!job) {
-      await queue.close();
-      connection.disconnect();
       const error = new Error("Job not found");
       error.statusCode = 404;
       throw error;
@@ -190,9 +172,6 @@ function createInterviewRoutes({ router, prisma, middleware, io }) {
     if (state === "completed") result = job.returnvalue;
     else if (state === "failed") result = { status: "FAILED", stderr: job.failedReason };
 
-    await queue.close();
-    connection.disconnect();
-    
     sendOk(res, { status: state, result });
   }));
 }

@@ -126,19 +126,38 @@ export default function ProfileModal({ candidate, campaignId, onClose, onShortli
               )}
 
               {/* Integrity */}
-              <div className="bg-white rounded-2xl p-6 border border-outline-variant/60 shadow-sm flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1">Integrity Status</h4>
-                  <p className="text-xs text-on-surface-variant">Proctoring alerts and session tracking</p>
+              <div className="bg-white rounded-2xl p-6 border border-outline-variant/60 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1">Integrity Status</h4>
+                    <p className="text-xs text-on-surface-variant">Proctoring alerts and session tracking</p>
+                  </div>
+                  {candidate.integrityFlags > 0 ? (
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#FEF2F2] text-[#DC2626] rounded-xl text-sm font-bold border border-[#FCA5A5]">
+                        <AlertTriangle size={16} /> {candidate.integrityFlags} Flags Detected
+                      </span>
+                      {candidate.integrityFlags >= 5 && (
+                        <span className="text-xs font-bold text-[#DC2626] bg-[#FEF2F2] px-2 py-1 rounded">Auto-Submitted due to Violations</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#ECFDF5] text-[#059669] rounded-xl text-sm font-bold border border-[#6EE7B7]">
+                      <ShieldCheck size={16} /> Passed
+                    </span>
+                  )}
                 </div>
-                {candidate.integrityFlags > 0 ? (
-                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#FEF2F2] text-[#DC2626] rounded-xl text-sm font-bold border border-[#FCA5A5]">
-                    <AlertTriangle size={16} /> {candidate.integrityFlags} Flags Detected
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#ECFDF5] text-[#059669] rounded-xl text-sm font-bold border border-[#6EE7B7]">
-                    <ShieldCheck size={16} /> Passed
-                  </span>
+                
+                {candidate.integrityFlags > 0 && candidate.proctorEvents && candidate.proctorEvents.length > 0 && (
+                  <div className="mt-6 space-y-2">
+                    <h5 className="text-xs font-semibold text-on-surface-variant mb-3 uppercase tracking-wide">Violation Details</h5>
+                    {candidate.proctorEvents.map((event, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-sm py-2 px-4 bg-[#FEF2F2]/50 border border-[#FCA5A5]/30 rounded-lg text-[#991B1B]">
+                        <span className="font-semibold capitalize">{event.type.replace(/_/g, ' ')}</span>
+                        <span className="text-xs opacity-80">{new Date(event.occurredAt).toLocaleTimeString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

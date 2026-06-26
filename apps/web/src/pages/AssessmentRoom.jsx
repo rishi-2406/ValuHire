@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Maximize } from "lucide-react";
 import AssessmentMcq from "../components/AssessmentRoom/AssessmentMcq";
 import AssessmentCoding from "../components/AssessmentCoding";
 import { useAssessmentRoom } from "../hooks/useAssessmentRoom";
 import { AssessmentRoomHeader } from "../components/AssessmentRoom/AssessmentRoomHeader";
 import { AssessmentRoomSidebar } from "../components/AssessmentRoom/AssessmentRoomSidebar";
+import { useProctoring } from "../hooks/useProctoring";
 
 export default function AssessmentRoom() {
   const { sessionId } = useParams();
@@ -29,10 +30,42 @@ export default function AssessmentRoom() {
     return `${hrs > 0 ? hrs.toString().padStart(2, "0") + ':' : ''}${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const isProctoringActive = activePhase === 'mcq' || activePhase === 'coding';
+  const { isFullscreen, requestFullscreen, violationsCount, MAX_VIOLATIONS } = useProctoring(sessionId, isProctoringActive, handleSubmit);
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-surface">
         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+      </div>
+    );
+  }
+
+  if (isProctoringActive && !isFullscreen) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-surface font-sans antialiased text-center px-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full border border-outline-variant/50">
+          <div className="w-16 h-16 bg-error-container text-on-error-container rounded-full flex items-center justify-center mx-auto mb-6">
+            <Maximize size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-on-surface mb-4">Fullscreen Required</h2>
+          <p className="text-on-surface-variant mb-6 text-sm">
+            This is a proctored assessment. You must remain in fullscreen mode. 
+            Exiting fullscreen, switching tabs, or losing focus will be recorded as a violation.
+          </p>
+          {violationsCount > 0 && (
+            <p className="text-error-coral font-semibold mb-6">
+              Violations: {violationsCount} / {MAX_VIOLATIONS}
+            </p>
+          )}
+          <button 
+            onClick={requestFullscreen}
+            className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+          >
+            <Maximize size={18} />
+            Enter Fullscreen to Continue
+          </button>
+        </div>
       </div>
     );
   }

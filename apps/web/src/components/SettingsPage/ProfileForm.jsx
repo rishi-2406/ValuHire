@@ -42,23 +42,15 @@ export function ProfileForm({ user, updateUser, isRecruiter, initials, saving, s
     if (setResetForm) setResetForm(() => resetForm);
   }, [resetForm, setResetForm]);
 
-  const handleViewResume = () => {
+  const handleViewResume = async () => {
     if (!resumeUrl || !resumeUrl.startsWith("data:")) {
       window.open(resumeUrl, "_blank");
       return;
     }
     try {
-      const arr = resumeUrl.split(",");
-      const mime = arr[0].match(/:(.*?);/)[1];
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while(n--){
-          u8arr[n] = bstr.charCodeAt(n);
-      }
-      const blob = new Blob([u8arr], {type: mime});
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      const res = await fetch(resumeUrl);
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), "_blank");
     } catch(e) {
       toast.error("Could not open resume document.");
     }

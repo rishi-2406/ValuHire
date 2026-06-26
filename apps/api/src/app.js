@@ -19,6 +19,15 @@ function createApp({ prismaClient = prisma, queue, io } = {}) {
   const router = express.Router();
   const middleware = createAuthMiddleware(prismaClient);
 
+  let appQueue = queue;
+  if (!appQueue) {
+    const { Queue } = require("bullmq");
+    const IORedis = require("ioredis");
+    const { redisUrl } = require("./config/env");
+    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+    appQueue = new Queue("code-submissions", { connection });
+  }
+
   app.use(helmet());
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
@@ -50,10 +59,10 @@ function createApp({ prismaClient = prisma, queue, io } = {}) {
   createAuthRoutes({ router, prisma: prismaClient, middleware });
   createAdminRoutes({ router, prisma: prismaClient, middleware });
   createCampaignRoutes({ router, prisma: prismaClient, middleware });
-  createApplicationsRoutes({ router, prisma: prismaClient, middleware, io });
-  createSubmissionRoutes({ router, prisma: prismaClient, middleware, queue });
+  createApplicationsRoutes({ router, prisma: prismaClient, middleware, io, queue: appQueue });
+  createSubmissionRoutes({ router, prisma: prismaClient, middleware, queue: appQueue });
   createResultsRoutes({ router, prisma: prismaClient, middleware });
-  createInterviewRoutes({ router, prisma: prismaClient, middleware, io });
+  createInterviewRoutes({ router, prisma: prismaClient, middleware, io, queue: appQueue });
   createNotificationRoutes({ router, prisma: prismaClient, middleware });
 
   app.use("/api/v1", router);

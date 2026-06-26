@@ -58,7 +58,8 @@ function createResultsRoutes({ router, prisma, middleware }) {
               } 
             },
             submissions: true,
-            mcqAnswers: true
+            mcqAnswers: true,
+            proctorEvents: true
           } 
         } 
       },

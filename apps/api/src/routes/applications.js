@@ -2,7 +2,7 @@ const { hashToken } = require("../lib/auth");
 const { buildAssessmentScore } = require("../lib/scoring");
 const { asyncHandler, requireFields, sendCreated, sendOk } = require("../lib/http");
 
-function createApplicationsRoutes({ router, prisma, middleware, io }) {
+function createApplicationsRoutes({ router, prisma, middleware, io, queue }) {
   const candidateOnly = [middleware.requireAuth, middleware.requireRole("CANDIDATE")];
 
   router.get("/applications/me", ...candidateOnly, asyncHandler(async (req, res) => {
@@ -331,12 +331,6 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
       throw error;
     }
 
-    const { Queue } = require("bullmq");
-    const IORedis = require("ioredis");
-    const { redisUrl } = require("../config/env");
-    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-    const queue = new Queue("code-submissions", { connection });
-
     const latestSubmissionsMap = new Map();
     for (const sub of session.submissions) {
       const existing = latestSubmissionsMap.get(sub.codingQuestionId);
@@ -377,10 +371,6 @@ function createApplicationsRoutes({ router, prisma, middleware, io }) {
       session.submissions = refreshedSession.submissions;
     }
     
-    // Close connections
-    await queue.close();
-    connection.disconnect();
-
     const score = buildAssessmentScore({
       mcqQuestions: session.assessment.mcqQuestions,
       mcqAnswers: session.mcqAnswers,

@@ -27,77 +27,26 @@ export function useCampaignBuilderData() {
   });
 
   // Handlers for MCQ
-  const addMcqSlot = () => setMcqSlots([...mcqSlots, [createEmptyMcqVariant()]]);
-  const addMcqVariant = (slotIndex) => {
-    const newSlots = [...mcqSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex], createEmptyMcqVariant()];
-    setMcqSlots(newSlots);
-  };
-  const updateMcqVariant = (slotIndex, variantIndex, field, value) => {
-    const newSlots = [...mcqSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    newSlots[slotIndex][variantIndex] = { ...newSlots[slotIndex][variantIndex], [field]: value };
-    setMcqSlots(newSlots);
-  };
-  const updateMcqOption = (slotIndex, variantIndex, optIndex, value) => {
-    const newSlots = [...mcqSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    const newOptions = [...newSlots[slotIndex][variantIndex].options];
-    newOptions[optIndex] = value;
-    newSlots[slotIndex][variantIndex] = { ...newSlots[slotIndex][variantIndex], options: newOptions };
-    setMcqSlots(newSlots);
-  };
-  const removeMcqVariant = (slotIndex, variantIndex) => {
-    const newSlots = [...mcqSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    newSlots[slotIndex].splice(variantIndex, 1);
-    if (newSlots[slotIndex].length === 0) newSlots.splice(slotIndex, 1);
-    setMcqSlots(newSlots);
-  };
+  const addMcqSlot = () => setMcqSlots(s => [...s, [createEmptyMcqVariant()]]);
+  const addMcqVariant = (slotIndex) => setMcqSlots(s => s.map((slot, i) => i === slotIndex ? [...slot, createEmptyMcqVariant()] : slot));
+  const updateMcqVariant = (slotIndex, variantIndex, field, value) => setMcqSlots(s => s.map((slot, i) => i === slotIndex ? slot.map((v, j) => j === variantIndex ? { ...v, [field]: value } : v) : slot));
+  const updateMcqOption = (slotIndex, variantIndex, optIndex, value) => setMcqSlots(s => s.map((slot, i) => i === slotIndex ? slot.map((v, j) => j === variantIndex ? { ...v, options: v.options.map((opt, k) => k === optIndex ? value : opt) } : v) : slot));
+  const removeMcqVariant = (slotIndex, variantIndex) => setMcqSlots(s => {
+    const newSlots = s.map((slot, i) => i === slotIndex ? slot.filter((_, j) => j !== variantIndex) : slot);
+    return newSlots.filter(slot => slot.length > 0);
+  });
 
   // Handlers for Coding
-  const addCodingSlot = () => setCodingSlots([...codingSlots, [createEmptyCodingVariant()]]);
-  const addCodingVariant = (slotIndex) => {
-    const newSlots = [...codingSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex], createEmptyCodingVariant()];
-    setCodingSlots(newSlots);
-  };
-  const updateCodingVariant = (slotIndex, variantIndex, field, value) => {
-    const newSlots = [...codingSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    newSlots[slotIndex][variantIndex] = { ...newSlots[slotIndex][variantIndex], [field]: value };
-    setCodingSlots(newSlots);
-  };
-  const addTestCase = (slotIndex, variantIndex) => {
-    const newSlots = [...codingSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    const newTestCases = [...newSlots[slotIndex][variantIndex].testCases, { input: "", expectedOutput: "", isHidden: false }];
-    newSlots[slotIndex][variantIndex] = { ...newSlots[slotIndex][variantIndex], testCases: newTestCases };
-    setCodingSlots(newSlots);
-  };
-  const updateTestCase = (slotIndex, variantIndex, tcIndex, field, value) => {
-    const newSlots = [...codingSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    const newTestCases = [...newSlots[slotIndex][variantIndex].testCases];
-    newTestCases[tcIndex] = { ...newTestCases[tcIndex], [field]: value };
-    newSlots[slotIndex][variantIndex] = { ...newSlots[slotIndex][variantIndex], testCases: newTestCases };
-    setCodingSlots(newSlots);
-  };
-  const removeTestCase = (slotIndex, variantIndex, tcIndex) => {
-    const newSlots = [...codingSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    const newTestCases = [...newSlots[slotIndex][variantIndex].testCases];
-    newTestCases.splice(tcIndex, 1);
-    newSlots[slotIndex][variantIndex] = { ...newSlots[slotIndex][variantIndex], testCases: newTestCases };
-    setCodingSlots(newSlots);
-  };
-  const removeCodingVariant = (slotIndex, variantIndex) => {
-    const newSlots = [...codingSlots];
-    newSlots[slotIndex] = [...newSlots[slotIndex]];
-    newSlots[slotIndex].splice(variantIndex, 1);
-    if (newSlots[slotIndex].length === 0) newSlots.splice(slotIndex, 1);
-    setCodingSlots(newSlots);
-  };
+  const addCodingSlot = () => setCodingSlots(s => [...s, [createEmptyCodingVariant()]]);
+  const addCodingVariant = (slotIndex) => setCodingSlots(s => s.map((slot, i) => i === slotIndex ? [...slot, createEmptyCodingVariant()] : slot));
+  const updateCodingVariant = (slotIndex, variantIndex, field, value) => setCodingSlots(s => s.map((slot, i) => i === slotIndex ? slot.map((v, j) => j === variantIndex ? { ...v, [field]: value } : v) : slot));
+  const addTestCase = (slotIndex, variantIndex) => setCodingSlots(s => s.map((slot, i) => i === slotIndex ? slot.map((v, j) => j === variantIndex ? { ...v, testCases: [...v.testCases, { input: "", expectedOutput: "", isHidden: false }] } : v) : slot));
+  const updateTestCase = (slotIndex, variantIndex, tcIndex, field, value) => setCodingSlots(s => s.map((slot, i) => i === slotIndex ? slot.map((v, j) => j === variantIndex ? { ...v, testCases: v.testCases.map((tc, k) => k === tcIndex ? { ...tc, [field]: value } : tc) } : v) : slot));
+  const removeTestCase = (slotIndex, variantIndex, tcIndex) => setCodingSlots(s => s.map((slot, i) => i === slotIndex ? slot.map((v, j) => j === variantIndex ? { ...v, testCases: v.testCases.filter((_, k) => k !== tcIndex) } : v) : slot));
+  const removeCodingVariant = (slotIndex, variantIndex) => setCodingSlots(s => {
+    const newSlots = s.map((slot, i) => i === slotIndex ? slot.filter((_, j) => j !== variantIndex) : slot);
+    return newSlots.filter(slot => slot.length > 0);
+  });
 
   const initializeData = useCallback((assessment) => {
     if (!assessment) return;

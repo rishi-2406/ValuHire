@@ -47,19 +47,8 @@ export default function CampaignBuilderPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const flatMcq = [];
-      mcqSlots.forEach((slot, sIdx) => {
-        slot.forEach(variant => {
-           flatMcq.push({ ...variant, slotIndex: sIdx });
-        });
-      });
-
-      const flatCoding = [];
-      codingSlots.forEach((slot, sIdx) => {
-        slot.forEach(variant => {
-           flatCoding.push({ ...variant, slotIndex: sIdx });
-        });
-      });
+      const flatMcq = mcqSlots.flatMap((slot, sIdx) => slot.map(v => ({ ...v, slotIndex: sIdx })));
+      const flatCoding = codingSlots.flatMap((slot, sIdx) => slot.map(v => ({ ...v, slotIndex: sIdx })));
 
       await campaignService.upsertAssessment(campaignId, {
          title: "Technical Assessment",
