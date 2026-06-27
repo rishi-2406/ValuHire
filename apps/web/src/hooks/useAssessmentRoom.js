@@ -26,6 +26,8 @@ export function useAssessmentRoom(sessionId, navigate) {
   const [activeMcqIndex, setActiveMcqIndex] = useState(0);
   const [activeCodingIndex, setActiveCodingIndex] = useState(0);
 
+  const activeCodingQ = sessionData?.assessment?.codingQuestions?.[activeCodingIndex];
+
   const [activeBottomTab, setActiveBottomTab] = useState("testcases");
   const [activeTestCase, setActiveTestCase] = useState(0);
   const [language, setLanguage] = useState("python");
@@ -53,6 +55,12 @@ export function useAssessmentRoom(sessionId, navigate) {
   }, [language]);
 
   useEffect(() => {
+    if (activeCodingQ?.language) {
+      setLanguage(activeCodingQ.language);
+    }
+  }, [activeCodingQ]);
+
+  useEffect(() => {
     if (!sessionId) return;
     applicationService.getSessionDetails(sessionId)
       .then((data) => {
@@ -68,7 +76,9 @@ export function useAssessmentRoom(sessionId, navigate) {
         else setActivePhase("done");
 
         if (hasCoding && session.assessment.codingQuestions[0]) {
-          setCode(LANGUAGE_TEMPLATES[language] || "");
+          const initialLang = session.assessment.codingQuestions[0].language || "python";
+          setLanguage(initialLang);
+          setCode(LANGUAGE_TEMPLATES[initialLang] || "");
         }
       })
       .catch((err) => {
@@ -115,8 +125,6 @@ export function useAssessmentRoom(sessionId, navigate) {
       toast.error("Failed to save answer");
     }
   };
-
-  const activeCodingQ = sessionData?.assessment?.codingQuestions?.[activeCodingIndex];
 
   const handleRunCode = useCallback(async () => {
     if (!activeCodingQ) return;

@@ -51,7 +51,8 @@ function shellQuote(value) {
 
 async function executeAgainstTestCases({ code, language, testCases, questionPoints, isFinalSubmit = false, useDocker = process.env.VALUHIRE_USE_DOCKER === "true" }) {
   const config = getLanguageConfig(language);
-  const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "valuhire-run-"));
+  const baseDir = process.env.VALUHIRE_WORK_DIR || os.tmpdir();
+  const workDir = await fs.mkdtemp(path.join(baseDir, "valuhire-run-"));
   const fileName = config.language === "java" ? "Main.java" : `main.${config.extension}`;
   const filePath = path.join(workDir, fileName);
   await fs.writeFile(filePath, code, "utf8");

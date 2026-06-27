@@ -29,7 +29,21 @@ function createResultsRoutes({ router, prisma, middleware }) {
   router.get("/results/:id", middleware.requireAuth, asyncHandler(async (req, res) => {
     const result = await prisma.assessmentResult.findUnique({
       where: { id: req.params.id },
-      include: { session: { include: { candidate: true, submissions: true, mcqAnswers: true, proctorEvents: true } } }
+      include: { 
+        session: { 
+          include: { 
+            candidate: true, 
+            submissions: true, 
+            mcqAnswers: true, 
+            proctorEvents: true,
+            assessment: {
+              include: {
+                campaign: true
+              }
+            }
+          } 
+        } 
+      }
     });
     if (!result) {
       const error = new Error("Result not found");
@@ -38,6 +52,11 @@ function createResultsRoutes({ router, prisma, middleware }) {
     }
     if (req.user.role === "CANDIDATE" && result.candidateId !== req.user.id) {
       const error = new Error("Cannot view another candidate result");
+      error.statusCode = 403;
+      throw error;
+    }
+    if (req.user.role === "RECRUITER" && result.session.assessment.campaign.companyId !== req.user.companyId) {
+      const error = new Error("Cannot view results of campaigns belonging to another company");
       error.statusCode = 403;
       throw error;
     }

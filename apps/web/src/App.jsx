@@ -111,7 +111,7 @@ function AppRoutes() {
       <Route
         path="/campaigns"
         element={
-          <ProtectedRoute allowedRoles={["CANDIDATE", "RECRUITER", "ADMIN"]}>
+          <ProtectedRoute allowedRoles={["CANDIDATE", "RECRUITER"]}>
             <CampaignsPage />
           </ProtectedRoute>
         }
@@ -135,7 +135,7 @@ function AppRoutes() {
       <Route
         path="/campaigns/:campaignId"
         element={
-          <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN", "CANDIDATE"]}>
+          <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN"]}>
             <ResultsPage />
           </ProtectedRoute>
         }
@@ -151,7 +151,7 @@ function AppRoutes() {
       <Route
         path="/interviews"
         element={
-          <ProtectedRoute allowedRoles={["RECRUITER", "CANDIDATE", "ADMIN"]}>
+          <ProtectedRoute allowedRoles={["RECRUITER", "CANDIDATE"]}>
             <InterviewsPage />
           </ProtectedRoute>
         }
@@ -159,7 +159,7 @@ function AppRoutes() {
       <Route
         path="/interviews/:sessionId/live"
         element={
-          <ProtectedRoute allowedRoles={["RECRUITER", "CANDIDATE", "ADMIN"]}>
+          <ProtectedRoute allowedRoles={["RECRUITER", "CANDIDATE"]}>
             <LiveInterviewRoom />
           </ProtectedRoute>
         }

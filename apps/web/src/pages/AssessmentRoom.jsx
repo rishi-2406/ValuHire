@@ -134,7 +134,7 @@ export default function AssessmentRoom() {
               setLanguage={setLanguage}
               showLangDropdown={showLangDropdown}
               setShowLangDropdown={setShowLangDropdown}
-              LANGUAGE_OPTIONS={LANGUAGE_OPTIONS}
+              LANGUAGE_OPTIONS={LANGUAGE_OPTIONS.filter((lang) => lang.id === activeCodingQ.language)}
               code={code}
               setCode={setCode}
               isRunning={isRunning}

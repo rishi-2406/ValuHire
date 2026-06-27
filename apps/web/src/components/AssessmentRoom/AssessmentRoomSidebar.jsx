@@ -57,7 +57,7 @@ export function AssessmentRoomSidebar({
               key={q.id}
               onClick={() => {
                 setActiveCodingIndex(idx);
-                setCode(LANGUAGE_TEMPLATES[language] || "");
+                setCode(LANGUAGE_TEMPLATES[q.language || "python"] || "");
                 setOutput("");
               }}
               className={`w-full text-left px-4 py-3 flex items-center justify-between rounded-lg transition-all ${isActive ? 'bg-primary-container/10 border-l-4 border-primary' : 'hover:bg-surface-container border-l-4 border-transparent'}`}

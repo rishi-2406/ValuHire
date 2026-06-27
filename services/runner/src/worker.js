@@ -21,7 +21,8 @@ const worker = new Worker(
       const os = require("os");
       
       const config = getLanguageConfig(job.data.language);
-      const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "valuhire-run-"));
+      const baseDir = process.env.VALUHIRE_WORK_DIR || os.tmpdir();
+      const workDir = await fs.mkdtemp(path.join(baseDir, "valuhire-run-"));
       const fileName = config.language === "java" ? "Main.java" : `main.${config.extension}`;
       const filePath = path.join(workDir, fileName);
       await fs.writeFile(filePath, job.data.code, "utf8");
@@ -84,3 +85,14 @@ worker.on("failed", (job, error) => {
 });
 
 console.log("ValuHire runner worker listening on queue: code-submissions");
+
+const shutdown = async () => {
+  console.log("Shutting down worker gracefully...");
+  await worker.close();
+  connection.quit();
+  await prisma.$disconnect();
+  process.exit(0);
+};
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

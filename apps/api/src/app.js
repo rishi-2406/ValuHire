@@ -29,7 +29,7 @@ function createApp({ prismaClient = prisma, queue, io } = {}) {
   }
 
   app.use(helmet());
-  app.use(cors({ origin: true, credentials: true }));
+  app.use(cors({ origin: webOrigin, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
 
   app.get("/health", (_req, res) => {
@@ -75,6 +75,9 @@ function createApp({ prismaClient = prisma, queue, io } = {}) {
 
   app.use((error, _req, res, _next) => {
     const status = error.statusCode || 500;
+    if (status === 500) {
+      console.error("[Server Error]", error);
+    }
     res.status(status).json({
       error: {
         message: error.message || "Unexpected server error",

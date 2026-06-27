@@ -7,7 +7,7 @@ const { apiPort, webOrigin } = require("./config/env");
 const server = http.createServer();
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin: webOrigin,
     credentials: true
   }
 });
