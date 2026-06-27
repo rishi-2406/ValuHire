@@ -135,16 +135,6 @@ The execution environment is designed to handle untrusted code safely.
 
 ---
 
-## 📚 Documentation
-
-For deeper dives into the architecture and project planning, refer to:
-- [Implementation Plan](IMPLEMENTATION_PLAN.md)
-- [Future Enhancements](FUTURE_ENHANCEMENTS.md)
-- [Phase Progress](TASK_PROGRESS.md)
-- [Stitch Design Project](docs/STITCH_DESIGN_PROJECT.md)
-
----
-
 <p align="center">
   Built with ❤️ by the ValuHire Team
 </p>
