@@ -8,6 +8,12 @@ const LANGUAGE_OPTIONS = [
   { id: "java", label: "Java", file: "Main.java" },
   { id: "cpp", label: "C++", file: "main.cpp" },
 ];
+export const LANGUAGE_TEMPLATES = {
+  python: `import sys\n\ndef main():\n    # Write your code here\n    pass\n\nif __name__ == '__main__':\n    main()`,
+  javascript: `const fs = require('fs');\n\nfunction main() {\n    // Write your code here\n}\n\nmain();`,
+  java: `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Write your code here\n        \n    }\n}`,
+  cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    \n    return 0;\n}`
+};
 
 export function useAssessmentRoom(sessionId, navigate) {
   const toast = useToast();
@@ -29,12 +35,22 @@ export function useAssessmentRoom(sessionId, navigate) {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showMcqSubmitConfirm, setShowMcqSubmitConfirm] = useState(false);
+  const [showFinalSubmitConfirm, setShowFinalSubmitConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(LANGUAGE_TEMPLATES.python);
   
   const [mcqTime, setMcqTime] = useState(0);
   const [codingTime, setCodingTime] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    const isUnmodified = !code || code === "# Write your code here" || Object.values(LANGUAGE_TEMPLATES).includes(code);
+    if (isUnmodified) {
+      setCode(LANGUAGE_TEMPLATES[language]);
+    }
+  }, [language]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -52,7 +68,7 @@ export function useAssessmentRoom(sessionId, navigate) {
         else setActivePhase("done");
 
         if (hasCoding && session.assessment.codingQuestions[0]) {
-          setCode(session.assessment.codingQuestions[0].statement || "# Write your code here");
+          setCode(LANGUAGE_TEMPLATES[language] || "");
         }
       })
       .catch((err) => {
@@ -64,10 +80,12 @@ export function useAssessmentRoom(sessionId, navigate) {
 
   const handleSubmit = useCallback(async () => {
     try {
+      setIsSubmitting(true);
       await applicationService.finalSubmit(sessionId, { mcqElapsed: mcqTime, codingElapsed: codingTime });
       toast.success("Assessment submitted!");
       setTimeout(() => navigate("/candidate"), 1500);
     } catch (err) {
+      setIsSubmitting(false);
       toast.error(`Submit failed: ${err.message}`);
     }
   }, [sessionId, mcqTime, codingTime, navigate, toast]);
@@ -157,6 +175,9 @@ export function useAssessmentRoom(sessionId, navigate) {
     showExitConfirm, setShowExitConfirm, code, setCode, mcqTime, codingTime,
     isSidebarOpen, setIsSidebarOpen,
     handleMcqSelect, handleRunCode, handleSubmit, handleExit,
-    LANGUAGE_OPTIONS, activeCodingQ
+    LANGUAGE_OPTIONS, activeCodingQ,
+    showMcqSubmitConfirm, setShowMcqSubmitConfirm,
+    showFinalSubmitConfirm, setShowFinalSubmitConfirm,
+    isSubmitting
   };
 }

@@ -72,6 +72,10 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("questionChange", { roomId, questionText });
   });
 
+  socket.on("executionStateChange", ({ roomId, isRunning, output }) => {
+    socket.to(roomId).emit("executionStateChange", { roomId, isRunning, output });
+  });
+
   socket.on("interviewEnded", ({ roomId }) => {
     socket.to(roomId).emit("interviewEnded", { roomId });
   });

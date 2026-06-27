@@ -52,6 +52,7 @@ function buildDockerCommand({ language, filePath, workDir, timeoutSeconds = 5, m
   return [
     "docker",
     "run",
+    "-i",
     "--rm",
     "--network",
     "none",

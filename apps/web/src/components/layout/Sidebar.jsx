@@ -96,12 +96,14 @@ export default function Sidebar({ role = "recruiter" }) {
         })}
       </nav>
 
-      <div className="mt-4 mb-2">
-        <NavLink to="/help" className="nav-item">
-          <HelpCircle size={18} />
-          <span>Help & Docs</span>
-        </NavLink>
-      </div>
+      {roleKey !== "recruiter" && (
+        <div className="mt-4 mb-2">
+          <NavLink to="/help" className="nav-item">
+            <HelpCircle size={18} />
+            <span>Help & Docs</span>
+          </NavLink>
+        </div>
+      )}
 
       <div className="sidebar-user">
         <div className="user-info">

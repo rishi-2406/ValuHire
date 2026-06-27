@@ -20,7 +20,10 @@ export default function AssessmentRoom() {
     showExitConfirm, setShowExitConfirm, code, setCode, mcqTime, codingTime,
     isSidebarOpen, setIsSidebarOpen,
     handleMcqSelect, handleRunCode, handleSubmit, handleExit,
-    LANGUAGE_OPTIONS, activeCodingQ
+    LANGUAGE_OPTIONS, activeCodingQ,
+    showMcqSubmitConfirm, setShowMcqSubmitConfirm,
+    showFinalSubmitConfirm, setShowFinalSubmitConfirm,
+    isSubmitting
   } = useAssessmentRoom(sessionId, navigate);
 
   const formatTime = (seconds) => {
@@ -30,7 +33,7 @@ export default function AssessmentRoom() {
     return `${hrs > 0 ? hrs.toString().padStart(2, "0") + ':' : ''}${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isProctoringActive = activePhase === 'mcq' || activePhase === 'coding';
+  const isProctoringActive = (activePhase === 'mcq' || activePhase === 'coding') && !isSubmitting;
   const { isFullscreen, requestFullscreen, violationsCount, MAX_VIOLATIONS } = useProctoring(sessionId, isProctoringActive, handleSubmit);
 
   if (loading) {
@@ -86,6 +89,7 @@ export default function AssessmentRoom() {
         setShowExitConfirm={setShowExitConfirm}
         sessionData={sessionData}
         handleSubmit={handleSubmit}
+        setShowFinalSubmitConfirm={setShowFinalSubmitConfirm}
       />
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -108,6 +112,8 @@ export default function AssessmentRoom() {
           setCode={setCode}
           setOutput={setOutput}
           setActivePhase={setActivePhase}
+          language={language}
+          setShowMcqSubmitConfirm={setShowMcqSubmitConfirm}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden bg-background relative min-h-full">
@@ -156,6 +162,50 @@ export default function AssessmentRoom() {
               <button type="button" className="px-4 py-2 text-sm font-semibold bg-error-coral text-white rounded-lg flex items-center gap-2 hover:bg-error-coral/90" onClick={handleExit}>
                 <LogOut size={16} />
                 Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMcqSubmitConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center backdrop-blur-sm" onClick={() => setShowMcqSubmitConfirm(false)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-title-lg font-bold text-on-surface mb-2">Submit MCQs?</h2>
+            <p className="text-body-md text-on-surface-variant mb-6">
+              Are you sure you want to submit MCQs? You cannot return to this phase.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button type="button" className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container rounded-lg" onClick={() => setShowMcqSubmitConfirm(false)}>
+                Cancel
+              </button>
+              <button type="button" className="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-lg hover:opacity-90 transition-opacity" onClick={() => {
+                setShowMcqSubmitConfirm(false);
+                setActivePhase('coding');
+              }}>
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinalSubmitConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center backdrop-blur-sm" onClick={() => setShowFinalSubmitConfirm(false)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-title-lg font-bold text-on-surface mb-2">Submit Assessment?</h2>
+            <p className="text-body-md text-on-surface-variant mb-6">
+              Are you sure you want to final submit your assessment? You won't be able to make any changes after this.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button type="button" className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container rounded-lg" onClick={() => setShowFinalSubmitConfirm(false)}>
+                Cancel
+              </button>
+              <button type="button" className="px-4 py-2 text-sm font-semibold bg-[#059669] text-white rounded-lg hover:bg-[#047857] transition-colors" onClick={() => {
+                setShowFinalSubmitConfirm(false);
+                handleSubmit();
+              }}>
+                Submit
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Code, ChevronDown, RotateCcw, Play } from "lucide-react";
 
 export function IDEHeader({
@@ -13,6 +13,8 @@ export function IDEHeader({
   handleRunCode,
   isRunning
 }) {
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   return (
     <div className="flex justify-between items-center bg-editor-surface border-b border-editor-outline px-4 py-2">
       <div className="relative">
@@ -49,13 +51,7 @@ export function IDEHeader({
         <button
           className="flex items-center gap-1 text-editor-text hover:text-white px-3 py-1 rounded transition-colors text-sm"
           onClick={() => {
-            if (
-              window.confirm(
-                "Are you sure you want to reset your code? All your progress will be lost and restored to the initial problem statement."
-              )
-            ) {
-              setCode(activeCodingQ.statement || "");
-            }
+            setShowResetConfirm(true);
           }}
         >
           <RotateCcw size={16} />
@@ -71,6 +67,28 @@ export function IDEHeader({
           {isRunning ? "Running..." : "Run Code"}
         </button>
       </div>
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}>
+          <div className="bg-[#1e1e1e] border border-editor-outline rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-title-lg font-bold text-white mb-2">Reset Code?</h2>
+            <p className="text-body-md text-editor-text mb-6">
+              Are you sure you want to reset your code? All your progress will be lost and restored to the initial problem statement.
+            </p>
+            <div className="flex justify-end gap-3 font-sans">
+              <button type="button" className="px-4 py-2 text-sm font-semibold text-editor-text hover:bg-editor-outline rounded-lg" onClick={() => setShowResetConfirm(false)}>
+                Cancel
+              </button>
+              <button type="button" className="px-4 py-2 text-sm font-semibold bg-error-coral text-white rounded-lg hover:opacity-90 transition-opacity" onClick={() => {
+                setShowResetConfirm(false);
+                setCode(activeCodingQ.statement || "");
+              }}>
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

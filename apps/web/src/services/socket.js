@@ -39,7 +39,7 @@ export function getSocket() {
     });
   });
 
-  ["presenceChanged", "codeChange", "cursorMove", "languageChange", "webrtcOffer", "webrtcAnswer", "iceCandidate", "questionChange", "mediaStateChange", "interviewEnded"].forEach(event => {
+  ["presenceChanged", "codeChange", "cursorMove", "languageChange", "webrtcOffer", "webrtcAnswer", "iceCandidate", "questionChange", "mediaStateChange", "interviewEnded", "executionStateChange"].forEach(event => {
     socket.on(event, (payload) => {
       const room = payload?.roomId || payload?.room;
       const fns = listeners.get(room) || [];
@@ -108,6 +108,10 @@ export function emitMediaStateChange(roomId, videoOn, micOn, isScreenSharing, ca
 
 export function emitInterviewEnded(roomId) {
   getSocket().emit("interviewEnded", { roomId });
+}
+
+export function emitExecutionStateChange(roomId, isRunning, output) {
+  getSocket().emit("executionStateChange", { roomId, isRunning, output });
 }
 
 export function disconnectSocket() {

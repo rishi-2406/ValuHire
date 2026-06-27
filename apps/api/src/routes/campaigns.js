@@ -63,7 +63,7 @@ function createCampaignRoutes({ router, prisma, middleware }) {
     const campaigns = await prisma.campaign.findMany({
       where: { companyId: req.user.companyId },
       include: {
-        assessment: { include: { mcqQuestions: true, codingQuestions: { include: { testCases: true } } } },
+        assessment: { include: { mcqQuestions: true, codingQuestions: { include: { testCases: true } }, sessions: { select: { _count: { select: { proctorEvents: true } } } } } },
         inviteLinks: true,
         _count: { select: { applications: true } }
       },

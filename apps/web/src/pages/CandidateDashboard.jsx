@@ -87,7 +87,11 @@ export default function CandidateDashboard() {
           <h1 className="text-title-lg font-bold text-on-surface">Overview</h1>
           <div className="flex items-center gap-4">
             <NotificationBell user={user} />
-            <button className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant">
+            <button 
+              onClick={() => navigate("/help")}
+              className="icon-button w-10 h-10 hover:bg-surface-light text-on-surface-variant"
+              title="Help & FAQ"
+            >
               <HelpCircle size={20} />
             </button>
             <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm ml-2 overflow-hidden border border-outline">

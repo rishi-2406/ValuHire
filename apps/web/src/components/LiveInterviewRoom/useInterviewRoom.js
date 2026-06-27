@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../hooks/useToast";
 import { interviewService, campaignService } from "../../services/api";
-import { joinRoom, leaveRoom, onRoomEvent, emitCodeChange, emitLanguageChange, emitQuestionChange, emitMediaStateChange, emitInterviewEnded } from "../../services/socket";
+import { joinRoom, leaveRoom, onRoomEvent, emitCodeChange, emitLanguageChange, emitQuestionChange, emitMediaStateChange, emitInterviewEnded, emitExecutionStateChange } from "../../services/socket";
 import { useMediaDevices } from "../../hooks/useMediaDevices";
 import { useWebRTC } from "../../hooks/useWebRTC";
+import { LANGUAGE_TEMPLATES } from "../../hooks/useAssessmentRoom";
 
 export function useInterviewRoom(sessionId, user, isRecruiter) {
   const navigate = useNavigate();
@@ -15,9 +16,16 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
   const [campaign, setCampaign] = useState(null);
 
   // Sync state
-  const [code, setCode] = useState("# Write your code here");
+  const [code, setCode] = useState(LANGUAGE_TEMPLATES.python);
   const [language, setLanguage] = useState("python");
   const [questionText, setQuestionText] = useState("## Technical Problem\n\nPlease write a function to solve...");
+
+  useEffect(() => {
+    const isUnmodified = !code || code === "# Write your code here" || Object.values(LANGUAGE_TEMPLATES).includes(code);
+    if (isUnmodified) {
+      setCode(LANGUAGE_TEMPLATES[language]);
+    }
+  }, [language]);
 
   // Local state
   const [showLangDropdown, setShowLangDropdown] = useState(false);
@@ -162,6 +170,9 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
           toast.info("The recruiter has ended the interview.");
           navigate("/candidate");
         }
+      } else if (type === "executionStateChange") {
+        setIsRunning(payload.isRunning);
+        setOutput(payload.output);
       }
     });
 
@@ -213,6 +224,7 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
   const handleRunCode = async () => {
     setIsRunning(true);
     setOutput("Executing code...");
+    emitExecutionStateChange(`interview:${sessionId}`, true, "Executing code...");
 
     try {
       const res = await interviewService.runCode(sessionId, code, language);
@@ -232,19 +244,23 @@ export function useInterviewRoom(sessionId, user, isRecruiter) {
                if (result.stdout) out += `\n\nSTDOUT:\n${result.stdout}`;
                if (result.stderr) out += `\n\nSTDERR:\n${result.stderr}`;
                setOutput(out);
+               emitExecutionStateChange(`interview:${sessionId}`, false, out);
             } else {
                setOutput(`Execution Failed: ${statusRes.stderr || "Unknown Error"}`);
+               emitExecutionStateChange(`interview:${sessionId}`, false, `Execution Failed: ${statusRes.stderr || "Unknown Error"}`);
             }
           }
         } catch (err) {
           clearInterval(poll);
           setIsRunning(false);
           setOutput(`Error checking status: ${err.message}`);
+          emitExecutionStateChange(`interview:${sessionId}`, false, `Error checking status: ${err.message}`);
         }
       }, 1500);
     } catch (err) {
       setIsRunning(false);
       setOutput(`Error: ${err.message}`);
+      emitExecutionStateChange(`interview:${sessionId}`, false, `Error: ${err.message}`);
       toast.error("Failed to execute code");
     }
   };

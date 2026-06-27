@@ -42,6 +42,10 @@ export default function RecruiterDashboard() {
 
   const totalCandidates = campaigns.reduce((sum, c) => sum + (c._count?.applications || c.applicantCount || c.applicants || 0), 0);
   const completedAssessments = campaigns.reduce((sum, c) => sum + (c.completedCount || 0), 0);
+  const integrityFlags = campaigns.reduce((sum, c) => {
+    const sessions = c.assessment?.sessions || [];
+    return sum + sessions.reduce((sessionSum, s) => sessionSum + (s._count?.proctorEvents || 0), 0);
+  }, 0);
 
   const handleCreateCampaign = async (payload) => {
     try {
@@ -122,7 +126,7 @@ export default function RecruiterDashboard() {
                 <MetricCard 
                   icon={AlertTriangle} 
                   label="Integrity Flags" 
-                  value={0} 
+                  value={integrityFlags} 
                   iconColor="text-[#DC2626]" 
                   iconBg="bg-[#FEE2E2]"
                   isWarning={true}

@@ -2,7 +2,7 @@ import React from "react";
 import { BrandPanel } from "../components/LoginPage/BrandPanel";
 import { LoginForm } from "../components/LoginPage/LoginForm";
 import { RegisterForm } from "../components/LoginPage/RegisterForm";
-import { SocialLogins } from "../components/LoginPage/SocialLogins";
+
 import { useLoginData } from "../hooks/useLoginData";
 
 export default function LoginPage() {
@@ -76,13 +76,7 @@ export default function LoginPage() {
             <RegisterForm onRegister={handleRegisterSubmit} loading={loading} role={role} setRole={setRole} />
           )}
 
-          <div className="relative flex items-center py-2 animate-fade-in stagger-3">
-            <div className="flex-grow border-t border-outline-variant" />
-            <span className="flex-shrink-0 mx-4 text-body-sm text-on-surface-variant">or continue with</span>
-            <div className="flex-grow border-t border-outline-variant" />
-          </div>
 
-          <SocialLogins />
 
           <div className="lg:hidden text-center mt-2 pb-8 animate-fade-in stagger-5">
             <p className="text-body-sm text-on-surface-variant">

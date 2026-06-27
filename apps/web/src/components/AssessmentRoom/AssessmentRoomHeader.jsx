@@ -7,7 +7,8 @@ export function AssessmentRoomHeader({
   displayTime,
   setShowExitConfirm,
   sessionData,
-  handleSubmit
+  handleSubmit,
+  setShowFinalSubmitConfirm
 }) {
   return (
     <header className="flex-shrink-0 bg-white border-b border-outline-variant flex justify-between items-center px-6 h-16 z-50">
@@ -39,7 +40,7 @@ export function AssessmentRoomHeader({
           </button>
           {activePhase === 'coding' || (!sessionData?.assessment?.codingQuestions?.length) ? (
             <button onClick={() => {
-              if (window.confirm("Are you sure you want to final submit?")) handleSubmit();
+              setShowFinalSubmitConfirm(true);
             }} className="px-6 py-2 bg-[#059669] text-white rounded-lg text-sm font-semibold hover:bg-[#047857] shadow-sm transition-colors">
               Submit Assessment
             </button>

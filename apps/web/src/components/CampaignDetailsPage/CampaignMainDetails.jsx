@@ -39,8 +39,33 @@ export function CampaignMainDetails({ campaign, application, hasAssessment, isSu
           
           {expanded.jobDescription && (
             <div className="p-6 pt-0 border-t border-outline-variant/30">
-              <div className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap font-medium pt-4">
-                {campaign.description || "No description provided for this job campaign."}
+              <div className="pt-4 flex flex-col gap-4">
+                <div>
+                  <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Target Role</h4>
+                  <p className="text-sm font-semibold text-on-surface">{campaign.targetRole || "Not specified"}</p>
+                </div>
+                
+                <div>
+                  <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Required Skills</h4>
+                  {campaign.requiredSkills && campaign.requiredSkills.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {campaign.requiredSkills.map((skill, idx) => (
+                        <span key={idx} className="bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-semibold border border-outline-variant/30">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-on-surface-variant font-medium">No specific skills listed.</p>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Description</h4>
+                  <div className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap font-medium">
+                    {campaign.description || "No description provided for this job campaign."}
+                  </div>
+                </div>
               </div>
             </div>
           )}

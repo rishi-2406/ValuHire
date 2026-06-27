@@ -18,6 +18,7 @@ import CampaignDetailsPage from "./pages/CampaignDetailsPage";
 import ActiveAssessmentsPage from "./pages/ActiveAssessmentsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import HelpPage from "./pages/HelpPage";
 import "./styles.css";
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -184,6 +185,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["RECRUITER", "ADMIN", "CANDIDATE"]}>
             <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute allowedRoles={["CANDIDATE", "ADMIN"]}>
+            <HelpPage />
           </ProtectedRoute>
         }
       />

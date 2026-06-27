@@ -1,5 +1,6 @@
 import React from "react";
 import { CheckCircle, Circle, Terminal } from "lucide-react";
+import { LANGUAGE_TEMPLATES } from "../../hooks/useAssessmentRoom";
 
 export function AssessmentRoomSidebar({
   isSidebarOpen,
@@ -12,7 +13,9 @@ export function AssessmentRoomSidebar({
   setActiveCodingIndex,
   setCode,
   setOutput,
-  setActivePhase
+  setActivePhase,
+  language,
+  setShowMcqSubmitConfirm
 }) {
   return (
     <aside className={`${isSidebarOpen ? 'w-[300px] border-r' : 'w-0 border-r-0 opacity-0 overflow-hidden'} transition-all duration-300 bg-surface-container-lowest border-outline-variant flex flex-col py-6 shrink-0 z-30`}>
@@ -54,7 +57,7 @@ export function AssessmentRoomSidebar({
               key={q.id}
               onClick={() => {
                 setActiveCodingIndex(idx);
-                setCode(q.statement || "# Write your code here");
+                setCode(LANGUAGE_TEMPLATES[language] || "");
                 setOutput("");
               }}
               className={`w-full text-left px-4 py-3 flex items-center justify-between rounded-lg transition-all ${isActive ? 'bg-primary-container/10 border-l-4 border-primary' : 'hover:bg-surface-container border-l-4 border-transparent'}`}
@@ -71,9 +74,7 @@ export function AssessmentRoomSidebar({
         <div className="px-6 mt-4 pt-4 border-t border-outline-variant/30 whitespace-nowrap">
           <button 
             onClick={() => {
-              if (window.confirm("Are you sure you want to submit MCQs? You cannot return to this phase.")) {
-                setActivePhase('coding');
-              }
+              setShowMcqSubmitConfirm(true);
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-lg font-semibold shadow-sm hover:opacity-90 transition-opacity"
           >
