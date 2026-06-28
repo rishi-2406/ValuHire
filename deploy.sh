@@ -28,6 +28,12 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+echo "Pre-pulling language runner images to prevent execution timeouts..."
+docker pull gcc:14
+docker pull python:3.12-alpine
+docker pull node:22-alpine
+docker pull eclipse-temurin:22
+
 echo "Building and starting Docker containers..."
 if docker compose version &> /dev/null; then
     docker compose -f docker-compose.prod.yml down
