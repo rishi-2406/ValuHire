@@ -56,6 +56,61 @@ ValuHire is built as a monorepo containing multiple services, ensuring high perf
 
 ---
 
+## 🏗️ Architecture
+
+Below is a high-level overview of how the ValuHire services interact:
+
+```mermaid
+flowchart LR
+    %% Define Users
+    User(("🧑‍💻 Users\n(Recruiters / Candidates)"))
+
+    %% Define Frontend
+    subgraph Client ["Client Side (apps/web)"]
+        Web["⚛️ React SPA\n(Vite + Monaco Editor)"]
+    end
+
+    %% Define Backend Services
+    subgraph Server ["Server Side (apps/api)"]
+        API["🟢 Express API\n(REST + Socket.IO)"]
+    end
+
+    %% Define Data Layer
+    subgraph Data ["Data & Message Broker"]
+        DB[("🐘 PostgreSQL\n(Prisma ORM)")]
+        Redis[("🔴 Redis\n(BullMQ & Cache)")]
+    end
+
+    %% Define Execution Layer
+    subgraph Execution ["Execution Environment (services/runner)"]
+        Worker["⚙️ Runner Worker\n(Node.js)"]
+        Sandbox{"🐳 Docker Sandbox\n(Isolated Runtime)"}
+    end
+
+    %% Connections
+    User <-->|HTTP / WS| Web
+    Web <-->|REST API & WebSockets| API
+    
+    API <-->|Read / Write| DB
+    API -->|Enqueue Execution Jobs| Redis
+    
+    Redis <-->|Consume & Update Jobs| Worker
+    Worker -->|Execute Code| Sandbox
+
+    %% Styling
+    classDef primary fill:#2563eb,stroke:#1d4ed8,color:#fff,stroke-width:2px,rx:8px,ry:8px;
+    classDef secondary fill:#16a34a,stroke:#15803d,color:#fff,stroke-width:2px,rx:8px,ry:8px;
+    classDef data fill:#ca8a04,stroke:#a16207,color:#fff,stroke-width:2px,rx:8px,ry:8px;
+    classDef worker fill:#9333ea,stroke:#7e22ce,color:#fff,stroke-width:2px,rx:8px,ry:8px;
+
+    class Web primary;
+    class API secondary;
+    class DB,Redis data;
+    class Worker,Sandbox worker;
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
