@@ -54,6 +54,8 @@ services:
       dockerfile: services/runner/Dockerfile
     env_file:
       - .env
+    environment:
+      - VALUHIRE_WORK_DIR=/tmp/valuhire-runner
     depends_on:
       redis:
         condition: service_healthy
@@ -61,6 +63,7 @@ services:
         condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/valuhire-runner:/tmp/valuhire-runner
 
 volumes:
   postgres_data:
