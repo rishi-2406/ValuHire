@@ -8,3 +8,4 @@ coverage/
 .vite/
 
 .agents
+deployment_guide.md
