@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { getAccessToken } from "./api";
 
-const SOCKET_URL = "/";
+const SOCKET_URL = import.meta.env.VITE_API_URL || "/";
 
 let socket = null;
 const listeners = new Map();
